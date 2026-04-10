@@ -55,6 +55,29 @@ body::before {
   padding: 18px 0 56px;
 }
 
+.language-home {
+  min-height: calc(100vh - 72px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: center;
+}
+
+.language-card {
+  padding: 34px;
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.56);
+  border-radius: 32px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+.language-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .topbar {
   position: sticky;
   top: 12px;
@@ -635,7 +658,8 @@ ol {
   .runtime-grid,
   .flow-steps,
   .adoption-grid,
-  .resources-grid {
+  .resources-grid,
+  .language-home {
     grid-template-columns: 1fr;
   }
 

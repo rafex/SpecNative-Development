@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SpecNative Development</title>
+    <meta
+      name="description"
+      content="SpecNative Development es un enfoque estructurado por repositorio y orientado por especificaciones para entrega de software asistida por IA."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="topbar">
+        <a class="brand" href="#top">
+          <span class="brand-mark">SD</span>
+          <span class="brand-copy">
+            <strong>SpecNative</strong>
+            <span>Ingeniería de agentes orientada por repositorio</span>
+          </span>
+        </a>
+        <nav class="topnav" aria-label="Principal">
+          <a href="#concepto">Concepto</a>
+          <a href="#estructura">Estructura</a>
+          <a href="#runtimes">Runtimes</a>
+          <a href="#adopcion">Adopción</a>
+          <a href="#recursos">Recursos</a>
+          <a href="../en/">EN</a>
+        </nav>
+      </header>
+
+      <main id="top">
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">Spec-Driven Development / Agent-Driven Development</p>
+            <h1>Haz que el repositorio sea el sistema de contexto, no el prompt.</h1>
+            <p class="lead">
+              SpecNative Development es un modelo de desarrollo donde las especificaciones,
+              reglas de arquitectura, convenciones y decisiones viven en archivos estables
+              del repositorio para que los agentes puedan planificar e implementar con menos
+              ambigüedad en runtime.
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#concepto">Entender el modelo</a>
+              <a class="button button-secondary" href="#runtimes">Usarlo con agentes</a>
+            </div>
+            <ul class="hero-points" aria-label="Resumen">
+              <li>Specification-first en lugar de prompt-first</li>
+              <li>Contexto nativo del repositorio en lugar de contexto local a la sesión</li>
+              <li>Funciona con Codex, Claude Code, OpenCode y agentes similares</li>
+            </ul>
+          </div>
+          <div class="hero-panel">
+            <div class="panel-card">
+              <div class="panel-header">
+                <span class="panel-dot"></span>
+                <span class="panel-dot"></span>
+                <span class="panel-dot"></span>
+              </div>
+              <div class="panel-grid">
+                <div class="panel-block accent-a">
+                  <span class="label">Producto</span>
+                  <strong>Problema, usuarios, objetivos</strong>
+                </div>
+                <div class="panel-block accent-b">
+                  <span class="label">Arquitectura</span>
+                  <strong>Límites y restricciones</strong>
+                </div>
+                <div class="panel-block accent-c">
+                  <span class="label">Especificación</span>
+                  <strong>Comportamiento requerido</strong>
+                </div>
+                <div class="panel-block accent-d">
+                  <span class="label">Tareas</span>
+                  <strong>Plan ejecutable</strong>
+                </div>
+              </div>
+              <div class="panel-footer">
+                <code>prompt =&gt; seleccionar la spec, no explicar el proyecto</code>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="concepto">
+          <div class="section-heading">
+            <p class="eyebrow">Concepto</p>
+            <h2>Qué cambia en un flujo SpecNative</h2>
+            <p>
+              El cambio es directo: en lugar de reconstruir el contexto del proyecto dentro
+              de una conversación, el repositorio codifica ese contexto una vez y el agente
+              lo navega de forma determinista.
+            </p>
+          </div>
+
+          <div class="comparison-grid">
+            <article class="card">
+              <h3>Flujo centrado en prompts</h3>
+              <ol>
+                <li>El usuario describe la feature y el estado del proyecto en un prompt.</li>
+                <li>El agente reconstruye contexto desde el chat y lecturas parciales de archivos.</li>
+                <li>Restricciones importantes pueden omitirse, duplicarse o quedar desactualizadas.</li>
+                <li>La siguiente sesión suele repetir la misma explicación.</li>
+              </ol>
+            </article>
+            <article class="card highlighted">
+              <h3>Flujo centrado en repositorio</h3>
+              <ol>
+                <li>El usuario pide trabajo sobre una spec o iniciativa existente.</li>
+                <li>El agente lee navegación del repositorio y documentos fuente.</li>
+                <li>Arquitectura, convenciones y decisiones ya existen como entradas.</li>
+                <li>Cada sesión parte de la misma superficie de contexto duradero.</li>
+              </ol>
+            </article>
+          </div>
+
+          <div class="diagram-card">
+            <div class="diagram-copy">
+              <h3>Modelo de ejecución</h3>
+              <p>
+                La intención se convierte en una especificación. Las especificaciones se
+                descomponen en tareas. La arquitectura y las decisiones restringen el plan.
+                El código y las pruebas materializan el resultado.
+              </p>
+            </div>
+            <svg viewBox="0 0 920 280" role="img" aria-label="Modelo de ejecución SpecNative">
+              <defs>
+                <linearGradient id="flowAes" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffd8a8" />
+                  <stop offset="100%" stop-color="#ffb86b" />
+                </linearGradient>
+                <linearGradient id="flowBes" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#b8f2e6" />
+                  <stop offset="100%" stop-color="#63d0b0" />
+                </linearGradient>
+                <linearGradient id="flowCes" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#d9e6ff" />
+                  <stop offset="100%" stop-color="#8ab1ff" />
+                </linearGradient>
+                <marker
+                  id="arrowes"
+                  viewBox="0 0 10 10"
+                  refX="9"
+                  refY="5"
+                  markerWidth="8"
+                  markerHeight="8"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#8ea0c2"></path>
+                </marker>
+              </defs>
+              <rect x="40" y="42" width="180" height="72" rx="16" fill="url(#flowAes)" />
+              <rect x="270" y="42" width="180" height="72" rx="16" fill="url(#flowBes)" />
+              <rect x="500" y="42" width="180" height="72" rx="16" fill="url(#flowCes)" />
+              <rect x="730" y="42" width="150" height="72" rx="16" fill="#edf2fb" />
+              <rect x="270" y="168" width="410" height="72" rx="16" fill="#111827" opacity="0.92" />
+              <path d="M220 78 H260" stroke="#8ea0c2" stroke-width="4" marker-end="url(#arrowes)" />
+              <path d="M450 78 H490" stroke="#8ea0c2" stroke-width="4" marker-end="url(#arrowes)" />
+              <path d="M680 78 H720" stroke="#8ea0c2" stroke-width="4" marker-end="url(#arrowes)" />
+              <path
+                d="M475 168 C475 140, 475 120, 590 120"
+                stroke="#8ea0c2"
+                stroke-width="4"
+                fill="none"
+                marker-end="url(#arrowes)"
+              />
+              <text x="130" y="72" text-anchor="middle">Intención humana</text>
+              <text x="130" y="94" text-anchor="middle" class="svg-small">solicitud o cambio</text>
+              <text x="360" y="72" text-anchor="middle">Especificación</text>
+              <text x="360" y="94" text-anchor="middle" class="svg-small">comportamiento requerido</text>
+              <text x="590" y="72" text-anchor="middle">Tareas / Plan</text>
+              <text x="590" y="94" text-anchor="middle" class="svg-small">unidades ejecutables</text>
+              <text x="805" y="72" text-anchor="middle">Implementación</text>
+              <text x="805" y="94" text-anchor="middle" class="svg-small">código y pruebas</text>
+              <text x="475" y="198" text-anchor="middle" fill="#f6f8fc">Arquitectura + Stack + Convenciones + Decisiones</text>
+              <text x="475" y="220" text-anchor="middle" class="svg-small light">Restricciones aplicadas a planificación e implementación</text>
+            </svg>
+          </div>
+        </section>
+
+        <section class="section muted-section">
+          <div class="section-heading narrow">
+            <p class="eyebrow">Motivación</p>
+            <h2>Por qué los equipos adoptan este modelo</h2>
+          </div>
+          <div class="motivation-grid">
+            <article class="mini-card">
+              <h3>La ingeniería de prompts no escala</h3>
+              <p>
+                Los prompts largos se vuelven un sustituto frágil de arquitectura,
+                decisiones y reglas operativas que deberían existir en control de versiones.
+              </p>
+            </article>
+            <article class="mini-card">
+              <h3>El contexto suele ser transitorio</h3>
+              <p>
+                Los agentes suelen heredar estado superficial de sesión en lugar de contexto
+                estable de producto y sistema con ownership explícito.
+              </p>
+            </article>
+            <article class="mini-card">
+              <h3>Los repositorios no son AI-native por defecto</h3>
+              <p>
+                Los layouts de código optimizan almacenamiento de source code, no navegación
+                determinista, tracking de decisiones ni lookup de especificaciones.
+              </p>
+            </article>
+            <article class="mini-card">
+              <h3>Repetir explicaciones desperdicia tiempo y tokens</h3>
+              <p>
+                Los equipos reexplican las mismas reglas de producto, límites
+                arquitectónicos y convenciones de código entre sesiones.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="estructura">
+          <div class="section-heading">
+            <p class="eyebrow">Estructura</p>
+            <h2>Layout de repositorio para trabajo guiado por agentes</h2>
+            <p>
+              La plantilla de este proyecto mantiene la mayor parte del contexto bajo
+              <code>agents/</code>. En sistemas más grandes, el mismo modelo puede
+              expandirse a áreas dedicadas como <code>specs/</code>, <code>tasks/</code>,
+              <code>architecture/</code> y <code>workflows/</code>.
+            </p>
+          </div>
+
+          <div class="structure-layout">
+            <div class="code-card">
+              <pre><code>repo/
+├── AGENTS.md
+├── README.md
+├── agents/
+│   ├── README.md
+│   ├── PRODUCT.md
+│   ├── ARCHITECTURE.md
+│   ├── STACK.md
+│   ├── CONVENTIONS.md
+│   ├── COMMANDS.md
+│   ├── DECISIONS.md
+│   ├── SPEC.md
+│   └── specs/
+│       ├── README.md
+│       └── authentication/
+│           ├── README.md
+│           ├── SPEC.md
+│           └── TASKS.md
+└── workflows/
+    └── implementation.md</code></pre>
+            </div>
+            <div class="stack-list">
+              <article class="stack-item">
+                <h3>Archivos de navegación</h3>
+                <p>
+                  Los <code>README.md</code> enrutan a humanos y agentes al contexto correcto
+                  sin duplicar todo el conocimiento del proyecto.
+                </p>
+              </article>
+              <article class="stack-item">
+                <h3>Documentos fuente</h3>
+                <p>
+                  Archivos como <code>PRODUCT.md</code>, <code>SPEC.md</code>,
+                  <code>ARCHITECTURE.md</code> y <code>DECISIONS.md</code> contienen la
+                  verdad duradera.
+                </p>
+              </article>
+              <article class="stack-item">
+                <h3>Artefactos de ejecución</h3>
+                <p>
+                  Los archivos o secciones de tareas descomponen specs en unidades
+                  implementables y las conectan con validación.
+                </p>
+              </article>
+            </div>
+          </div>
+
+          <div class="diagram-card">
+            <div class="diagram-copy">
+              <h3>Estrategia de lectura</h3>
+              <p>
+                Los agentes deben navegar, no ingerir todo el repositorio. Empieza por la
+                navegación local y luego carga solo los documentos necesarios para la tarea
+                actual.
+              </p>
+            </div>
+            <svg viewBox="0 0 920 190" role="img" aria-label="Estrategia de lectura del repositorio">
+              <defs>
+                <marker
+                  id="arrow2es"
+                  viewBox="0 0 10 10"
+                  refX="9"
+                  refY="5"
+                  markerWidth="8"
+                  markerHeight="8"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#8ea0c2"></path>
+                </marker>
+              </defs>
+              <rect x="24" y="56" width="150" height="54" rx="14" fill="#f1f5ff" />
+              <rect x="205" y="56" width="170" height="54" rx="14" fill="#fff0d6" />
+              <rect x="406" y="56" width="190" height="54" rx="14" fill="#e7faf4" />
+              <rect x="627" y="56" width="130" height="54" rx="14" fill="#eaf0ff" />
+              <rect x="788" y="56" width="108" height="54" rx="14" fill="#101726" />
+              <path d="M174 83 H196" stroke="#8ea0c2" stroke-width="4" marker-end="url(#arrow2es)" />
+              <path d="M375 83 H397" stroke="#8ea0c2" stroke-width="4" marker-end="url(#arrow2es)" />
+              <path d="M596 83 H618" stroke="#8ea0c2" stroke-width="4" marker-end="url(#arrow2es)" />
+              <path d="M757 83 H779" stroke="#8ea0c2" stroke-width="4" marker-end="url(#arrow2es)" />
+              <text x="99" y="79" text-anchor="middle">Carpeta actual</text>
+              <text x="99" y="99" text-anchor="middle" class="svg-small">punto de entrada</text>
+              <text x="290" y="79" text-anchor="middle">README local</text>
+              <text x="290" y="99" text-anchor="middle" class="svg-small">navegación</text>
+              <text x="501" y="79" text-anchor="middle">Documentos fuente relevantes</text>
+              <text x="501" y="99" text-anchor="middle" class="svg-small">contexto mínimo</text>
+              <text x="692" y="79" text-anchor="middle">Plan</text>
+              <text x="692" y="99" text-anchor="middle" class="svg-small">modelo de tarea</text>
+              <text x="842" y="79" text-anchor="middle" fill="#f6f8fc">Implementar</text>
+              <text x="842" y="99" text-anchor="middle" class="svg-small light">código + pruebas</text>
+            </svg>
+          </div>
+        </section>
+
+        <section class="section" id="runtimes">
+          <div class="section-heading">
+            <p class="eyebrow">Runtimes</p>
+            <h2>Cómo usar el método con OpenCode, Claude Code y Codex</h2>
+            <p>
+              SpecNative no está atado a un solo runtime de agentes. El repositorio es la
+              capa estable. El runtime es la capa de ejecución. El patrón de integración es
+              darle a cada herramienta un bootstrap delgado hacia el mismo contexto del
+              repositorio.
+            </p>
+          </div>
+
+          <div class="runtime-grid">
+            <article class="runtime-card">
+              <div class="runtime-head">
+                <h3>OpenCode</h3>
+                <span>Terminal, desktop, IDE</span>
+              </div>
+              <p>
+                OpenCode ofrece agentes primarios y subagentes, permisos configurables e
+                integraciones ACP/editor. Encaja bien cuando quieres separar planificación y
+                ejecución alrededor de un flujo nativo del repositorio.
+              </p>
+              <h4>Patrón recomendado</h4>
+              <ul>
+                <li>Usa un agente tipo plan para leer specs y proponer trabajo sin editar.</li>
+                <li>Usa un agente tipo build para implementar cuando la spec y el camino de tareas ya estén claros.</li>
+                <li>Mantén las reglas del repositorio en <code>AGENTS.md</code> y en los <code>README.md</code> de carpetas.</li>
+                <li>Restringe permisos de escritura y bash hasta validar el camino de lectura.</li>
+              </ul>
+              <div class="snippet">
+                <pre><code>{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "plan": {
+      "permission": {
+        "edit": "deny",
+        "bash": { "*": "ask" }
+      }
+    },
+    "build": {
+      "permission": {
+        "edit": "allow",
+        "bash": { "*": "ask", "git status *": "allow" }
+      }
+    }
+  }
+}</code></pre>
+              </div>
+              <p class="source">
+                Fuente: <a href="https://opencode.ai/docs/agents/">documentación de agentes y permisos de OpenCode</a>
+              </p>
+            </article>
+
+            <article class="runtime-card">
+              <div class="runtime-head">
+                <h3>Claude Code</h3>
+                <span>CLI y equipos de agentes</span>
+              </div>
+              <p>
+                Claude Code lee un <code>CLAUDE.md</code> raíz, soporta comandos
+                personalizados, hooks, MCP y múltiples agentes. En un repositorio
+                SpecNative, usa <code>CLAUDE.md</code> como archivo de bootstrap y no como
+                manual monolítico del proyecto.
+              </p>
+              <h4>Patrón recomendado</h4>
+              <ul>
+                <li>Crea un <code>CLAUDE.md</code> corto que apunte a <code>AGENTS.md</code> y al modelo de navegación local.</li>
+                <li>Guarda la verdad real del proyecto en archivos de contexto versionados, no en un único archivo de instrucciones gigante.</li>
+                <li>Usa subagentes o agentes paralelos por área de spec, no por prompts vagos.</li>
+                <li>Codifica flujos reutilizables como comandos tipo <code>/implement-spec authentication</code>.</li>
+              </ul>
+              <div class="snippet">
+                <pre><code># CLAUDE.md
+
+Empieza leyendo ./AGENTS.md.
+En cada carpeta, lee el README.md local antes de hacer cambios.
+Usa los archivos bajo ./agents/ como documentos fuente.
+Si vas a implementar una feature, localiza primero el SPEC.md relevante.
+No trates este archivo como fuente de verdad de producto o arquitectura.</code></pre>
+              </div>
+              <p class="source">
+                Fuente: <a href="https://code.claude.com/docs/en/overview">overview de Claude Code</a>
+              </p>
+            </article>
+
+            <article class="runtime-card">
+              <div class="runtime-head">
+                <h3>Codex</h3>
+                <span>Local, IDE, GitHub, cloud</span>
+              </div>
+              <p>
+                Codex puede trabajar localmente o en entornos cloud y funciona mejor cuando
+                el repositorio ya expone restricciones y setup de forma clara. SpecNative le
+                da a Codex una superficie de contexto estable entre terminal, IDE y tareas
+                delegadas.
+              </p>
+              <h4>Patrón recomendado</h4>
+              <ul>
+                <li>Coloca reglas del repositorio en <code>AGENTS.md</code> y en archivos de spec, no solo en prompts de tarea.</li>
+                <li>Para tareas cloud, asegúrate de que setup, comandos y validación vivan en archivos del repositorio.</li>
+                <li>Delega trabajo nombrando la spec o carpeta de iniciativa, no reescribiendo todo el contexto del proyecto.</li>
+                <li>Usa Codex para implementación, refactor y review contra artefactos explícitos del repositorio.</li>
+              </ul>
+              <div class="snippet">
+                <pre><code>Implementa la iniciativa de autenticación.
+
+Lee AGENTS.md primero.
+Luego lee agents/README.md, agents/ARCHITECTURE.md,
+agents/CONVENTIONS.md y agents/specs/authentication/SPEC.md.
+Planifica el trabajo, impleméntalo, ejecuta los comandos de validación
+documentados y actualiza DECISIONS.md si cambia un trade-off persistente.</code></pre>
+              </div>
+              <p class="source">
+                Fuentes:
+                <a href="https://developers.openai.com/codex/cloud">documentación cloud de Codex</a>,
+                <a href="https://openai.com/codex">overview de Codex</a>
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section dark-band">
+          <div class="section-heading narrow">
+            <p class="eyebrow">Flujo de Implementación</p>
+            <h2>Cómo una solicitud termina en código</h2>
+          </div>
+          <div class="flow-steps">
+            <article>
+              <span>01</span>
+              <h3>Define la capacidad</h3>
+              <p>Escribe comportamiento, alcance, restricciones y criterios de aceptación en una spec.</p>
+            </article>
+            <article>
+              <span>02</span>
+              <h3>Lee restricciones</h3>
+              <p>Carga arquitectura, stack, convenciones y decisiones previas antes de planificar.</p>
+            </article>
+            <article>
+              <span>03</span>
+              <h3>Genera tareas</h3>
+              <p>Descompón la spec en unidades de implementación que puedan validarse.</p>
+            </article>
+            <article>
+              <span>04</span>
+              <h3>Implementa y valida</h3>
+              <p>Produce código, pruebas y actualizaciones documentales que satisfagan la spec.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="adopcion">
+          <div class="section-heading">
+            <p class="eyebrow">Adopción</p>
+            <h2>Cómo introducir SpecNative en un codebase real</h2>
+          </div>
+          <div class="adoption-grid">
+            <article class="card">
+              <h3>Empieza pequeño</h3>
+              <p>
+                Agrega <code>AGENTS.md</code>, un <code>README.md</code> raíz y un
+                <code>agents/SPEC.md</code> para una iniciativa activa.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Define verdades duraderas</h3>
+              <p>
+                Mueve intención de producto, arquitectura, reglas de stack, comandos y
+                convenciones a archivos del repositorio con ownership claro.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Enruta a los agentes, no los briefes desde cero</h3>
+              <p>
+                Dale al runtime una instrucción de entrada corta que diga dónde mirar, no un
+                resumen largo del proyecto.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Expande solo cuando sea necesario</h3>
+              <p>
+                Introduce carpetas por iniciativa, archivos explícitos de tareas y documentos
+                de workflow a medida que aumente la complejidad del proyecto.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="recursos">
+          <div class="section-heading">
+            <p class="eyebrow">Recursos</p>
+            <h2>Repositorio y referencias</h2>
+          </div>
+          <div class="resources-grid">
+            <a class="resource-link" href="https://github.com/rafex/SpecNative-Development/blob/main/README.md">
+              <strong>README.md</strong>
+              <span>Propuesta técnica en inglés</span>
+            </a>
+            <a class="resource-link" href="https://github.com/rafex/SpecNative-Development/blob/main/README.es.md">
+              <strong>README.es.md</strong>
+              <span>Versión técnica en español</span>
+            </a>
+            <a class="resource-link" href="https://github.com/rafex/SpecNative-Development/tree/main/Template-Project-Agents-AI">
+              <strong>Template-Project-Agents-AI</strong>
+              <span>Plantilla mínima del repositorio</span>
+            </a>
+            <a class="resource-link" href="https://opencode.ai/docs/agents/">
+              <strong>Docs de OpenCode</strong>
+              <span>Agentes, modos, permisos</span>
+            </a>
+            <a class="resource-link" href="https://code.claude.com/docs/en/overview">
+              <strong>Docs de Claude Code</strong>
+              <span>Overview, instrucciones, comandos, hooks</span>
+            </a>
+            <a class="resource-link" href="https://developers.openai.com/codex/cloud">
+              <strong>Docs de Codex</strong>
+              <span>Delegación cloud y setup del entorno</span>
+            </a>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p>SpecNative Development es un modelo de diseño de repositorios para ingeniería asistida por IA reproducible.</p>
+        <p>
+          Publícalo con GitHub Pages sirviendo el directorio <code>docs/</code> desde tu
+          branch principal.
+        </p>
+      </footer>
+    </div>
+
+    <script src="../app.js"></script>
+  </body>
+</html>
