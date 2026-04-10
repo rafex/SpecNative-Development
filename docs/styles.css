@@ -23,6 +23,11 @@
   box-sizing: border-box;
 }
 
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -30,6 +35,7 @@ html {
 body {
   margin: 0;
   font-family: var(--sans);
+  overflow-x: hidden;
   background:
     radial-gradient(circle at top left, rgba(239, 157, 71, 0.24), transparent 28%),
     radial-gradient(circle at 90% 10%, rgba(67, 111, 232, 0.18), transparent 24%),
@@ -93,31 +99,34 @@ body::before {
   border-radius: 22px;
   backdrop-filter: blur(18px);
   box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
   gap: 14px;
+  min-width: 0;
   color: inherit;
   text-decoration: none;
 }
 
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--amber), #ffcc84);
-  color: #2d1f08;
-  font-weight: 800;
+.brand-logo {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
 }
 
 .brand-copy {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+}
+
+.brand-copy strong,
+.brand-copy span {
+  overflow-wrap: anywhere;
 }
 
 .brand-copy span {
@@ -129,12 +138,16 @@ body::before {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .topnav a {
   color: var(--ink-soft);
   text-decoration: none;
   font-weight: 600;
+  font-size: 0.96rem;
+  white-space: nowrap;
 }
 
 .topnav a:hover,
@@ -156,6 +169,19 @@ body::before {
   padding: 26px 0 12px;
 }
 
+.hero-copy,
+.hero-panel,
+.section-heading,
+.runtime-card,
+.card,
+.mini-card,
+.stack-item,
+.resource-link,
+.language-card,
+.panel-card {
+  min-width: 0;
+}
+
 .eyebrow {
   margin: 0 0 12px;
   font-family: var(--mono);
@@ -174,19 +200,27 @@ h4 {
 }
 
 h1 {
-  font-size: clamp(2.8rem, 6vw, 5.6rem);
-  max-width: 11ch;
+  font-size: clamp(2.45rem, 5.2vw, 5rem);
+  max-width: 12ch;
   letter-spacing: -0.06em;
+  line-height: 1.04;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 
 h2 {
-  font-size: clamp(2rem, 3vw, 3.2rem);
+  font-size: clamp(1.85rem, 3vw, 3rem);
   letter-spacing: -0.04em;
+  line-height: 1.06;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 
 h3 {
-  font-size: 1.3rem;
+  font-size: clamp(1.12rem, 1.7vw, 1.3rem);
   margin-bottom: 12px;
+  line-height: 1.16;
+  overflow-wrap: anywhere;
 }
 
 h4 {
@@ -198,6 +232,7 @@ p,
 li {
   line-height: 1.7;
   color: var(--ink-soft);
+  overflow-wrap: anywhere;
 }
 
 .lead {
@@ -293,6 +328,12 @@ li {
   justify-content: space-between;
 }
 
+.panel-logo {
+  width: min(100%, 320px);
+  height: auto;
+  margin-bottom: 16px;
+}
+
 .panel-header {
   display: flex;
   gap: 8px;
@@ -320,6 +361,8 @@ li {
   flex-direction: column;
   justify-content: space-between;
   color: #112031;
+  gap: 8px;
+  overflow: hidden;
 }
 
 .label {
@@ -328,6 +371,14 @@ li {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.8;
+}
+
+.panel-block strong {
+  display: block;
+  font-size: clamp(1rem, 1.3vw, 1.12rem);
+  line-height: 1.2;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 
 .accent-a {
@@ -352,6 +403,13 @@ li {
   border-radius: 18px;
   background: rgba(16, 23, 38, 0.92);
   color: #f4f7ff;
+}
+
+.panel-footer code {
+  display: block;
+  white-space: normal;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 code,
@@ -420,13 +478,13 @@ svg {
 
 svg text {
   font-family: var(--sans);
-  font-size: 18px;
+  font-size: 16px;
   fill: #102039;
   font-weight: 700;
 }
 
 .svg-small {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   fill: #4d5a70;
 }
@@ -489,15 +547,17 @@ svg text {
 
 .runtime-head {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .runtime-head span {
   color: var(--ink-soft);
   font-size: 0.92rem;
+  line-height: 1.4;
 }
 
 ul,
@@ -515,6 +575,7 @@ ol {
 .source {
   margin-top: 12px;
   font-size: 0.94rem;
+  overflow-wrap: anywhere;
 }
 
 .source a,
@@ -599,6 +660,12 @@ ol {
   max-width: 36ch;
 }
 
+.footer code,
+.resource-link strong,
+.resource-link span {
+  overflow-wrap: anywhere;
+}
+
 .reveal {
   opacity: 0;
   transform: translateY(18px);
@@ -630,6 +697,10 @@ ol {
   .footer {
     display: grid;
   }
+
+  .topbar {
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 760px) {
@@ -646,10 +717,48 @@ ol {
 
   .topnav {
     gap: 12px;
+    width: 100%;
   }
 
   h1 {
     max-width: none;
+    font-size: clamp(2rem, 11vw, 3.3rem);
+  }
+
+  h2 {
+    font-size: clamp(1.7rem, 8vw, 2.4rem);
+  }
+
+  .lead {
+    font-size: 1.02rem;
+  }
+
+  .brand {
+    width: 100%;
+  }
+
+  .brand-copy strong {
+    font-size: 1rem;
+  }
+
+  .brand-copy span {
+    font-size: 0.8rem;
+  }
+
+  .panel-logo {
+    width: min(100%, 250px);
+  }
+
+  .panel-footer {
+    padding: 12px 14px;
+  }
+
+  svg text {
+    font-size: 13px;
+  }
+
+  .svg-small {
+    font-size: 10px;
   }
 
   .comparison-grid,
@@ -676,7 +785,8 @@ ol {
   .diagram-card,
   .runtime-card,
   .stack-item,
-  .resource-link {
+  .resource-link,
+  .language-card {
     border-radius: 22px;
   }
 }

@@ -1,0 +1,23 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
+  <rect x="40" y="52" width="108" height="68" rx="18" fill="url(#cardA)"/>
+  <rect x="108" y="136" width="108" height="68" rx="18" fill="url(#cardB)"/>
+  <path d="M158 76H198C206.837 76 214 83.1634 214 92V100" stroke="#15233D" stroke-width="18" stroke-linecap="round"/>
+  <path d="M98 180H58C49.1634 180 42 172.837 42 164V156" stroke="#15233D" stroke-width="18" stroke-linecap="round"/>
+  <path d="M76 128L180 128" stroke="#15233D" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="186" cy="128" r="18" fill="#15233D"/>
+  <defs>
+    <linearGradient id="bg" x1="28" y1="24" x2="232" y2="232" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF5DD"/>
+      <stop offset="1" stop-color="#E6EEFF"/>
+    </linearGradient>
+    <linearGradient id="cardA" x1="40" y1="52" x2="148" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFC570"/>
+      <stop offset="1" stop-color="#F09D46"/>
+    </linearGradient>
+    <linearGradient id="cardB" x1="108" y1="136" x2="216" y2="204" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9EDFD0"/>
+      <stop offset="1" stop-color="#65BDA6"/>
+    </linearGradient>
+  </defs>
+</svg>

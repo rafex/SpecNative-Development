@@ -1,0 +1,27 @@
+<svg width="760" height="184" viewBox="0 0 760 184" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="8" width="168" height="168" rx="38" fill="url(#bg)"/>
+  <rect x="34.25" y="40.5" width="71" height="46" rx="12" fill="url(#cardA)"/>
+  <rect x="79.25" y="97.5" width="71" height="46" rx="12" fill="url(#cardB)"/>
+  <path d="M112 56H143C148.523 56 153 60.4772 153 66V72" stroke="#15233D" stroke-width="12" stroke-linecap="round"/>
+  <path d="M98 128H67C61.4772 128 57 123.523 57 118V112" stroke="#15233D" stroke-width="12" stroke-linecap="round"/>
+  <path d="M74 92H143" stroke="#15233D" stroke-width="13" stroke-linecap="round"/>
+  <circle cx="146" cy="92" r="11" fill="#15233D"/>
+  <path d="M223 76.8125C223 52.0707 239.061 36 263.746 36H331.406V59.2188H266.258C255.39 59.2188 248.469 66.1831 248.469 76.8125C248.469 87.4419 255.39 94.4062 266.258 94.4062H294.938C319.715 94.4062 335.684 110.477 335.684 135.219C335.684 159.744 319.715 176 294.938 176H226.168V152.781H292.426C303.387 152.781 310.309 145.725 310.309 135.219C310.309 124.498 303.387 117.625 292.426 117.625H263.746C239.061 117.625 223 101.555 223 76.8125Z" fill="#15233D"/>
+  <path d="M363.611 176V36H424.834C466.789 36 494.453 63.2953 494.453 106C494.453 148.705 466.789 176 424.834 176H363.611ZM388.986 152.781H423.358C451.189 152.781 469.078 134.604 469.078 106C469.078 77.3962 451.189 59.2188 423.358 59.2188H388.986V152.781Z" fill="#15233D"/>
+  <path d="M517.254 176V36H614.239V59.2188H542.629V94.3125H603.772V117.531H542.629V152.781H614.239V176H517.254Z" fill="#15233D"/>
+  <path d="M636.17 176V36H661.545L724.262 131.648V36H749.637V176H724.262L661.545 80.3516V176H636.17Z" fill="#15233D"/>
+  <defs>
+    <linearGradient id="bg" x1="26" y1="24" x2="159" y2="161" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF5DD"/>
+      <stop offset="1" stop-color="#E6EEFF"/>
+    </linearGradient>
+    <linearGradient id="cardA" x1="34.25" y1="40.5" x2="105.25" y2="86.5" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFC570"/>
+      <stop offset="1" stop-color="#F09D46"/>
+    </linearGradient>
+    <linearGradient id="cardB" x1="79.25" y1="97.5" x2="150.25" y2="143.5" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9EDFD0"/>
+      <stop offset="1" stop-color="#65BDA6"/>
+    </linearGradient>
+  </defs>
+</svg>
