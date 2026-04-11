@@ -17,6 +17,17 @@ raiz de tu proyecto.
 
 ## Comandos disponibles
 
+### Estado del proyecto
+
+```bash
+python3 specnative.py status
+```
+
+Muestra el estado actual de todas las specs y sus tareas asociadas.
+Util para que el agente o el equipo tenga una vista rapida de que
+iniciativas estan activas, bloqueadas o cerradas y cuantas tareas
+quedan pendientes en cada una.
+
 ### Validacion
 
 ```bash

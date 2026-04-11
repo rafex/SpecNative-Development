@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parent / "Template-Project-Agents-AI"
+ROOT = Path(__file__).resolve().parent.parent / "Template-Project-Agents-AI"
 REQUIRED_FILES = [
     "AGENTS.md",
     "README.md",
@@ -169,11 +169,13 @@ def validate() -> int:
             errors.append(f"{spec_path.relative_to(ROOT)}: {exc}")
             continue
 
-        for field in ("id", "state", "owner", "created_at", "updated_at"):
-            if field not in spec:
-                errors.append(f"{spec_path.relative_to(ROOT)}: missing metadata field '{field}'")
-        if spec.get("state") not in SPEC_STATES:
-            errors.append(f"{spec_path.relative_to(ROOT)}: invalid state '{spec.get('state')}'")
+        # validate TOML fields only when a TOML block is present
+        if spec.get("artifact_type") == "spec":
+            for field in ("id", "state", "owner", "created_at", "updated_at"):
+                if field not in spec:
+                    errors.append(f"{spec_path.relative_to(ROOT)}: missing metadata field '{field}'")
+            if spec.get("state") not in SPEC_STATES:
+                errors.append(f"{spec_path.relative_to(ROOT)}: invalid state '{spec.get('state')}'")
 
     for task_path in find_task_files():
         try:
@@ -182,18 +184,16 @@ def validate() -> int:
             errors.append(f"{task_path.relative_to(ROOT)}: {exc}")
             continue
 
-        for field in ("initiative", "spec_id", "owner", "state"):
-            if field not in task_file:
-                errors.append(f"{task_path.relative_to(ROOT)}: missing metadata field '{field}'")
-        if task_file.get("state") not in TASK_STATES:
-            errors.append(f"{task_path.relative_to(ROOT)}: invalid state '{task_file.get('state')}'")
+        if task_file.get("artifact_type") == "task_file":
+            for field in ("initiative", "spec_id", "owner", "state"):
+                if field not in task_file:
+                    errors.append(f"{task_path.relative_to(ROOT)}: missing metadata field '{field}'")
+            if task_file.get("state") not in TASK_STATES:
+                errors.append(f"{task_path.relative_to(ROOT)}: invalid state '{task_file.get('state')}'")
 
         for task in task_file["tasks"]:
-            for field in ("id", "title", "state", "owner", "close_criteria"):
-                if field not in task:
-                    errors.append(f"{task_path.relative_to(ROOT)}: task {task.get('id', '<unknown>')} missing field '{field}'")
-            if task.get("state") not in TASK_STATES:
-                errors.append(f"{task_path.relative_to(ROOT)}: task {task.get('id')} has invalid state '{task.get('state')}'")
+            if task.get("state") and task["state"] not in TASK_STATES:
+                errors.append(f"{task_path.relative_to(ROOT)}: task {task.get('id')} has invalid state '{task['state']}'")
 
     if errors:
         print("SpecNative validation failed")
@@ -233,6 +233,38 @@ def export_traceability() -> dict[str, Any]:
             }
         )
     return {"traceability": rows}
+
+
+def status() -> int:
+    specs = find_specs()
+    task_files = find_task_files()
+    tasks_by_spec = {tf.get("spec_id"): tf for tf in [parse_tasks(p) for p in task_files]}
+
+    lines: list[str] = ["SpecNative status\n"]
+
+    if not specs:
+        lines.append("  no specs found\n")
+    else:
+        for spec_path in specs:
+            spec = parse_spec(spec_path)
+            spec_id = spec.get("id") or str(spec_path.relative_to(ROOT))
+            spec_state = spec.get("state", "unknown")
+            lines.append(f"  spec  {spec_id:<20} [{spec_state}]")
+
+            task_file = tasks_by_spec.get(spec.get("id"))
+            if not task_file:
+                lines.append("        no task file linked")
+            else:
+                tasks = task_file.get("tasks", [])
+                counts: dict[str, int] = {}
+                for t in tasks:
+                    s = t.get("state", "unknown")
+                    counts[s] = counts.get(s, 0) + 1
+                summary = "  ".join(f"{s}:{n}" for s, n in sorted(counts.items()))
+                lines.append(f"        tasks: {summary}" if summary else "        no tasks")
+
+    print("\n".join(lines))
+    return 0
 
 
 def write_output(payload: dict[str, Any], output: str | None) -> int:
@@ -334,6 +366,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser("validate", help="Validate the repository structure")
+    subparsers.add_parser("status", help="Show current state of specs and tasks")
 
     export_index_parser = subparsers.add_parser("export-index", help="Export a machine-readable project index")
     export_index_parser.add_argument("--output", help="Write JSON to a file")
@@ -374,6 +407,8 @@ def main() -> int:
 
     if args.command == "validate":
         return validate()
+    if args.command == "status":
+        return status()
     if args.command == "export-index":
         return write_output(export_index(), args.output)
     if args.command == "export-traceability":

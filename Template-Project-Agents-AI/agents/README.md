@@ -10,7 +10,9 @@ Si eres un agente o una persona entrando por primera vez:
 2. Abre solo el documento que corresponde a tu tarea.
 3. Si trabajas sobre una spec concreta, ve a `specs/README.md`.
 4. Si necesitas ejecutar trabajo, ve a `../tasks/README.md`.
-5. Si necesitas el contrato del framework o el CLI, ve a
+5. Si necesitas entender los gates de CI o el proceso de deploy,
+   ve a `../pipelines/README.md`.
+6. Si necesitas el contrato del framework o el CLI, ve a
    `../.specnative/README.md`.
 
 ## Documentos base

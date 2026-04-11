@@ -48,6 +48,8 @@ Todos estos documentos viven dentro de `agents/`.
   indice del sistema de ejecucion y estado de tareas.
 - [`workflows/README.md`](./workflows/README.md):
   procedimientos repetibles para planificar, implementar y validar.
+- [`pipelines/README.md`](./pipelines/README.md):
+  contexto de integracion continua y entrega continua.
 - [`.specnative/README.md`](./.specnative/README.md):
   documentacion del framework y referencias al CLI.
 
@@ -66,4 +68,5 @@ Todos estos documentos viven dentro de `agents/`.
 - `agents/`: contexto del proyecto adoptante.
 - `tasks/`: plan ejecutable derivado de specs.
 - `workflows/`: procedimientos operativos repetibles.
+- `pipelines/`: contexto de CI/CD del proyecto.
 - `.specnative/`: documentacion del framework (no del proyecto).

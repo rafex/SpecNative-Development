@@ -23,6 +23,7 @@ que estados o campos minimos deben existir para reducir ambiguedad.
 - `agents/TRACEABILITY.md`
 - `tasks/README.md`
 - `workflows/README.md`
+- `pipelines/README.md`
 
 ## Documentos opcionales
 
@@ -43,6 +44,7 @@ que estados o campos minimos deben existir para reducir ambiguedad.
 - Descomposicion ejecutable: `tasks/**/TASKS.md`
 - Decisiones persistentes: `DECISIONS.md`
 - Relaciones entre artefactos: `TRACEABILITY.md`
+- Gates de CI y proceso de CD: `pipelines/CI.md`, `pipelines/CD.md`
 
 ## Estados obligatorios
 
