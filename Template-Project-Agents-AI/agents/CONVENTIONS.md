@@ -33,3 +33,5 @@ Reglas operativas y de implementacion del proyecto.
 
 - Antes de editar, leer el `README.md` de la carpeta.
 - Actualizar el documento fuente si cambia una verdad compartida.
+- No cerrar una tarea sin estado final y evidencia de validacion.
+- No ejecutar una iniciativa sin referencia explicita a una spec.

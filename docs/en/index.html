@@ -193,6 +193,69 @@
           </div>
         </section>
 
+        <section class="section">
+          <div class="section-heading">
+            <p class="eyebrow">v0.3</p>
+            <h2>What the v0.3 proposal adds</h2>
+            <p>
+              The current template no longer stops at context documents. It now defines a
+              stricter and more exportable operating model with parseable metadata, task
+              execution, traceability, review workflows, and Python tooling.
+            </p>
+          </div>
+          <div class="adoption-grid">
+            <article class="card">
+              <h3>Explicit framework contract</h3>
+              <p>
+                <code>SCHEMA.md</code> defines required documents, ownership boundaries, and
+                allowed state models.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Execution layer</h3>
+              <p>
+                <code>tasks/</code> turns specs into executable units with state, owners,
+                dependencies, and closure criteria.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Machine-readable metadata</h3>
+              <p>
+                Specs and task files include <code>toml</code> metadata blocks so external
+                tools can validate and export project state.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Canonical task structure</h3>
+              <p>
+                Each task now carries its own metadata block, so exports no longer depend on
+                parsing free-form bullet lists.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Traceability</h3>
+              <p>
+                <code>TRACEABILITY.md</code> links specs, tasks, decisions, files, and
+                validation evidence.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Operational workflows</h3>
+              <p>
+                <code>workflows/</code> defines repeatable procedures for planning,
+                implementation, and review.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Python CLI</h3>
+              <p>
+                <code>specnative.py</code> validates the repository and exports project
+                indices or traceability as JSON.
+              </p>
+            </article>
+          </div>
+        </section>
+
         <section class="section muted-section">
           <div class="section-heading narrow">
             <p class="eyebrow">Motivation</p>

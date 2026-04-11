@@ -17,6 +17,8 @@ Registrar una decision cuando cambie:
 
 - Fecha: YYYY-MM-DD
 - Estado: proposed | accepted | deprecated | replaced
+- Relacionado con specs:
+- Relacionado con tareas:
 - Contexto: que problema obligo la decision
 - Decision: que se decidio exactamente
 - Consecuencias: costos, beneficios y limites

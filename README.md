@@ -1,6 +1,26 @@
+![SpecNative Development Logo](./docs/assets/specnative-logo.svg)
+
 # SpecNative Development
 
 Repository-structured, specification-first development for AI agents and humans.
+
+## v0.3 Preview
+
+The current repository now includes a concrete `v0.3` proposal of the framework in
+[`Template-Project-Agents-AI`](./Template-Project-Agents-AI). This revision adds the pieces
+that move the framework from human-readable structure toward exportable tooling:
+
+- an explicit framework contract in [`SCHEMA.md`](./Template-Project-Agents-AI/agents/SCHEMA.md)
+- required state models for specs, tasks, and decisions
+- a traceability layer in [`TRACEABILITY.md`](./Template-Project-Agents-AI/agents/TRACEABILITY.md)
+- a first-class execution layer in [`tasks/`](./Template-Project-Agents-AI/tasks)
+- repeatable operating procedures in [`workflows/`](./Template-Project-Agents-AI/workflows)
+- parseable TOML metadata in specs and task files
+- canonical per-task metadata instead of loose bullet parsing
+- a Python CLI in [`specnative.py`](./Template-Project-Agents-AI/tools/specnative.py) for validation and export
+- an end-to-end example initiative for authentication
+
+This makes the proposal closer to a protocol than a loose documentation pattern.
 
 ## Executive Summary
 

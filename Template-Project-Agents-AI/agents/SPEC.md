@@ -10,6 +10,31 @@ Spec activa o spec general del trabajo en curso.
 
 ## Template
 
+```toml
+artifact_type = "spec"
+id = "SPEC-0001"
+state = "draft"
+owner = "team-name"
+created_at = "YYYY-MM-DD"
+updated_at = "YYYY-MM-DD"
+replaces = "none"
+related_tasks = ["TASK-0001"]
+related_decisions = ["DEC-0001"]
+artifacts = ["src/example/*"]
+validation = ["pytest", "manual walkthrough"]
+```
+
+### Metadata
+
+- ID:
+- Estado: `draft | active | blocked | done | superseded`
+- Owner:
+- Fecha de creacion: YYYY-MM-DD
+- Ultima actualizacion: YYYY-MM-DD
+- Reemplaza: `none` o SPEC-XXXX
+- Tareas relacionadas:
+- Decisiones relacionadas:
+
 ### Resumen
 
 Describe en pocas lineas que capacidad se quiere construir.
@@ -48,8 +73,21 @@ Que estado observable debe existir al terminar.
 - Dependencia
 - Riesgo
 
+### Plan de ejecucion
+
+- Tarea o lote de tareas
+- Orden sugerido
+- Bloqueos conocidos
+- Criterio de cierre
+
 ### Plan de validacion
 
 - Test manual
 - Test automatizado
 - Evidencia esperada
+
+### Trazabilidad
+
+- Commits o PRs:
+- Archivos principales:
+- Resultado de validacion:
