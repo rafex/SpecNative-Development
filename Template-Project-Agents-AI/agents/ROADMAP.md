@@ -6,6 +6,14 @@ Direccion del proyecto en el tiempo.
 
 Dar contexto de prioridad sin convertir esto en una lista de tickets.
 
+## Cuando leer este archivo
+
+Leer antes de crear una nueva spec para confirmar que la iniciativa
+es coherente con la direccion actual del proyecto.
+
+Si ROADMAP.md menciona una iniciativa pero no existe spec para ella,
+el siguiente paso es crear esa spec antes de implementar.
+
 ## Template
 
 ### Ahora

@@ -24,26 +24,63 @@ Antes de trabajar en cualquier carpeta, leer primero su `README.md`.
 - Si la verdad cambia de manera persistente, actualizar el documento
   correcto antes de cerrar la tarea.
 
+## Separacion semantica de documentos
+
+Cada documento tiene un dominio exclusivo. No duplicar informacion
+entre ellos.
+
+- `SPEC.md`: define *que* debe construirse en esta iniciativa.
+  Contiene el problema, el objetivo, el alcance, los requisitos y
+  los riesgos especificos de este trabajo. Su horizonte es la
+  iniciativa. Cuando la spec cierra, su contenido es historia.
+
+- `DECISIONS.md`: registra *por que el sistema es como es*.
+  Contiene tradeoffs que condicionan iniciativas futuras y que
+  otros agentes deben respetar. Su horizonte es el proyecto
+  completo. No registra lo que se va a construir sino lo que
+  ya se decidio y no debe revertirse sin razon explicita.
+
+- `PRODUCT.md`: define *para quien y por que existe el producto*.
+  No describe implementacion ni decisiones tecnicas.
+
+- `ROADMAP.md`: define *que viene primero y por que*.
+  No describe como implementar ni que decidir.
+
+- `ARCHITECTURE.md`: describe *como esta estructurado el sistema*.
+  No describe que construir ni por que se tomaron las decisiones.
+
+La prueba para saber donde escribir algo:
+- Si desaparece cuando la iniciativa termina → va en la spec.
+- Si debe respetarse en la proxima iniciativa → va en DECISIONS.md.
+- Si explica el producto → va en PRODUCT.md.
+- Si orienta prioridad temporal → va en ROADMAP.md.
+- Si describe estructura del sistema → va en ARCHITECTURE.md.
+
 ## Flujo de trabajo recomendado
 
 1. Leer el `README.md` de la carpeta actual.
-2. Revisar `agents/SCHEMA.md` para entender el contrato documental.
+2. Revisar `agents/ROADMAP.md` para confirmar que la iniciativa es
+   coherente con la direccion actual del proyecto.
 3. Revisar `agents/PRODUCT.md` y el contexto tecnico relevante.
-4. Revisar o crear un `SPEC.md` en `agents/` o en `agents/specs/`.
-5. Derivar o leer las tareas correspondientes en `tasks/`.
-6. Implementar y validar siguiendo `workflows/IMPLEMENTATION.md`.
-7. Registrar decisiones permanentes en `agents/DECISIONS.md`.
-8. Mantener trazabilidad entre spec, tareas, decisiones y validacion.
-9. Mantener metadata parseable cuando una spec o tarea cambie.
+4. Revisar `agents/DECISIONS.md` para respetar tradeoffs persistentes.
+5. Revisar o crear un `SPEC.md` en `agents/` o en `agents/specs/`.
+6. Derivar o leer las tareas correspondientes en `tasks/`.
+7. Implementar y validar siguiendo `workflows/IMPLEMENTATION.md`.
+8. Registrar en `agents/DECISIONS.md` si surgieron tradeoffs que
+   deben persistir mas alla de esta iniciativa.
+9. Actualizar trazabilidad en `agents/TRACEABILITY.md` al cerrar.
+10. (Opcional) Si el proyecto usa el CLI de SpecNative, mantener
+    metadata parseable consistente al actualizar specs o tareas.
 
 ## Criterio de actualizacion
 
-- `ROADMAP.md` cambia cuando cambia la direccion.
+- `ROADMAP.md` cambia cuando cambia la direccion del proyecto.
 - `SPEC.md` cambia cuando cambia el alcance del trabajo.
-- `DECISIONS.md` cambia cuando se toma una decision que debe persistir.
+- `DECISIONS.md` cambia cuando un tradeoff debe persistir mas alla
+  de la iniciativa actual.
 - `tasks/` cambia cuando cambia el plan ejecutable o el estado real.
-- `TRACEABILITY.md` cambia cuando se crea o modifica una relacion
-  relevante entre artefactos.
+- `TRACEABILITY.md` cambia al cerrar una iniciativa o cuando una
+  decision modifica el alcance de una spec activa.
 
 ## Estados obligatorios
 

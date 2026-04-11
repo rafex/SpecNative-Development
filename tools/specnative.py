@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent / "Template-Project-Agents-AI"
 REQUIRED_FILES = [
     "AGENTS.md",
     "README.md",
@@ -23,8 +23,8 @@ REQUIRED_FILES = [
     "agents/COMMANDS.md",
     "agents/DECISIONS.md",
     "agents/ROADMAP.md",
-    "agents/SCHEMA.md",
     "agents/TRACEABILITY.md",
+    ".specnative/SCHEMA.md",
     "tasks/README.md",
     "workflows/README.md",
 ]
@@ -42,7 +42,6 @@ INSTALL_PATHS_MINIMAL = [
     "agents/COMMANDS.md",
     "agents/DECISIONS.md",
     "agents/ROADMAP.md",
-    "agents/SCHEMA.md",
     "agents/SPEC.md",
     "agents/TRACEABILITY.md",
     "agents/specs/README.md",
@@ -52,7 +51,9 @@ INSTALL_PATHS_MINIMAL = [
     "workflows/IMPLEMENTATION.md",
     "workflows/PLANNING.md",
     "workflows/REVIEW.md",
-    "tools/specnative.py",
+    ".specnative/README.md",
+    ".specnative/CLI.md",
+    ".specnative/SCHEMA.md",
 ]
 
 INSTALL_PATHS_EXAMPLES = [
@@ -70,7 +71,7 @@ def load_text(path: Path) -> str:
 def extract_toml_block(text: str) -> dict[str, Any]:
     match = re.search(r"```toml\n(.*?)\n```", text, flags=re.DOTALL)
     if not match:
-        raise ValueError("missing TOML metadata block")
+        return {}
     return parse_simple_toml(match.group(1))
 
 
@@ -115,10 +116,7 @@ def parse_task_entries(text: str) -> list[dict[str, Any]]:
             continue
 
         toml_blocks = extract_all_toml_blocks(section)
-        if not toml_blocks:
-            raise ValueError(f"task section {heading.group(1)} is missing a TOML metadata block")
-
-        metadata = toml_blocks[0]
+        metadata = toml_blocks[0] if toml_blocks else {}
         metadata.setdefault("id", heading.group(1))
         metadata.setdefault("title", heading.group(2))
         entries.append(metadata)

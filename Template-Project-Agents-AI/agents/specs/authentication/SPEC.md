@@ -1,5 +1,9 @@
 # SPEC.md
 
+> Este es un ejemplo de spec con metadata parseable para proyectos que
+> usan el CLI de SpecNative. El bloque toml es opcional; ver
+> `.specnative/SCHEMA.md` y `.specnative/CLI.md`.
+
 ```toml
 artifact_type = "spec"
 id = "SPEC-AUTH-0001"

@@ -1,5 +1,9 @@
 # TASKS.md
 
+> Ejemplo de archivo de tareas con metadata parseable para proyectos
+> que usan el CLI de SpecNative. Los bloques toml son opcionales; ver
+> `.specnative/CLI.md`.
+
 ```toml
 artifact_type = "task_file"
 initiative = "authentication"

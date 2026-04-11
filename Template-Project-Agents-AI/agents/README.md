@@ -7,11 +7,11 @@ Indice principal del contexto operativo del proyecto.
 Si eres un agente o una persona entrando por primera vez:
 
 1. Lee este archivo.
-2. Lee `SCHEMA.md` si necesitas entender el contrato del framework.
-3. Abre solo el documento que corresponde a tu tarea.
-4. Si trabajas sobre una spec concreta, ve a `specs/README.md`.
-5. Si necesitas ejecutar trabajo, ve a `../tasks/README.md`.
-6. Si necesitas entender tooling del framework, ve a `../docs/README.md`.
+2. Abre solo el documento que corresponde a tu tarea.
+3. Si trabajas sobre una spec concreta, ve a `specs/README.md`.
+4. Si necesitas ejecutar trabajo, ve a `../tasks/README.md`.
+5. Si necesitas el contrato del framework o el CLI, ve a
+   `../.specnative/README.md`.
 
 ## Documentos base
 
@@ -29,8 +29,6 @@ Si eres un agente o una persona entrando por primera vez:
   comandos de desarrollo, test, lint y operaciones comunes.
 - [`DECISIONS.md`](./DECISIONS.md):
   decisiones relevantes ya tomadas y su racional.
-- [`SCHEMA.md`](./SCHEMA.md):
-  contrato minimo del framework y documentos obligatorios.
 - [`TRACEABILITY.md`](./TRACEABILITY.md):
   enlaces entre iniciativas, tareas, decisiones y validacion.
 - [`SPEC.md`](./SPEC.md):
@@ -38,15 +36,15 @@ Si eres un agente o una persona entrando por primera vez:
 - [`specs/README.md`](./specs/README.md):
   indice de specs por iniciativa.
 
-## Regla de ownership documental
+## Ownership documental
 
 - Producto y direccion: `PRODUCT.md` y `ROADMAP.md`
 - Sistema y restricciones: `ARCHITECTURE.md`, `STACK.md`,
   `CONVENTIONS.md`, `COMMANDS.md`
-- Contrato del framework: `SCHEMA.md`
 - Ejecucion: `SPEC.md` y `../tasks/`
 - Memoria de decisiones: `DECISIONS.md`
 - Trazabilidad: `TRACEABILITY.md`
+- Contrato del framework: `.specnative/SCHEMA.md`
 
 ## Separacion importante
 

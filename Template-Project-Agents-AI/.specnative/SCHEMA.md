@@ -7,10 +7,6 @@ Contrato minimo del framework SpecNative Development v0.3.
 Definir que documentos son obligatorios, que rol cumple cada uno y
 que estados o campos minimos deben existir para reducir ambiguedad.
 
-En `v0.3`, specs y archivos de tareas deben incluir un bloque
-`toml` parseable para que herramientas externas puedan validar o
-exportar el estado del proyecto.
-
 ## Documentos obligatorios
 
 - `AGENTS.md`
@@ -34,7 +30,7 @@ exportar el estado del proyecto.
 - `workflows/PLANNING.md`
 - `workflows/REVIEW.md`
 - specs separadas por iniciativa en `agents/specs/`
-- `exports/*.json` generados por tooling
+- `exports/*.json` generados por tooling externo
 
 ## Ownership documental
 
@@ -42,46 +38,13 @@ exportar el estado del proyecto.
 - Direccion temporal: `ROADMAP.md`
 - Restricciones del sistema: `ARCHITECTURE.md`, `STACK.md`
 - Reglas operativas: `CONVENTIONS.md`, `COMMANDS.md`
+- Contrato del framework: `.specnative/SCHEMA.md`
 - Cambio requerido: `SPEC.md` o `agents/specs/**/SPEC.md`
 - Descomposicion ejecutable: `tasks/**/TASKS.md`
 - Decisiones persistentes: `DECISIONS.md`
 - Relaciones entre artefactos: `TRACEABILITY.md`
 
 ## Estados obligatorios
-
-## Metadata parseable
-
-Los siguientes artefactos deben incluir un bloque `toml` cercano al
-inicio del archivo:
-
-- `agents/SPEC.md`
-- `agents/specs/**/SPEC.md`
-- `tasks/**/TASKS.md`
-
-Campos minimos para specs:
-
-- `artifact_type = "spec"`
-- `id`
-- `state`
-- `owner`
-- `created_at`
-- `updated_at`
-
-Campos minimos para archivos de tareas:
-
-- `artifact_type = "task_file"`
-- `initiative`
-- `spec_id`
-- `owner`
-- `state`
-
-Campos minimos para cada tarea:
-
-- `id`
-- `title`
-- `state`
-- `owner`
-- `close_criteria`
 
 ### Specs
 
@@ -103,9 +66,6 @@ Estados permitidos:
 
 ### Tareas
 
-Todo archivo `TASKS.md` debe declarar metadata de archivo y cada tarea
-debe incluir su propio bloque `toml`.
-
 Toda tarea debe declarar:
 
 - `ID`
@@ -113,7 +73,6 @@ Toda tarea debe declarar:
 - `State`
 - `Owner`
 - `Criterio de cierre`
-- `Validation`
 
 Estados permitidos:
 
@@ -157,4 +116,17 @@ Antes de cerrar una iniciativa, comprobar:
 - validacion definida o ejecutada
 - trazabilidad minima registrada
 - ausencia de contradicciones entre spec, tareas y decisiones
-- metadata parseable consistente con el contenido humano del archivo
+
+## Metadata parseable (opcional)
+
+Para proyectos que usan el CLI de SpecNative, specs y archivos de
+tareas pueden incluir un bloque `toml` que permite validacion y
+exportacion automatica del estado del proyecto.
+
+Cuando se usa el CLI, los bloques `toml` deben aparecer cerca del
+inicio del archivo y contener al menos los campos requeridos por el
+comando `validate`. Ver `.specnative/CLI.md` para referencia completa de
+campos y comandos disponibles.
+
+El TOML no es un requisito del contrato base. Los documentos son
+validos sin el y pueden adoptarlo de forma incremental.
