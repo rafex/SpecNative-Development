@@ -27,6 +27,7 @@ REQUIRED_FILES = [
     ".specnative/SCHEMA.md",
     "tasks/README.md",
     "workflows/README.md",
+    "pipelines/README.md",
 ]
 SPEC_STATES = {"draft", "active", "blocked", "done", "superseded"}
 TASK_STATES = {"todo", "in_progress", "blocked", "done"}
@@ -51,6 +52,9 @@ INSTALL_PATHS_MINIMAL = [
     "workflows/IMPLEMENTATION.md",
     "workflows/PLANNING.md",
     "workflows/REVIEW.md",
+    "pipelines/README.md",
+    "pipelines/CI.md",
+    "pipelines/CD.md",
     ".specnative/README.md",
     ".specnative/CLI.md",
     ".specnative/SCHEMA.md",

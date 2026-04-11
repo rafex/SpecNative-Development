@@ -13,6 +13,7 @@ Antes de trabajar en cualquier carpeta, leer primero su `README.md`.
 - `agents/specs/README.md`: indice de specs disponibles.
 - `tasks/README.md`: indice del sistema de ejecucion.
 - `workflows/README.md`: procedimientos repetibles de operacion.
+- `pipelines/README.md`: contexto de CI/CD del proyecto.
 
 ## Politica de contexto
 
@@ -49,12 +50,20 @@ entre ellos.
 - `ARCHITECTURE.md`: describe *como esta estructurado el sistema*.
   No describe que construir ni por que se tomaron las decisiones.
 
+- `pipelines/CI.md`: describe *que gates automaticos deben pasar*.
+  No contiene comandos locales ni logica de implementacion.
+
+- `pipelines/CD.md`: describe *como el codigo llega a produccion*.
+  No contiene scripts de deploy ni credenciales.
+
 La prueba para saber donde escribir algo:
 - Si desaparece cuando la iniciativa termina → va en la spec.
 - Si debe respetarse en la proxima iniciativa → va en DECISIONS.md.
 - Si explica el producto → va en PRODUCT.md.
 - Si orienta prioridad temporal → va en ROADMAP.md.
 - Si describe estructura del sistema → va en ARCHITECTURE.md.
+- Si describe gates automaticos de validacion → va en pipelines/CI.md.
+- Si describe como se despliega el sistema → va en pipelines/CD.md.
 
 ## Flujo de trabajo recomendado
 
@@ -79,6 +88,9 @@ La prueba para saber donde escribir algo:
 - `DECISIONS.md` cambia cuando un tradeoff debe persistir mas alla
   de la iniciativa actual.
 - `tasks/` cambia cuando cambia el plan ejecutable o el estado real.
+- `pipelines/CI.md` cambia cuando cambia un gate o la plataforma de CI.
+- `pipelines/CD.md` cambia cuando cambia un ambiente, gate de
+  promocion o proceso de release.
 - `TRACEABILITY.md` cambia al cerrar una iniciativa o cuando una
   decision modifica el alcance de una spec activa.
 

@@ -11,6 +11,8 @@ El flujo general de trabajo esta en `AGENTS.md`.
 3. Leer o crear las tareas en `tasks/<iniciativa>/TASKS.md`.
 4. Implementar en lotes pequenos siguiendo el orden de dependencias.
 5. Ejecutar la validacion definida en la spec o en cada tarea.
+   Consultar `pipelines/CI.md` para verificar que los gates
+   obligatorios del proyecto estan cubiertos.
 6. Actualizar el estado de cada tarea al completarla.
 7. Registrar decisiones persistentes en `agents/DECISIONS.md` si
    surgieron tradeoffs nuevos.
