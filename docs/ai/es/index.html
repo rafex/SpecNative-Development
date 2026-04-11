@@ -64,6 +64,7 @@
           </span>
         </a>
         <nav class="topnav" aria-label="Principal">
+          <a href="#mcp">MCP</a>
           <a href="#estructura">Estructura</a>
           <a href="#ownership">Ownership</a>
           <a href="#generar">Generar</a>
@@ -97,6 +98,89 @@
         </div>
 
         <div style="max-width: 900px; margin: 0 auto; padding: 0 1.5rem;">
+
+          <!-- MCP -->
+          <section class="ref-section" id="mcp">
+            <h2>Servidor MCP — v0.4</h2>
+            <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
+              <code>tools/specnative_mcp.py</code> expone el repositorio como
+              <strong>recursos</strong>, <strong>herramientas</strong> y <strong>prompts</strong>
+              MCP para que cualquier agente compatible (Claude Desktop, Claude Code, OpenCode)
+              trabaje en modo spec-first sin navegar manualmente el árbol de archivos.
+              Requiere: <code>pip install mcp</code>.
+            </p>
+
+            <h3>Configuración rápida — Claude Code</h3>
+            <div class="code-card">
+              <pre><code># Agregar desde la CLI
+claude mcp add specnative \
+  python3 /ruta/a/SpecNative-Development/tools/specnative_mcp.py \
+  -- --repo /ruta/a/tu/proyecto
+
+# O agregar a .claude/mcp_settings.json
+{
+  "mcpServers": {
+    "specnative": {
+      "command": "python3",
+      "args": [
+        "/ruta/a/SpecNative-Development/tools/specnative_mcp.py",
+        "--repo", "/ruta/a/tu/proyecto"
+      ]
+    }
+  }
+}</code></pre>
+            </div>
+
+            <h3>Recursos</h3>
+            <table class="ref-table">
+              <thead><tr><th>URI</th><th>Documento</th></tr></thead>
+              <tbody>
+                <tr><td><code>spec://agents</code></td><td>AGENTS.md — contrato operativo</td></tr>
+                <tr><td><code>spec://context/product</code></td><td>agents/PRODUCT.md</td></tr>
+                <tr><td><code>spec://context/architecture</code></td><td>agents/ARCHITECTURE.md</td></tr>
+                <tr><td><code>spec://context/stack</code></td><td>agents/STACK.md</td></tr>
+                <tr><td><code>spec://context/conventions</code></td><td>agents/CONVENTIONS.md</td></tr>
+                <tr><td><code>spec://context/commands</code></td><td>agents/COMMANDS.md</td></tr>
+                <tr><td><code>spec://context/decisions</code></td><td>agents/DECISIONS.md</td></tr>
+                <tr><td><code>spec://context/roadmap</code></td><td>agents/ROADMAP.md</td></tr>
+                <tr><td><code>spec://context/traceability</code></td><td>agents/TRACEABILITY.md</td></tr>
+                <tr><td><code>spec://pipelines/ci</code></td><td>pipelines/CI.md</td></tr>
+                <tr><td><code>spec://pipelines/cd</code></td><td>pipelines/CD.md</td></tr>
+                <tr><td><code>spec://schema</code></td><td>.specnative/SCHEMA.md</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Herramientas</h3>
+            <table class="ref-table">
+              <thead><tr><th>Herramienta</th><th>Descripción</th></tr></thead>
+              <tbody>
+                <tr><td><code>status()</code></td><td>Estado de specs y conteo de tareas</td></tr>
+                <tr><td><code>validate()</code></td><td>Verifica que existan los archivos obligatorios</td></tr>
+                <tr><td><code>list_specs()</code></td><td>Todas las specs con ID, estado y owner</td></tr>
+                <tr><td><code>list_tasks(initiative)</code></td><td>Tareas de una iniciativa</td></tr>
+                <tr><td><code>read_spec(initiative)</code></td><td>Leer una spec</td></tr>
+                <tr><td><code>read_context(document)</code></td><td>Leer cualquier documento de contexto por nombre</td></tr>
+                <tr><td><code>export_index()</code></td><td>Exportar toda la metadata como JSON</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Prompts</h3>
+            <table class="ref-table">
+              <thead><tr><th>Prompt</th><th>Descripción</th></tr></thead>
+              <tbody>
+                <tr><td><code>start_initiative(name, problem)</code></td><td>Iniciar una nueva iniciativa spec-driven</td></tr>
+                <tr><td><code>plan_tasks(initiative)</code></td><td>Derivar tareas desde una spec</td></tr>
+                <tr><td><code>implement_task(initiative, task_id)</code></td><td>Implementar una tarea específica</td></tr>
+                <tr><td><code>review_against_spec(initiative)</code></td><td>Revisar contra criterios de aceptación</td></tr>
+                <tr><td><code>record_decision(title, ctx, dec, cons)</code></td><td>Registrar una decisión persistente</td></tr>
+                <tr><td><code>close_initiative(initiative)</code></td><td>Cerrar y actualizar trazabilidad</td></tr>
+              </tbody>
+            </table>
+            <p style="font-size: 0.85rem; color: #4a5568; margin-top: 1rem;">
+              Configuración completa para Claude Desktop, OpenCode y transporte SSE:
+              <a href="https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/.specnative/MCP.md">.specnative/MCP.md</a>
+            </p>
+          </section>
 
           <!-- ESTRUCTURA -->
           <section class="ref-section" id="estructura">

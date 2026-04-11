@@ -64,6 +64,7 @@
           </span>
         </a>
         <nav class="topnav" aria-label="Primary">
+          <a href="#mcp">MCP</a>
           <a href="#structure">Structure</a>
           <a href="#ownership">Ownership</a>
           <a href="#generate">Generate</a>
@@ -96,6 +97,89 @@
         </div>
 
         <div style="max-width: 900px; margin: 0 auto; padding: 0 1.5rem;">
+
+          <!-- MCP -->
+          <section class="ref-section" id="mcp">
+            <h2>MCP server — v0.4</h2>
+            <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
+              <code>tools/specnative_mcp.py</code> exposes the repository as MCP
+              <strong>resources</strong>, <strong>tools</strong>, and <strong>prompts</strong>
+              so any MCP-compatible agent (Claude Desktop, Claude Code, OpenCode) can work
+              spec-first without manually navigating the file tree.
+              Requires: <code>pip install mcp</code>.
+            </p>
+
+            <h3>Quick setup — Claude Code</h3>
+            <div class="code-card">
+              <pre><code># Add via CLI
+claude mcp add specnative \
+  python3 /path/to/SpecNative-Development/tools/specnative_mcp.py \
+  -- --repo /path/to/your/project
+
+# Or add to .claude/mcp_settings.json
+{
+  "mcpServers": {
+    "specnative": {
+      "command": "python3",
+      "args": [
+        "/path/to/SpecNative-Development/tools/specnative_mcp.py",
+        "--repo", "/path/to/your/project"
+      ]
+    }
+  }
+}</code></pre>
+            </div>
+
+            <h3>Resources</h3>
+            <table class="ref-table">
+              <thead><tr><th>URI</th><th>Document</th></tr></thead>
+              <tbody>
+                <tr><td><code>spec://agents</code></td><td>AGENTS.md — operating contract</td></tr>
+                <tr><td><code>spec://context/product</code></td><td>agents/PRODUCT.md</td></tr>
+                <tr><td><code>spec://context/architecture</code></td><td>agents/ARCHITECTURE.md</td></tr>
+                <tr><td><code>spec://context/stack</code></td><td>agents/STACK.md</td></tr>
+                <tr><td><code>spec://context/conventions</code></td><td>agents/CONVENTIONS.md</td></tr>
+                <tr><td><code>spec://context/commands</code></td><td>agents/COMMANDS.md</td></tr>
+                <tr><td><code>spec://context/decisions</code></td><td>agents/DECISIONS.md</td></tr>
+                <tr><td><code>spec://context/roadmap</code></td><td>agents/ROADMAP.md</td></tr>
+                <tr><td><code>spec://context/traceability</code></td><td>agents/TRACEABILITY.md</td></tr>
+                <tr><td><code>spec://pipelines/ci</code></td><td>pipelines/CI.md</td></tr>
+                <tr><td><code>spec://pipelines/cd</code></td><td>pipelines/CD.md</td></tr>
+                <tr><td><code>spec://schema</code></td><td>.specnative/SCHEMA.md</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Tools</h3>
+            <table class="ref-table">
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><code>status()</code></td><td>Spec states and task count summary</td></tr>
+                <tr><td><code>validate()</code></td><td>Check all required files exist</td></tr>
+                <tr><td><code>list_specs()</code></td><td>All specs with ID, state, owner</td></tr>
+                <tr><td><code>list_tasks(initiative)</code></td><td>Tasks for an initiative</td></tr>
+                <tr><td><code>read_spec(initiative)</code></td><td>Read a spec file</td></tr>
+                <tr><td><code>read_context(document)</code></td><td>Read any context doc by name</td></tr>
+                <tr><td><code>export_index()</code></td><td>Export all metadata as JSON</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Prompts</h3>
+            <table class="ref-table">
+              <thead><tr><th>Prompt</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><code>start_initiative(name, problem)</code></td><td>Begin a new spec-driven initiative</td></tr>
+                <tr><td><code>plan_tasks(initiative)</code></td><td>Derive tasks from a spec</td></tr>
+                <tr><td><code>implement_task(initiative, task_id)</code></td><td>Implement a specific task</td></tr>
+                <tr><td><code>review_against_spec(initiative)</code></td><td>Review against acceptance criteria</td></tr>
+                <tr><td><code>record_decision(title, ctx, dec, cons)</code></td><td>Record a persistent decision</td></tr>
+                <tr><td><code>close_initiative(initiative)</code></td><td>Close and update traceability</td></tr>
+              </tbody>
+            </table>
+            <p style="font-size: 0.85rem; color: #4a5568; margin-top: 1rem;">
+              Full configuration for Claude Desktop, OpenCode, and SSE transport:
+              <a href="https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/.specnative/MCP.md">.specnative/MCP.md</a>
+            </p>
+          </section>
 
           <!-- STRUCTURE -->
           <section class="ref-section" id="structure">

@@ -14,7 +14,9 @@
 - [Template-Project-Agents-AI](https://github.com/rafex/SpecNative-Development/tree/main/Template-Project-Agents-AI): Ready-to-use repository template
 - [install.py](https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py): Standalone bootstrapper — no dependencies beyond Python stdlib
 - [SCHEMA.md](https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/.specnative/SCHEMA.md): Framework contract (required files, states, traceability rules)
-- [CLI.md](https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/.specnative/CLI.md): CLI reference (validate, status, export, install)
+- [CLI.md](https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/.specnative/CLI.md): CLI reference (validate, status, export, install) + MCP server pointer
+- [MCP.md](https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/.specnative/MCP.md): MCP server configuration for Claude Desktop, Claude Code, OpenCode
+- [specnative_mcp.py](https://github.com/rafex/SpecNative-Development/blob/main/tools/specnative_mcp.py): MCP server — resources, tools, prompts
 - [AGENTS.md](https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/AGENTS.md): Agent operating contract — start here
 
 ## Repository structure
@@ -198,6 +200,54 @@ python3 specnative.py export-index --output out.json   # Export specs and tasks 
 python3 specnative.py export-traceability --output t.json
 python3 specnative.py install --target /path/to/repo --profile minimal --include-examples
 ```
+
+## MCP server (tools/specnative_mcp.py — lives in SpecNative Development repo)
+
+Requires: pip install mcp
+
+Configure in your agent (stdio transport):
+```json
+{
+  "mcpServers": {
+    "specnative": {
+      "command": "python3",
+      "args": ["/path/to/SpecNative-Development/tools/specnative_mcp.py", "--repo", "/path/to/project"]
+    }
+  }
+}
+```
+
+Resources (read by URI):
+  spec://agents                  → AGENTS.md
+  spec://context/product         → agents/PRODUCT.md
+  spec://context/architecture    → agents/ARCHITECTURE.md
+  spec://context/stack           → agents/STACK.md
+  spec://context/conventions     → agents/CONVENTIONS.md
+  spec://context/commands        → agents/COMMANDS.md
+  spec://context/decisions       → agents/DECISIONS.md
+  spec://context/roadmap         → agents/ROADMAP.md
+  spec://context/traceability    → agents/TRACEABILITY.md
+  spec://context/spec            → agents/SPEC.md
+  spec://pipelines/ci            → pipelines/CI.md
+  spec://pipelines/cd            → pipelines/CD.md
+  spec://schema                  → .specnative/SCHEMA.md
+
+Tools:
+  status()                       → spec and task state overview
+  validate()                     → check required files
+  list_specs()                   → list all specs with states
+  list_tasks(initiative)         → list tasks for an initiative
+  read_spec(initiative)          → read a spec file
+  read_context(document)         → read a context document by short name
+  export_index()                 → export metadata as JSON
+
+Prompts (structured workflow starters):
+  start_initiative(name, problem)           → begin a new spec-driven initiative
+  plan_tasks(initiative)                    → derive tasks from a spec
+  implement_task(initiative, task_id)       → implement a specific task
+  review_against_spec(initiative)           → review against acceptance criteria
+  record_decision(title, ctx, dec, cons)    → record a persistent decision
+  close_initiative(initiative)              → close and update traceability
 
 ## Agent workflow (from AGENTS.md)
 

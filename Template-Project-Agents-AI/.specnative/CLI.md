@@ -86,6 +86,23 @@ Antes de copiar archivos, el CLI:
 
 Si un archivo ya existe y no se usa `--force`, el CLI lo omite.
 
+## Servidor MCP
+
+El servidor MCP expone el repositorio como recursos, herramientas y prompts
+para agentes compatibles con MCP (Claude Desktop, Claude Code, OpenCode, etc.).
+
+```
+https://github.com/rafex/SpecNative-Development
+tools/specnative_mcp.py
+```
+
+Requiere: `pip install mcp`
+
+Consulta `.specnative/MCP.md` para la configuracion completa por agente y
+la referencia de recursos, herramientas y prompts disponibles.
+
+---
+
 ## Campos TOML para specs
 
 Cuando se usa el CLI, cada `SPEC.md` puede incluir:

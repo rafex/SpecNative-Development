@@ -1,6 +1,6 @@
 # SCHEMA.md
 
-Contrato minimo del framework SpecNative Development v0.3.
+Contrato minimo del framework SpecNative Development v0.4.
 
 ## Objetivo
 
@@ -32,6 +32,12 @@ que estados o campos minimos deben existir para reducir ambiguedad.
 - `workflows/REVIEW.md`
 - specs separadas por iniciativa en `agents/specs/`
 - `exports/*.json` generados por tooling externo
+
+## Infraestructura del framework (`.specnative/`)
+
+- `SCHEMA.md` — este archivo; contrato del framework
+- `CLI.md` — referencia del CLI (`specnative.py`) y el servidor MCP
+- `MCP.md` — configuracion del servidor MCP por agente (v0.4+)
 
 ## Ownership documental
 
