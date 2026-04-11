@@ -11,6 +11,7 @@ Si eres un agente o una persona entrando por primera vez:
 3. Abre solo el documento que corresponde a tu tarea.
 4. Si trabajas sobre una spec concreta, ve a `specs/README.md`.
 5. Si necesitas ejecutar trabajo, ve a `../tasks/README.md`.
+6. Si necesitas entender tooling del framework, ve a `../docs/README.md`.
 
 ## Documentos base
 
@@ -46,3 +47,9 @@ Si eres un agente o una persona entrando por primera vez:
 - Ejecucion: `SPEC.md` y `../tasks/`
 - Memoria de decisiones: `DECISIONS.md`
 - Trazabilidad: `TRACEABILITY.md`
+
+## Separacion importante
+
+Los comandos y herramientas del framework no deben documentarse en
+`COMMANDS.md`. Ese archivo queda reservado para comandos del proyecto
+real que el agente debe usar para desarrollar, probar y construir.

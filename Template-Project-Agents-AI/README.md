@@ -51,6 +51,8 @@ Todos estos documentos viven dentro de `agents/`.
   indice del sistema de ejecucion y estado de tareas.
 - [`workflows/README.md`](./workflows/README.md):
   procedimientos repetibles para planificar, implementar y validar.
+- [`docs/README.md`](./docs/README.md):
+  documentacion del framework y de su tooling.
 
 ## Como usar este template
 
@@ -60,37 +62,8 @@ Todos estos documentos viven dentro de `agents/`.
    `agents/`.
 4. Crear specs nuevas dentro de `agents/specs/`.
 5. Derivar tareas ejecutables en `tasks/`.
-6. Validar la estructura con `python3 ./tools/specnative.py validate`.
-7. Exportar indices o trazabilidad si hace falta integracion externa.
-8. Instalar el framework en otro repo con `python3 ./tools/specnative.py install`.
-
-## Instalacion segura en otro repositorio
-
-La CLI soporta adopcion segura sobre un repositorio existente:
-
-```bash
-python3 ./tools/specnative.py install \
-  --target /ruta/al/repo \
-  --profile minimal \
-  --include-examples \
-  --branch specnative/install-v0.3
-```
-
-Antes de copiar archivos, la CLI:
-
-1. verifica que el destino sea un repositorio git
-2. verifica que no existan cambios sin commit
-3. crea una rama dedicada para la instalacion
-4. copia la estructura seleccionada
-
-Esto deja el trabajo aislado para que luego el usuario haga merge a
-`main` o a su rama principal.
-
-Notas:
-
-- El perfil `minimal` no toca el `README.md` existente del repo destino.
-- El perfil `full` solo intenta copiar el `README.md` de la plantilla.
-- Si el archivo ya existe y no se usa `--force`, la CLI lo omite.
+6. Revisar [`docs/README.md`](./docs/README.md) si necesitas usar la
+   CLI del framework o adoptar la plantilla en otro repo.
 
 ## Flujo recomendado
 
@@ -120,3 +93,9 @@ Una iniciativa no deberia considerarse cerrada hasta que existan:
 - tareas con estado final consistente
 - validacion ejecutada o plan de validacion explicitado
 - trazabilidad minima hacia decisiones o artefactos relevantes
+
+## Regla de separacion
+
+- `agents/` contiene contexto del proyecto adoptante.
+- `docs/` contiene documentacion del framework y su tooling.
+- `tools/` contiene implementacion tecnica del framework.
