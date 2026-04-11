@@ -1,0 +1,213 @@
+# SpecNative Development
+
+> Specification-driven, repository-native framework for AI-assisted software delivery.
+> The repository is the context system. Prompts are thin triggers, not project manuals.
+
+## Documentation
+
+- [AI Agent Guide](https://specnative-d.rafex.io/ai/): Complete reference for AI agents — structure, document roles, template generation
+- [English docs](https://specnative-d.rafex.io/en/): Concept, structure, runtimes, adoption
+- [Spanish docs](https://specnative-d.rafex.io/es/): Same content in Spanish
+
+## Template and tooling
+
+- [Template-Project-Agents-AI](https://github.com/rafex/SpecNative-Development/tree/main/Template-Project-Agents-AI): Ready-to-use repository template
+- [install.py](https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py): Standalone bootstrapper — no dependencies beyond Python stdlib
+- [SCHEMA.md](https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/.specnative/SCHEMA.md): Framework contract (required files, states, traceability rules)
+- [CLI.md](https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/.specnative/CLI.md): CLI reference (validate, status, export, install)
+- [AGENTS.md](https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/AGENTS.md): Agent operating contract — start here
+
+## Repository structure
+
+```
+repo/
+├── AGENTS.md              # Agent operating contract — read first
+├── README.md              # Navigation index
+├── agents/
+│   ├── README.md          # Context index
+│   ├── PRODUCT.md         # Problem, users, goals (permanent)
+│   ├── ARCHITECTURE.md    # System structure and boundaries
+│   ├── STACK.md           # Tech stack and version constraints
+│   ├── CONVENTIONS.md     # Code rules, naming, testing
+│   ├── COMMANDS.md        # Project-specific dev/test/build commands
+│   ├── SPEC.md            # Active spec (or entry point to specs/)
+│   ├── DECISIONS.md       # Persistent decisions and trade-offs
+│   ├── ROADMAP.md         # Temporal direction (no implementation detail)
+│   ├── TRACEABILITY.md    # Links between specs, tasks, decisions
+│   └── specs/
+│       └── <initiative>/
+│           └── SPEC.md
+├── tasks/
+│   └── <initiative>/
+│       └── TASKS.md
+├── workflows/
+│   ├── PLANNING.md
+│   ├── IMPLEMENTATION.md
+│   └── REVIEW.md
+├── pipelines/
+│   ├── CI.md              # Automated validation gates
+│   └── CD.md              # Delivery process and environments
+└── .specnative/
+    ├── SCHEMA.md           # Framework contract
+    └── CLI.md              # CLI reference
+```
+
+## Document ownership — one truth per document
+
+Each document owns one semantic domain. Never duplicate information across files.
+
+- PRODUCT.md: problem, target users, goals, non-goals
+- SPEC.md: what must be built in this initiative (time-bounded)
+- DECISIONS.md: why the system is the way it is (persistent trade-offs)
+- ROADMAP.md: what comes first and why (direction without implementation)
+- ARCHITECTURE.md: system structure, modules, boundaries
+- STACK.md: technologies, versions, constraints
+- CONVENTIONS.md: code rules, naming, testing approach
+- COMMANDS.md: project-specific commands only — never framework CLI commands
+- tasks/**/TASKS.md: executable plan derived from specs
+- TRACEABILITY.md: cross-artifact links (update when initiative closes)
+- pipelines/CI.md: automated gate definitions
+- pipelines/CD.md: delivery process and environment definitions
+- .specnative/SCHEMA.md: framework contract (not project content)
+
+## Decision test — where to write something
+
+- Disappears when the initiative closes → SPEC.md
+- Must be respected in the next initiative → DECISIONS.md
+- Explains the product → PRODUCT.md
+- Sets temporal priority → ROADMAP.md
+- Describes system structure → ARCHITECTURE.md
+- Defines automated validation gates → pipelines/CI.md
+- Describes how code reaches production → pipelines/CD.md
+
+## How to generate the full template
+
+1. Bootstrap: `python3 install.py --target /path/to/repo --profile minimal`
+   or copy Template-Project-Agents-AI into the target repository.
+
+2. Fill agents/PRODUCT.md
+   - Problem: what friction exists and for whom
+   - Users: segments, needs, context
+   - Goals: measurable outcomes
+   - Non-goals: explicit exclusions
+   - Differential value: why this solution deserves to exist
+
+3. Fill agents/ARCHITECTURE.md
+   - System modules and their responsibilities
+   - Module boundaries and data flow
+   - Key architectural constraints
+
+4. Fill agents/STACK.md
+   - Languages and runtimes with versions
+   - Frameworks and libraries
+   - Infrastructure and tooling
+   - Constraints and prohibited tech
+
+5. Fill agents/CONVENTIONS.md
+   - Naming conventions (files, classes, variables)
+   - Code style and formatting rules
+   - Testing approach (unit, integration, e2e)
+   - Commit and PR conventions
+
+6. Fill agents/COMMANDS.md
+   - Build command
+   - Test command
+   - Lint command
+   - Run/start command
+   - Any project-specific operational commands
+
+7. Fill agents/ROADMAP.md
+   - Current priorities in order
+   - Rationale for ordering
+   - Rough horizon (do not add implementation detail)
+
+8. Create agents/SPEC.md or agents/specs/<initiative>/SPEC.md
+   - ID, state, owner, dates
+   - Summary, problem, objective
+   - Scope (includes / excludes)
+   - Functional and non-functional requirements
+   - Acceptance criteria (Given / When / Then)
+   - Dependencies and risks
+   - Execution plan
+   - Validation plan
+
+9. Derive tasks/<initiative>/TASKS.md from the spec
+   - One task per implementable unit
+   - Each task: ID, state, owner, dependencies, expected files, close criteria, validation
+
+10. Fill agents/DECISIONS.md as decisions emerge
+    - Record only persistent trade-offs that future initiatives must respect
+    - Format: DEC-XXXX, date, state, context, decision, consequences
+
+11. Update agents/TRACEABILITY.md when the initiative closes
+    - Link spec → tasks → decisions → artifacts → validation evidence
+
+## States
+
+Specs: draft | active | blocked | done | superseded
+Tasks: todo | in_progress | blocked | done
+Decisions: proposed | accepted | deprecated | replaced
+
+## Optional TOML metadata (enables CLI tooling)
+
+TOML blocks are optional. The base contract is documentary.
+Add TOML when you want validate/export/status CLI commands to work.
+
+Spec header:
+```toml
+artifact_type = "spec"
+id = "SPEC-0001"
+state = "draft"
+owner = "team-name"
+created_at = "YYYY-MM-DD"
+updated_at = "YYYY-MM-DD"
+replaces = "none"
+related_tasks = ["TASK-0001"]
+related_decisions = ["DEC-0001"]
+artifacts = ["src/example/*"]
+validation = ["pytest", "manual walkthrough"]
+```
+
+Task file header:
+```toml
+artifact_type = "task_file"
+initiative = "initiative-name"
+spec_id = "SPEC-0001"
+owner = "team-name"
+state = "todo"
+```
+
+Individual task block:
+```toml
+id = "TASK-0001"
+title = "Task title"
+state = "todo"
+owner = "team-name"
+dependencies = []
+expected_files = ["src/example.py"]
+close_criteria = "Observable closure condition"
+validation = ["pytest tests/example_test.py"]
+```
+
+## CLI (tools/specnative.py — lives in SpecNative Development repo)
+
+```bash
+python3 specnative.py status                           # Spec and task state overview
+python3 specnative.py validate                         # Check required files and TOML
+python3 specnative.py export-index --output out.json   # Export specs and tasks as JSON
+python3 specnative.py export-traceability --output t.json
+python3 specnative.py install --target /path/to/repo --profile minimal --include-examples
+```
+
+## Agent workflow (from AGENTS.md)
+
+1. Read the README.md of the current folder.
+2. Check agents/ROADMAP.md — confirm the initiative aligns with current direction.
+3. Read agents/PRODUCT.md and relevant technical context.
+4. Read agents/DECISIONS.md — respect persistent trade-offs.
+5. Review or create a SPEC.md.
+6. Derive or read tasks in tasks/.
+7. Implement and validate following workflows/IMPLEMENTATION.md.
+8. Record in agents/DECISIONS.md if persistent trade-offs emerged.
+9. Update agents/TRACEABILITY.md when the initiative closes.
+10. Keep TOML metadata consistent if the project uses the CLI.

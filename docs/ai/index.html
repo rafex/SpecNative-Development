@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SpecNative — AI Agent Guide</title>
+    <meta
+      name="description"
+      content="Complete reference for AI agents working with SpecNative repositories. Structure, document roles, template generation, and CLI."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+    <style>
+      .ref-section { margin-bottom: 3rem; }
+      .ref-section h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--ink); }
+      .ref-section h3 { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: var(--ink); }
+      .ref-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+      .ref-table th { text-align: left; padding: 0.5rem 0.75rem; background: var(--surface-2, #f1f5ff); font-weight: 600; border-bottom: 2px solid var(--border, #dde3f0); }
+      .ref-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border, #dde3f0); vertical-align: top; line-height: 1.5; }
+      .ref-table td:first-child { white-space: nowrap; }
+      .ref-table code { background: #f1f5ff; padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.8rem; }
+      .step-list { counter-reset: steps; list-style: none; padding: 0; }
+      .step-list li { counter-increment: steps; display: flex; gap: 1rem; margin-bottom: 1.25rem; }
+      .step-list li::before { content: counter(steps, decimal-leading-zero); font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; font-weight: 500; color: #8ab1ff; min-width: 2rem; padding-top: 0.15rem; }
+      .step-list li strong { display: block; margin-bottom: 0.25rem; }
+      .step-list li p { margin: 0; font-size: 0.9rem; color: #4a5568; }
+      .tag-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+      .tag { display: inline-block; padding: 0.2em 0.65em; border-radius: 999px; font-size: 0.75rem; font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+      .tag-draft { background: #fff0d6; color: #a05d00; }
+      .tag-active { background: #e7faf4; color: #1a6b50; }
+      .tag-blocked { background: #ffe4e4; color: #9b1c1c; }
+      .tag-done { background: #eaf0ff; color: #1e3a8a; }
+      .tag-superseded { background: #f3f4f6; color: #6b7280; }
+      .tag-inprogress { background: #fef3c7; color: #92400e; }
+      .tag-proposed { background: #f5f0ff; color: #6d28d9; }
+      .tag-accepted { background: #e7faf4; color: #1a6b50; }
+      .tag-deprecated { background: #f3f4f6; color: #6b7280; }
+      .tag-replaced { background: #fff0d6; color: #a05d00; }
+      .decision-test { background: #f8faff; border: 1px solid #dde3f0; border-radius: 12px; padding: 1.5rem; }
+      .decision-test p { margin: 0.4rem 0; font-size: 0.9rem; }
+      .decision-test p strong { font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; }
+      .ai-hero { background: linear-gradient(135deg, #101726 0%, #1a2540 100%); color: #f6f8fc; padding: 3rem 2rem; border-radius: 20px; margin-bottom: 3rem; }
+      .ai-hero h1 { font-size: 1.75rem; margin-bottom: 0.75rem; }
+      .ai-hero p { color: #a8b8d0; max-width: 640px; margin: 0; }
+      .ai-hero code { background: rgba(255,255,255,0.1); color: #8ab1ff; padding: 0.15em 0.4em; border-radius: 4px; }
+      .inline-nav { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }
+      .inline-nav a { font-size: 0.85rem; color: #8ab1ff; text-decoration: none; font-family: 'IBM Plex Mono', monospace; }
+      .inline-nav a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="topbar">
+        <a class="brand" href="#top">
+          <img class="brand-logo" src="../assets/specnative-mark.svg" alt="SpecNative logo" />
+          <span class="brand-copy">
+            <strong>SpecNative</strong>
+            <span>AI Agent Guide</span>
+          </span>
+        </a>
+        <nav class="topnav" aria-label="Primary">
+          <a href="#structure">Structure</a>
+          <a href="#ownership">Ownership</a>
+          <a href="#generate">Generate</a>
+          <a href="#states">States</a>
+          <a href="#toml">TOML</a>
+          <a href="#cli">CLI</a>
+          <a href="../en/">EN</a>
+          <a href="../es/">ES</a>
+        </nav>
+      </header>
+
+      <main id="top" style="padding: 2rem 0;">
+        <div class="section-heading" style="max-width: 800px; margin: 0 auto 2rem;">
+          <div class="ai-hero">
+            <p class="eyebrow" style="color: #63d0b0;">For AI Agents</p>
+            <h1>SpecNative — how to work with this framework</h1>
+            <p>
+              SpecNative repositories encode project context in versioned files so agents
+              can plan and implement work without reconstructing context from conversation
+              history. Read <code>AGENTS.md</code> first. Navigate via <code>README.md</code>
+              files. Load only what you need for the current task.
+            </p>
+            <div class="inline-nav">
+              <a href="https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/AGENTS.md">→ AGENTS.md</a>
+              <a href="https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/.specnative/SCHEMA.md">→ SCHEMA.md</a>
+              <a href="https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/.specnative/CLI.md">→ CLI.md</a>
+              <a href="../llms.txt">→ llms.txt</a>
+            </div>
+          </div>
+        </div>
+
+        <div style="max-width: 900px; margin: 0 auto; padding: 0 1.5rem;">
+
+          <!-- STRUCTURE -->
+          <section class="ref-section" id="structure">
+            <h2>Repository structure</h2>
+            <div class="code-card" style="margin-bottom: 1.5rem;">
+              <pre><code>repo/
+├── AGENTS.md              # Agent operating contract — read first
+├── README.md              # Navigation index
+├── agents/
+│   ├── README.md          # Context folder index
+│   ├── PRODUCT.md         # Problem, users, goals (permanent)
+│   ├── ARCHITECTURE.md    # System structure and boundaries
+│   ├── STACK.md           # Tech stack and version constraints
+│   ├── CONVENTIONS.md     # Code rules, naming, testing
+│   ├── COMMANDS.md        # Project dev/test/build commands only
+│   ├── SPEC.md            # Active spec (or entry point to specs/)
+│   ├── DECISIONS.md       # Persistent decisions and trade-offs
+│   ├── ROADMAP.md         # Temporal direction, no implementation
+│   ├── TRACEABILITY.md    # Links between artifacts
+│   └── specs/
+│       └── &lt;initiative&gt;/
+│           └── SPEC.md
+├── tasks/
+│   └── &lt;initiative&gt;/
+│       └── TASKS.md
+├── workflows/
+│   ├── PLANNING.md
+│   ├── IMPLEMENTATION.md
+│   └── REVIEW.md
+├── pipelines/
+│   ├── CI.md              # Automated validation gates
+│   └── CD.md              # Delivery process and environments
+└── .specnative/
+    ├── SCHEMA.md           # Framework contract (not project content)
+    └── CLI.md              # CLI reference</code></pre>
+            </div>
+            <p style="font-size: 0.9rem; color: #4a5568;">
+              Files in uppercase are context for agents. <code>README.md</code> files are
+              navigation indexes, not the source of truth. Load the minimum context needed
+              for the current task. Do not ingest the whole repository.
+            </p>
+          </section>
+
+          <!-- OWNERSHIP -->
+          <section class="ref-section" id="ownership">
+            <h2>Document ownership — one truth per document</h2>
+            <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
+              Each document owns one semantic domain. Never duplicate information across files.
+              Update the source of truth, not a parallel summary.
+            </p>
+            <table class="ref-table">
+              <thead>
+                <tr>
+                  <th>Document</th>
+                  <th>Owns</th>
+                  <th>Does not own</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>PRODUCT.md</code></td>
+                  <td>Problem, target users, goals, non-goals, differential value</td>
+                  <td>Implementation, technical decisions</td>
+                </tr>
+                <tr>
+                  <td><code>SPEC.md</code></td>
+                  <td>What must be built in this initiative: requirements, scope, acceptance criteria, risks</td>
+                  <td>Persistent trade-offs (→ DECISIONS), product vision (→ PRODUCT), direction (→ ROADMAP)</td>
+                </tr>
+                <tr>
+                  <td><code>DECISIONS.md</code></td>
+                  <td>Persistent trade-offs that future initiatives must respect</td>
+                  <td>What will be built (→ SPEC), temporal priorities (→ ROADMAP)</td>
+                </tr>
+                <tr>
+                  <td><code>ROADMAP.md</code></td>
+                  <td>What comes first and why (temporal direction)</td>
+                  <td>How to implement, specific trade-offs</td>
+                </tr>
+                <tr>
+                  <td><code>ARCHITECTURE.md</code></td>
+                  <td>System modules, boundaries, data flows, architectural constraints</td>
+                  <td>What to build, why decisions were made</td>
+                </tr>
+                <tr>
+                  <td><code>STACK.md</code></td>
+                  <td>Languages, runtimes, frameworks, versions, prohibited tech</td>
+                  <td>System structure, code conventions</td>
+                </tr>
+                <tr>
+                  <td><code>CONVENTIONS.md</code></td>
+                  <td>Naming rules, code style, testing approach, commit/PR conventions</td>
+                  <td>Project commands, tech stack</td>
+                </tr>
+                <tr>
+                  <td><code>COMMANDS.md</code></td>
+                  <td>Project-specific commands: build, test, lint, run, migrations</td>
+                  <td>Framework CLI commands (specnative.py), deployment scripts</td>
+                </tr>
+                <tr>
+                  <td><code>tasks/**/TASKS.md</code></td>
+                  <td>Executable plan: tasks with state, owner, dependencies, close criteria</td>
+                  <td>Requirements (→ SPEC), persistent decisions (→ DECISIONS)</td>
+                </tr>
+                <tr>
+                  <td><code>TRACEABILITY.md</code></td>
+                  <td>Cross-artifact links: spec → tasks → decisions → artifacts → validation</td>
+                  <td>Content of any linked document</td>
+                </tr>
+                <tr>
+                  <td><code>pipelines/CI.md</code></td>
+                  <td>Automated gate definitions, triggers, required checks</td>
+                  <td>Local dev commands, implementation logic</td>
+                </tr>
+                <tr>
+                  <td><code>pipelines/CD.md</code></td>
+                  <td>Delivery process, environments, promotion gates, rollback</td>
+                  <td>Deployment scripts, credentials</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3>Decision test — where to write something</h3>
+            <div class="decision-test">
+              <p>If it <strong>disappears when the initiative closes</strong> → <code>SPEC.md</code></p>
+              <p>If it <strong>must be respected in the next initiative</strong> → <code>DECISIONS.md</code></p>
+              <p>If it <strong>explains the product</strong> → <code>PRODUCT.md</code></p>
+              <p>If it <strong>sets temporal priority</strong> → <code>ROADMAP.md</code></p>
+              <p>If it <strong>describes system structure</strong> → <code>ARCHITECTURE.md</code></p>
+              <p>If it <strong>defines automated validation gates</strong> → <code>pipelines/CI.md</code></p>
+              <p>If it <strong>describes how code reaches production</strong> → <code>pipelines/CD.md</code></p>
+            </div>
+          </section>
+
+          <!-- GENERATE -->
+          <section class="ref-section" id="generate">
+            <h2>How to generate the full template</h2>
+            <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.5rem;">
+              Follow these steps in order when helping a user create a SpecNative repository
+              from scratch. Each step populates one document with the right scope.
+            </p>
+            <ol class="step-list">
+              <li>
+                <div>
+                  <strong>Bootstrap the structure</strong>
+                  <p>Run <code>python3 install.py --target /path/to/repo --profile minimal</code>
+                  or copy Template-Project-Agents-AI into the target repository.
+                  This creates all required folders and placeholder files.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <strong>Fill <code>agents/PRODUCT.md</code></strong>
+                  <p>Problem (what friction exists and for whom), Users (segments, needs, context),
+                  Goals (measurable outcomes), Non-goals (explicit exclusions),
+                  Differential value (why this solution deserves to exist).</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <strong>Fill <code>agents/ARCHITECTURE.md</code></strong>
+                  <p>System modules and their responsibilities, module boundaries and data flows,
+                  key architectural constraints. No implementation detail.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <strong>Fill <code>agents/STACK.md</code></strong>
+                  <p>Languages and runtimes with exact versions, frameworks and libraries,
+                  infrastructure and tooling, constraints and prohibited technologies.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <strong>Fill <code>agents/CONVENTIONS.md</code></strong>
+                  <p>Naming conventions (files, classes, variables), code style and formatting rules,
+                  testing approach (unit / integration / e2e), commit and PR conventions.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <strong>Fill <code>agents/COMMANDS.md</code></strong>
+                  <p>Actual project commands only: build, test, lint, run/start, migrations,
+                  and any project-specific operational commands.
+                  Never include framework CLI commands here.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <strong>Fill <code>agents/ROADMAP.md</code></strong>
+                  <p>Current priorities in order with rationale for ordering.
+                  Rough time horizon. No implementation detail, no spec content.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <strong>Create <code>agents/SPEC.md</code> (or <code>agents/specs/&lt;initiative&gt;/SPEC.md</code>)</strong>
+                  <p>ID, state, owner, creation/update dates. Summary, problem, objective.
+                  Scope (includes / excludes). Functional and non-functional requirements.
+                  Acceptance criteria (Given / When / Then). Dependencies and risks.
+                  Execution plan. Validation plan.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <strong>Derive <code>tasks/&lt;initiative&gt;/TASKS.md</code></strong>
+                  <p>One task per implementable unit. Each task: ID, state, owner, dependencies,
+                  expected files, observable close criteria, validation command.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <strong>Record decisions in <code>agents/DECISIONS.md</code></strong>
+                  <p>Only persistent trade-offs that future initiatives must respect.
+                  Format: DEC-XXXX, date, state, context, decision, consequences, replaces.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <strong>Fill <code>pipelines/CI.md</code> and <code>pipelines/CD.md</code></strong>
+                  <p>CI: platform, triggers, mandatory and optional gates, failure policy.
+                  CD: environments, release process, promotion gates, rollback process.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <strong>Update <code>agents/TRACEABILITY.md</code> when an initiative closes</strong>
+                  <p>Link spec → tasks → decisions → main artifacts → validation evidence.
+                  Update at close, not during execution.</p>
+                </div>
+              </li>
+            </ol>
+
+            <h3>Agent workflow (from AGENTS.md)</h3>
+            <ol class="step-list">
+              <li><div><strong>Read the README.md of the current folder</strong><p>Entry point for navigation in any directory.</p></div></li>
+              <li><div><strong>Check agents/ROADMAP.md</strong><p>Confirm the initiative aligns with current project direction before creating a spec.</p></div></li>
+              <li><div><strong>Read agents/PRODUCT.md and relevant technical context</strong><p>Load minimum context: ARCHITECTURE.md, STACK.md, CONVENTIONS.md as needed.</p></div></li>
+              <li><div><strong>Read agents/DECISIONS.md</strong><p>Respect persistent trade-offs that condition the current design.</p></div></li>
+              <li><div><strong>Review or create a SPEC.md</strong><p>Use agents/SPEC.md for single active specs; agents/specs/&lt;initiative&gt;/SPEC.md for larger projects.</p></div></li>
+              <li><div><strong>Derive or read tasks in tasks/</strong><p>Follow workflows/PLANNING.md to turn spec into executable task list.</p></div></li>
+              <li><div><strong>Implement following workflows/IMPLEMENTATION.md</strong><p>Verify CI gates from pipelines/CI.md before considering work complete.</p></div></li>
+              <li><div><strong>Record persistent trade-offs in DECISIONS.md</strong><p>Only if the decision must survive beyond the current initiative.</p></div></li>
+              <li><div><strong>Update TRACEABILITY.md at initiative close</strong><p>Link all related artifacts. Not during execution — only at close.</p></div></li>
+            </ol>
+          </section>
+
+          <!-- STATES -->
+          <section class="ref-section" id="states">
+            <h2>Required states</h2>
+
+            <h3>Specs</h3>
+            <div class="tag-row">
+              <span class="tag tag-draft">draft</span>
+              <span class="tag tag-active">active</span>
+              <span class="tag tag-blocked">blocked</span>
+              <span class="tag tag-done">done</span>
+              <span class="tag tag-superseded">superseded</span>
+            </div>
+            <table class="ref-table" style="margin-top: 1rem;">
+              <thead><tr><th>State</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td><code>draft</code></td><td>Being written, not yet committed for implementation</td></tr>
+                <tr><td><code>active</code></td><td>Currently being implemented</td></tr>
+                <tr><td><code>blocked</code></td><td>Cannot proceed due to external dependency or decision</td></tr>
+                <tr><td><code>done</code></td><td>All acceptance criteria met and validated</td></tr>
+                <tr><td><code>superseded</code></td><td>Replaced by a newer spec (link the replacement)</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Tasks</h3>
+            <div class="tag-row">
+              <span class="tag tag-draft">todo</span>
+              <span class="tag tag-inprogress">in_progress</span>
+              <span class="tag tag-blocked">blocked</span>
+              <span class="tag tag-done">done</span>
+            </div>
+
+            <h3>Decisions</h3>
+            <div class="tag-row">
+              <span class="tag tag-proposed">proposed</span>
+              <span class="tag tag-accepted">accepted</span>
+              <span class="tag tag-deprecated">deprecated</span>
+              <span class="tag tag-replaced">replaced</span>
+            </div>
+          </section>
+
+          <!-- TOML -->
+          <section class="ref-section" id="toml">
+            <h2>Optional TOML metadata</h2>
+            <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
+              TOML blocks are optional. The base contract is documentary — documents are valid
+              without TOML. Add TOML blocks when you want <code>validate</code>,
+              <code>status</code>, and <code>export</code> CLI commands to work automatically.
+              Place the block near the top of the file.
+            </p>
+
+            <h3>Spec header (<code>agents/SPEC.md</code> or <code>agents/specs/**/SPEC.md</code>)</h3>
+            <div class="code-card">
+              <pre><code>```toml
+artifact_type = "spec"
+id            = "SPEC-0001"
+state         = "draft"
+owner         = "team-name"
+created_at    = "YYYY-MM-DD"
+updated_at    = "YYYY-MM-DD"
+replaces      = "none"
+related_tasks       = ["TASK-0001"]
+related_decisions   = ["DEC-0001"]
+artifacts           = ["src/example/*"]
+validation          = ["pytest", "manual walkthrough"]
+```</code></pre>
+            </div>
+
+            <h3>Task file header (<code>tasks/**/TASKS.md</code>)</h3>
+            <div class="code-card">
+              <pre><code>```toml
+artifact_type = "task_file"
+initiative    = "initiative-name"
+spec_id       = "SPEC-0001"
+owner         = "team-name"
+state         = "todo"
+```</code></pre>
+            </div>
+
+            <h3>Individual task block</h3>
+            <div class="code-card">
+              <pre><code>```toml
+id             = "TASK-0001"
+title          = "Task title"
+state          = "todo"
+owner          = "team-name"
+dependencies   = []
+expected_files = ["src/example.py"]
+close_criteria = "Observable closure condition"
+validation     = ["pytest tests/example_test.py"]
+```</code></pre>
+            </div>
+          </section>
+
+          <!-- CLI -->
+          <section class="ref-section" id="cli">
+            <h2>CLI reference</h2>
+            <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
+              <code>tools/specnative.py</code> lives in the SpecNative Development repository,
+              not in the adopting project. Invoke it pointing to the project root.
+            </p>
+            <table class="ref-table">
+              <thead>
+                <tr><th>Command</th><th>What it does</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>status</code></td>
+                  <td>Shows each spec with its state and a summary of task states (todo, in_progress, done, blocked counts).</td>
+                </tr>
+                <tr>
+                  <td><code>validate</code></td>
+                  <td>Checks all required files exist and that TOML blocks (when present) have valid states and required fields.</td>
+                </tr>
+                <tr>
+                  <td><code>export-index</code></td>
+                  <td>Exports all specs and task files with TOML metadata as JSON. Use <code>--output file.json</code> to write to disk.</td>
+                </tr>
+                <tr>
+                  <td><code>export-traceability</code></td>
+                  <td>Exports traceability matrix linking each spec to its task file, decisions, artifacts, and validation. Use <code>--output file.json</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>install</code></td>
+                  <td>Copies the template structure into an existing git repository. Requires clean worktree and creates a dedicated branch. Options: <code>--target</code>, <code>--profile minimal|full</code>, <code>--include-examples</code>, <code>--branch</code>, <code>--force</code>.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="code-card" style="margin-top: 1rem;">
+              <pre><code># Show spec and task state overview
+python3 specnative.py status
+
+# Validate required files and TOML consistency
+python3 specnative.py validate
+
+# Export full index
+python3 specnative.py export-index --output exports/index.json
+
+# Export traceability matrix
+python3 specnative.py export-traceability --output exports/traceability.json
+
+# Install into existing repository
+python3 specnative.py install \
+  --target /path/to/repo \
+  --profile minimal \
+  --include-examples \
+  --branch specnative/install-v0.3.1</code></pre>
+            </div>
+
+            <h3>Standalone installer</h3>
+            <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 0.75rem;">
+              <code>install.py</code> bootstraps SpecNative from a GitHub release with no
+              dependencies beyond the Python standard library.
+            </p>
+            <div class="code-card">
+              <pre><code># Download and run
+curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
+  | python3 - --target /path/to/repo
+
+# Or download first, then run
+python3 install.py --target /path/to/repo --profile minimal --include-examples</code></pre>
+            </div>
+          </section>
+
+        </div><!-- /content -->
+      </main>
+
+      <footer class="footer">
+        <p>SpecNative Development — repository design model for reproducible AI-assisted engineering.</p>
+        <p>
+          <a href="../llms.txt" style="color: inherit;">llms.txt</a> ·
+          <a href="../en/" style="color: inherit;">English docs</a> ·
+          <a href="../es/" style="color: inherit;">Documentación en español</a> ·
+          <a href="https://github.com/rafex/SpecNative-Development" style="color: inherit;">GitHub</a>
+        </p>
+      </footer>
+    </div>
+
+    <script src="../app.js"></script>
+  </body>
+</html>
