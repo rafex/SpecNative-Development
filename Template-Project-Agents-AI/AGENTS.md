@@ -34,6 +34,7 @@ Antes de trabajar en cualquier carpeta, leer primero su `README.md`.
 6. Implementar y validar siguiendo `workflows/IMPLEMENTATION.md`.
 7. Registrar decisiones permanentes en `agents/DECISIONS.md`.
 8. Mantener trazabilidad entre spec, tareas, decisiones y validacion.
+9. Mantener metadata parseable cuando una spec o tarea cambie.
 
 ## Criterio de actualizacion
 

@@ -1,5 +1,13 @@
 # TASKS.md
 
+```toml
+artifact_type = "task_file"
+initiative = "initiative-name"
+spec_id = "SPEC-0001"
+owner = "team-name"
+state = "todo"
+```
+
 ## Metadata
 
 - Iniciativa:
@@ -11,18 +19,31 @@
 
 ### TASK-0001 - Titulo
 
-- Estado: `todo | in_progress | blocked | done`
-- Owner:
-- Dependencias:
-- Archivos esperados:
-- Criterio de cierre:
-- Validacion:
+```toml
+id = "TASK-0001"
+title = "Titulo"
+state = "todo"
+owner = "team-name"
+dependencies = []
+expected_files = ["src/example/*"]
+close_criteria = "Describe la condicion observable de cierre"
+validation = ["pytest tests/example_test.py"]
+```
+
+Descripcion humana opcional:
+
+- explicar la responsabilidad de esta tarea
+- aclarar riesgos o dependencias no obvias
 
 ### TASK-0002 - Titulo
 
-- Estado: `todo | in_progress | blocked | done`
-- Owner:
-- Dependencias:
-- Archivos esperados:
-- Criterio de cierre:
-- Validacion:
+```toml
+id = "TASK-0002"
+title = "Titulo"
+state = "todo"
+owner = "team-name"
+dependencies = ["TASK-0001"]
+expected_files = ["src/example/feature/*"]
+close_criteria = "Describe la condicion observable de cierre"
+validation = ["manual walkthrough"]
+```

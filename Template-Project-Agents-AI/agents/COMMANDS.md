@@ -46,5 +46,9 @@ Reducir la ambiguedad de ejecucion para agentes y humanos.
 # migrate
 # generar tipos
 # validar estructura del framework
-./tools/validate-specnative.sh
+python3 ./tools/specnative.py validate
+# exportar indice del proyecto
+python3 ./tools/specnative.py export-index --output exports/index.json
+# exportar trazabilidad
+python3 ./tools/specnative.py export-traceability --output exports/traceability.json
 ```
