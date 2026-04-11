@@ -45,4 +45,6 @@ Reducir la ambiguedad de ejecucion para agentes y humanos.
 # seed
 # migrate
 # generar tipos
+# validar estructura del framework
+./tools/validate-specnative.sh
 ```

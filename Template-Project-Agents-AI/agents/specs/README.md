@@ -37,3 +37,5 @@ agents/specs/
 - Si entras a una iniciativa, abre primero su `README.md`.
 - Si no existe `README.md`, abre su `SPEC.md`.
 - Mantener los nombres de carpetas en kebab-case.
+- Toda iniciativa relevante deberia tener tareas asociadas en
+  `../../tasks/<iniciativa>/`.
