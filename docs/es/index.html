@@ -196,12 +196,12 @@
 
         <section class="section">
           <div class="section-heading">
-            <p class="eyebrow">v0.2</p>
-            <h2>Qué agrega la propuesta v0.2</h2>
+            <p class="eyebrow">v0.3</p>
+            <h2>Qué agrega la propuesta v0.3</h2>
             <p>
               La plantilla actual ya no se queda solo en documentos de contexto. Ahora
-              define un modelo más estricto con contrato documental, ejecución por tareas,
-              trazabilidad, workflows de revisión y validación estructural.
+              define un modelo más estricto y exportable con metadata parseable, ejecución
+              por tareas, trazabilidad, workflows de revisión y tooling en Python.
             </p>
           </div>
           <div class="adoption-grid">
@@ -220,6 +220,13 @@
               </p>
             </article>
             <article class="card">
+              <h3>Metadata legible por máquina</h3>
+              <p>
+                Las specs y los archivos de tareas incluyen bloques <code>toml</code> para
+                que herramientas externas puedan validar y exportar el estado del proyecto.
+              </p>
+            </article>
+            <article class="card">
               <h3>Trazabilidad</h3>
               <p>
                 <code>TRACEABILITY.md</code> enlaza specs, tareas, decisiones, archivos y
@@ -231,6 +238,13 @@
               <p>
                 <code>workflows/</code> define procedimientos repetibles para planning,
                 implementación y review.
+              </p>
+            </article>
+            <article class="card">
+              <h3>CLI en Python</h3>
+              <p>
+                <code>specnative.py</code> valida el repositorio y exporta índices o
+                trazabilidad en JSON.
               </p>
             </article>
           </div>

@@ -1,11 +1,15 @@
 # SCHEMA.md
 
-Contrato minimo del framework SpecNative Development v0.2.
+Contrato minimo del framework SpecNative Development v0.3.
 
 ## Objetivo
 
 Definir que documentos son obligatorios, que rol cumple cada uno y
 que estados o campos minimos deben existir para reducir ambiguedad.
+
+En `v0.3`, specs y archivos de tareas deben incluir un bloque
+`toml` parseable para que herramientas externas puedan validar o
+exportar el estado del proyecto.
 
 ## Documentos obligatorios
 
@@ -30,6 +34,7 @@ que estados o campos minimos deben existir para reducir ambiguedad.
 - `workflows/PLANNING.md`
 - `workflows/REVIEW.md`
 - specs separadas por iniciativa en `agents/specs/`
+- `exports/*.json` generados por tooling
 
 ## Ownership documental
 
@@ -43,6 +48,32 @@ que estados o campos minimos deben existir para reducir ambiguedad.
 - Relaciones entre artefactos: `TRACEABILITY.md`
 
 ## Estados obligatorios
+
+## Metadata parseable
+
+Los siguientes artefactos deben incluir un bloque `toml` cercano al
+inicio del archivo:
+
+- `agents/SPEC.md`
+- `agents/specs/**/SPEC.md`
+- `tasks/**/TASKS.md`
+
+Campos minimos para specs:
+
+- `artifact_type = "spec"`
+- `id`
+- `state`
+- `owner`
+- `created_at`
+- `updated_at`
+
+Campos minimos para archivos de tareas:
+
+- `artifact_type = "task_file"`
+- `initiative`
+- `spec_id`
+- `owner`
+- `state`
 
 ### Specs
 
@@ -114,3 +145,4 @@ Antes de cerrar una iniciativa, comprobar:
 - validacion definida o ejecutada
 - trazabilidad minima registrada
 - ausencia de contradicciones entre spec, tareas y decisiones
+- metadata parseable consistente con el contenido humano del archivo

@@ -1,5 +1,19 @@
 # SPEC.md
 
+```toml
+artifact_type = "spec"
+id = "SPEC-AUTH-0001"
+state = "active"
+owner = "team-auth"
+created_at = "2026-04-10"
+updated_at = "2026-04-10"
+replaces = "none"
+related_tasks = ["TASK-AUTH-0001", "TASK-AUTH-0002", "TASK-AUTH-0003"]
+related_decisions = []
+artifacts = ["src/auth/*"]
+validation = ["session unit tests", "protected routes integration test", "manual login/logout walkthrough"]
+```
+
 ## Metadata
 
 - ID: SPEC-AUTH-0001

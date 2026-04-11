@@ -4,18 +4,19 @@
 
 Repository-structured, specification-first development for AI agents and humans.
 
-## v0.2 Preview
+## v0.3 Preview
 
-The current repository now includes a concrete `v0.2` proposal of the framework in
+The current repository now includes a concrete `v0.3` proposal of the framework in
 [`Template-Project-Agents-AI`](./Template-Project-Agents-AI). This revision adds the pieces
-that were previously implicit:
+that move the framework from human-readable structure toward exportable tooling:
 
 - an explicit framework contract in [`SCHEMA.md`](./Template-Project-Agents-AI/agents/SCHEMA.md)
 - required state models for specs, tasks, and decisions
 - a traceability layer in [`TRACEABILITY.md`](./Template-Project-Agents-AI/agents/TRACEABILITY.md)
 - a first-class execution layer in [`tasks/`](./Template-Project-Agents-AI/tasks)
 - repeatable operating procedures in [`workflows/`](./Template-Project-Agents-AI/workflows)
-- a structural validator in [`validate-specnative.sh`](./Template-Project-Agents-AI/tools/validate-specnative.sh)
+- parseable TOML metadata in specs and task files
+- a Python CLI in [`specnative.py`](./Template-Project-Agents-AI/tools/specnative.py) for validation and export
 - an end-to-end example initiative for authentication
 
 This makes the proposal closer to a protocol than a loose documentation pattern.

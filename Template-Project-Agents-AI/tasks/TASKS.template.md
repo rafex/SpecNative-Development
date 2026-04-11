@@ -1,5 +1,13 @@
 # TASKS.md
 
+```toml
+artifact_type = "task_file"
+initiative = "initiative-name"
+spec_id = "SPEC-0001"
+owner = "team-name"
+state = "todo"
+```
+
 ## Metadata
 
 - Iniciativa:

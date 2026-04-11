@@ -4,14 +4,15 @@ Framework de spec-driven development para operar repos AI-native.
 Inspirado en Agent OS (Builder Methods), adaptado a una regla simple:
 la navegacion empieza por carpeta, no por un unico documento global.
 
-Esta version `v0.2` endurece el framework agregando:
+Esta version `v0.3` endurece el framework agregando:
 
 - contrato documental explicito
 - estados obligatorios para specs, tareas y decisiones
 - trazabilidad entre artefactos
 - capa de ejecucion con `tasks/`
 - workflows operativos repetibles
-- script de validacion estructural
+- metadata parseable en TOML dentro de markdown
+- tooling en Python para validar y exportar
 - ejemplo end-to-end por iniciativa
 
 ## Principios
@@ -57,7 +58,8 @@ Todos estos documentos viven dentro de `agents/`.
    `agents/`.
 4. Crear specs nuevas dentro de `agents/specs/`.
 5. Derivar tareas ejecutables en `tasks/`.
-6. Validar la estructura con `tools/validate-specnative.sh`.
+6. Validar la estructura con `python3 ./tools/specnative.py validate`.
+7. Exportar indices o trazabilidad si hace falta integracion externa.
 
 ## Flujo recomendado
 
