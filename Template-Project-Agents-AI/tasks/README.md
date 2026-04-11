@@ -10,18 +10,18 @@ criterio de cierre verificable.
 ## Reglas
 
 - Toda carpeta de iniciativa en `tasks/` debe corresponder a una spec.
-- Toda tarea debe tener bloque `toml` propio con ID, titulo, estado,
-  owner y criterio de cierre.
+- Toda tarea debe declarar: ID, titulo, estado, owner y criterio de
+  cierre.
 - No usar `tasks/` como lista de ideas. Solo trabajo derivado de una
   spec vigente.
 - Si una tarea se bloquea, registrar bloqueo y dependencia.
-- Todo `TASKS.md` debe incluir metadata `toml` parseable.
 
 ## Estructura sugerida
 
 ```text
 tasks/
   README.md
+  TASKS.template.md
   authentication/
     README.md
     TASKS.md
@@ -34,5 +34,3 @@ tasks/
 3. Ejecutar segun prioridad y dependencias.
 4. Actualizar estado real durante la ejecucion.
 5. Reflejar cierre y evidencia en `TRACEABILITY.md`.
-6. Exportar indices o trazabilidad cuando haga falta integracion con
-   tooling externo.

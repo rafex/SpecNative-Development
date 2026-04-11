@@ -10,20 +10,6 @@ Spec activa o spec general del trabajo en curso.
 
 ## Template
 
-```toml
-artifact_type = "spec"
-id = "SPEC-0001"
-state = "draft"
-owner = "team-name"
-created_at = "YYYY-MM-DD"
-updated_at = "YYYY-MM-DD"
-replaces = "none"
-related_tasks = ["TASK-0001"]
-related_decisions = ["DEC-0001"]
-artifacts = ["src/example/*"]
-validation = ["pytest", "manual walkthrough"]
-```
-
 ### Metadata
 
 - ID:
