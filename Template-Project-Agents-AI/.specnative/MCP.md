@@ -4,27 +4,62 @@ El servidor MCP de SpecNative expone el repositorio como **recursos**, **herrami
 y **prompts** para que cualquier agente compatible con MCP pueda trabajar en modo
 spec-first sin navegar manualmente el árbol de archivos.
 
-## Requisito
+## Instalación
+
+El instalador de SpecNative descarga el servidor MCP automáticamente y lo coloca en:
+
+```
+.specnative/specnative_mcp.py
+```
+
+Si necesitas instalarlo manualmente o actualizarlo:
+
+```bash
+curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/specnative_mcp.py \
+  -o .specnative/specnative_mcp.py && chmod +x .specnative/specnative_mcp.py
+```
+
+Requiere Python con el paquete MCP:
 
 ```bash
 pip install mcp
-```
-
-El servidor vive en el repositorio de SpecNative Development, no en el proyecto adoptante:
-
-```
-SpecNative-Development/
-└── tools/
-    └── specnative_mcp.py   ← servidor MCP
 ```
 
 ---
 
 ## Configuración por agente
 
+El servidor vive en `.specnative/specnative_mcp.py` dentro de tu proyecto.
+Apunta tu agente a esa ruta.
+
+### Claude Code
+
+```bash
+# Desde la raíz de tu proyecto:
+claude mcp add specnative \
+  python3 "$(pwd)/.specnative/specnative_mcp.py" \
+  -- --repo "$(pwd)"
+```
+
+O agrega a `.claude/mcp_settings.json` (proyecto) o `~/.claude/mcp_settings.json` (global):
+
+```json
+{
+  "mcpServers": {
+    "specnative": {
+      "command": "python3",
+      "args": [
+        "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
+        "--repo", "/ruta/a/tu/proyecto"
+      ]
+    }
+  }
+}
+```
+
 ### Claude Desktop
 
-Agrega al archivo `claude_desktop_config.json`
+Agrega a `claude_desktop_config.json`
 (`~/Library/Application Support/Claude/` en macOS,
 `%APPDATA%\Claude\` en Windows):
 
@@ -34,44 +69,17 @@ Agrega al archivo `claude_desktop_config.json`
     "specnative": {
       "command": "python3",
       "args": [
-        "/ruta/a/SpecNative-Development/tools/specnative_mcp.py",
+        "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
         "--repo", "/ruta/a/tu/proyecto"
       ]
     }
   }
 }
-```
-
-### Claude Code
-
-Agrega al archivo `.claude/mcp_settings.json` del proyecto (o al global
-`~/.claude/mcp_settings.json`):
-
-```json
-{
-  "mcpServers": {
-    "specnative": {
-      "command": "python3",
-      "args": [
-        "/ruta/a/SpecNative-Development/tools/specnative_mcp.py",
-        "--repo", "/ruta/a/tu/proyecto"
-      ]
-    }
-  }
-}
-```
-
-También puedes registrarlo desde la CLI de Claude Code:
-
-```bash
-claude mcp add specnative \
-  python3 /ruta/a/SpecNative-Development/tools/specnative_mcp.py \
-  -- --repo /ruta/a/tu/proyecto
 ```
 
 ### OpenCode
 
-Agrega al archivo `.opencode/config.json` del proyecto:
+Agrega a `.opencode/config.json` en la raíz del proyecto:
 
 ```json
 {
@@ -80,7 +88,7 @@ Agrega al archivo `.opencode/config.json` del proyecto:
       "specnative": {
         "command": "python3",
         "args": [
-          "/ruta/a/SpecNative-Development/tools/specnative_mcp.py",
+          "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
           "--repo", "/ruta/a/tu/proyecto"
         ]
       }
@@ -91,50 +99,49 @@ Agrega al archivo `.opencode/config.json` del proyecto:
 
 ### Codex CLI
 
-Agrega al archivo `~/.codex/config.toml` (global) o `codex.toml` (raíz del proyecto):
+Agrega a `~/.codex/config.toml` (global) o `codex.toml` (raíz del proyecto):
 
 ```toml
 [mcp_servers.specnative]
 command = "python3"
 args = [
-  "/ruta/a/SpecNative-Development/tools/specnative_mcp.py",
+  "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
   "--repo", "/ruta/a/tu/proyecto"
 ]
 type = "stdio"
 ```
 
-También puedes definir `SPECNATIVE_REPO` como variable de entorno en el perfil
-de Codex para evitar repetir `--repo`:
+Alternativa con variable de entorno:
 
 ```toml
 [mcp_servers.specnative]
 command = "python3"
-args = ["/ruta/a/SpecNative-Development/tools/specnative_mcp.py"]
+args = ["/ruta/a/tu/proyecto/.specnative/specnative_mcp.py"]
 type = "stdio"
 env = { SPECNATIVE_REPO = "/ruta/a/tu/proyecto" }
 ```
 
-### Variable de entorno (alternativa)
+### Variable de entorno (alternativa universal)
 
-Si prefieres no pasar `--repo` como argumento puedes exportar:
+Si prefieres no pasar `--repo` como argumento:
 
 ```bash
 export SPECNATIVE_REPO=/ruta/a/tu/proyecto
-python3 /ruta/a/SpecNative-Development/tools/specnative_mcp.py
+python3 .specnative/specnative_mcp.py
 ```
 
 ### Transporte SSE (agentes remotos)
 
 ```bash
-python3 specnative_mcp.py --repo /ruta/al/proyecto --transport sse --port 8765
+python3 .specnative/specnative_mcp.py \
+  --repo /ruta/al/proyecto \
+  --transport sse \
+  --port 8765
 ```
 
 ---
 
 ## Recursos disponibles
-
-Los recursos permiten al agente leer documentos de contexto por URI sin
-necesidad de conocer la ruta física del archivo.
 
 | URI                          | Documento                         |
 |------------------------------|-----------------------------------|
@@ -156,22 +163,19 @@ necesidad de conocer la ruta física del archivo.
 
 ## Herramientas disponibles
 
-| Herramienta          | Descripción                                                    |
-|----------------------|----------------------------------------------------------------|
-| `status()`           | Estado de cada spec y conteo de tareas por estado              |
-| `validate()`         | Verifica que existan todos los archivos obligatorios           |
-| `list_specs()`       | Lista specs con ID, estado y owner                             |
-| `list_tasks(initiative)` | Lista tareas de una iniciativa con estados               |
-| `read_spec(initiative)` | Lee el contenido de una spec                              |
-| `read_context(document)` | Lee un documento de contexto por nombre corto           |
-| `export_index()`     | Exporta specs y task files con metadata TOML como JSON         |
+| Herramienta                  | Descripción                                                    |
+|------------------------------|----------------------------------------------------------------|
+| `status()`                   | Estado de cada spec y conteo de tareas por estado              |
+| `validate()`                 | Verifica que existan todos los archivos obligatorios           |
+| `list_specs()`               | Lista specs con ID, estado y owner                             |
+| `list_tasks(initiative)`     | Lista tareas de una iniciativa con estados                     |
+| `read_spec(initiative)`      | Lee el contenido de una spec                                   |
+| `read_context(document)`     | Lee un documento de contexto por nombre corto                  |
+| `export_index()`             | Exporta specs y task files con metadata TOML como JSON         |
 
 ---
 
 ## Prompts disponibles
-
-Los prompts son flujos de trabajo estructurados. El agente los usa como punto
-de partida para tareas complejas.
 
 | Prompt                                    | Descripción                                              |
 |-------------------------------------------|----------------------------------------------------------|
@@ -189,7 +193,9 @@ de partida para tareas complejas.
 El servidor MCP es **infraestructura del framework**, no contenido del proyecto:
 
 - Los documentos del proyecto viven en `agents/`, `tasks/`, `pipelines/`, etc.
-- El servidor MCP lee esos documentos; no los reemplaza.
+- El servidor MCP lee esos documentos; no los reemplaza ni escribe en ellos.
 - Las reglas de ownership siguen siendo las de `AGENTS.md` y `SCHEMA.md`.
 - El servidor no escribe en el repositorio — las escrituras las hace el agente
   siguiendo los documentos fuente correctos.
+- `.specnative/specnative_mcp.py` puede agregarse a `.gitignore` si prefieres
+  no versionarlo; o commitearlo si quieres que el equipo use la misma versión.

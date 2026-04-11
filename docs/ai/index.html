@@ -113,7 +113,7 @@
             <div class="code-card">
               <pre><code># Add via CLI
 claude mcp add specnative \
-  python3 /path/to/SpecNative-Development/tools/specnative_mcp.py \
+  python3 .specnative/specnative_mcp.py \
   -- --repo /path/to/your/project
 
 # Or add to .claude/mcp_settings.json
@@ -122,7 +122,7 @@ claude mcp add specnative \
     "specnative": {
       "command": "python3",
       "args": [
-        "/path/to/SpecNative-Development/tools/specnative_mcp.py",
+        ".specnative/specnative_mcp.py",
         "--repo", "/path/to/your/project"
       ]
     }

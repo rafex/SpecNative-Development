@@ -44,7 +44,7 @@ pip install mcp
 
 # Claude Code
 claude mcp add specnative \
-  python3 /ruta/a/SpecNative-Development/tools/specnative_mcp.py \
+  python3 .specnative/specnative_mcp.py \
   -- --repo /ruta/a/tu/proyecto
 ```
 
@@ -136,7 +136,7 @@ spec://schema                  → .specnative/SCHEMA.md
 **Claude Code**
 ```bash
 claude mcp add specnative \
-  python3 /ruta/a/SpecNative-Development/tools/specnative_mcp.py \
+  python3 .specnative/specnative_mcp.py \
   -- --repo /ruta/a/tu/proyecto
 ```
 

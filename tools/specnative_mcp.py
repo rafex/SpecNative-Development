@@ -40,6 +40,8 @@ from typing import Any
 
 try:
     from mcp.server.fastmcp import FastMCP
+
+VERSION = "dev"  # replaced by CI on release
 except ImportError:
     sys.exit(
         "mcp package not found.\n"

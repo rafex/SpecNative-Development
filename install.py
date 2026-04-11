@@ -67,6 +67,7 @@ PATHS_MINIMAL = [
     ".specnative/README.md",
     ".specnative/CLI.md",
     ".specnative/SCHEMA.md",
+    ".specnative/MCP.md",
 ]
 
 PATHS_EXAMPLES = [
@@ -105,6 +106,10 @@ def raw_url(version: str, relative: str) -> str:
         f"https://raw.githubusercontent.com/{REPO}/refs/tags/{version}"
         f"/{TEMPLATE_ROOT}/{relative}"
     )
+
+
+def release_asset_url(version: str, filename: str) -> str:
+    return f"https://github.com/{REPO}/releases/download/{version}/{filename}"
 
 
 def download_file(url: str) -> bytes:
@@ -206,6 +211,21 @@ def install(
         dest.write_bytes(content)
         created.append(relative)
 
+    # Download MCP server into .specnative/
+    mcp_dest = target / ".specnative" / "specnative_mcp.py"
+    if mcp_dest.exists() and not force:
+        skipped.append(".specnative/specnative_mcp.py")
+    else:
+        mcp_url = release_asset_url(version, "specnative_mcp.py")
+        try:
+            mcp_content = download_file(mcp_url)
+            mcp_dest.parent.mkdir(parents=True, exist_ok=True)
+            mcp_dest.write_bytes(mcp_content)
+            mcp_dest.chmod(0o755)
+            created.append(".specnative/specnative_mcp.py")
+        except RuntimeError as exc:
+            errors.append(str(exc))
+
     print(json.dumps({
         "version": version,
         "target": str(target),
@@ -223,6 +243,8 @@ def install(
 
     print(
         f"\nSpecNative {version} installed on branch '{branch}'.\n"
+        f"MCP server available at: .specnative/specnative_mcp.py\n"
+        f"Configure your agent following: .specnative/MCP.md\n"
         f"Review the files, then merge the branch into your main branch."
     )
 

@@ -22,16 +22,19 @@ jobs:
       - name: Validate template
         run: python3 tools/specnative.py validate
 
-      - name: Prepare installer
+      - name: Prepare assets
         env:
           VERSION: ${{ github.event.release.tag_name }}
         run: |
           sed "s/VERSION = \"dev\"/VERSION = \"${VERSION}\"/" install.py \
             > /tmp/install.py
+          sed "s/VERSION = \"dev\"/VERSION = \"${VERSION}\"/" tools/specnative_mcp.py \
+            > /tmp/specnative_mcp.py
 
-      - name: Upload installer to release
+      - name: Upload assets to release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ github.event.release.tag_name }}
         run: |
           gh release upload "${VERSION}" /tmp/install.py --clobber
+          gh release upload "${VERSION}" /tmp/specnative_mcp.py --clobber

@@ -211,7 +211,7 @@ Configure in your agent (stdio transport):
   "mcpServers": {
     "specnative": {
       "command": "python3",
-      "args": ["/path/to/SpecNative-Development/tools/specnative_mcp.py", "--repo", "/path/to/project"]
+      "args": [".specnative/specnative_mcp.py", "--repo", "/path/to/project"]
     }
   }
 }
