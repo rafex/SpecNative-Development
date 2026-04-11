@@ -51,4 +51,6 @@ python3 ./tools/specnative.py validate
 python3 ./tools/specnative.py export-index --output exports/index.json
 # exportar trazabilidad
 python3 ./tools/specnative.py export-traceability --output exports/traceability.json
+# instalar SpecNative en otro repo
+python3 ./tools/specnative.py install --target /ruta/al/repo --branch specnative/install-v0.3
 ```
