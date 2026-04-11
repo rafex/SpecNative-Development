@@ -199,17 +199,19 @@
             <p class="eyebrow">v0.3</p>
             <h2>Qué agrega la propuesta v0.3</h2>
             <p>
-              La plantilla actual ya no se queda solo en documentos de contexto. Ahora
-              define un modelo más estricto y exportable con metadata parseable, ejecución
-              por tareas, trazabilidad, workflows de revisión y tooling en Python.
+              La plantilla actual separa la infraestructura del framework del contenido del
+              proyecto, hace opcional la metadata TOML, agrega una capa de contexto CI/CD
+              y provee un instalador standalone para inicializar la estructura en cualquier
+              repositorio existente.
             </p>
           </div>
           <div class="adoption-grid">
             <article class="card">
               <h3>Contrato explícito del framework</h3>
               <p>
-                <code>SCHEMA.md</code> define documentos obligatorios, límites de ownership
-                y modelos de estado permitidos.
+                <code>.specnative/SCHEMA.md</code> define documentos obligatorios, límites
+                de ownership y modelos de estado permitidos. Vive en una carpeta oculta,
+                separada del contenido del proyecto.
               </p>
             </article>
             <article class="card">
@@ -220,17 +222,11 @@
               </p>
             </article>
             <article class="card">
-              <h3>Metadata legible por máquina</h3>
+              <h3>Metadata legible por máquina (opcional)</h3>
               <p>
-                Las specs y los archivos de tareas incluyen bloques <code>toml</code> para
-                que herramientas externas puedan validar y exportar el estado del proyecto.
-              </p>
-            </article>
-            <article class="card">
-              <h3>Estructura canónica de tareas</h3>
-              <p>
-                Cada tarea ahora tiene su propio bloque de metadata, así que la exportación
-                ya no depende de parsear listas libres de bullets.
+                Las specs y los archivos de tareas pueden incluir bloques <code>toml</code>
+                para validación y exportación automatizada. El TOML no es obligatorio — el
+                contrato base es documental.
               </p>
             </article>
             <article class="card">
@@ -248,18 +244,26 @@
               </p>
             </article>
             <article class="card">
-              <h3>CLI en Python</h3>
+              <h3>Contexto CI/CD</h3>
               <p>
-                <code>specnative.py</code> valida el repositorio y exporta índices o
-                trazabilidad en JSON.
+                <code>pipelines/CI.md</code> y <code>pipelines/CD.md</code> documentan los
+                gates automatizados y el proceso de entrega para que los agentes entiendan
+                cómo se validan y publican los cambios.
               </p>
             </article>
             <article class="card">
-              <h3>Instalador seguro</h3>
+              <h3>CLI en Python</h3>
               <p>
-                La CLI puede instalar SpecNative en un repositorio git existente solo
-                después de confirmar worktree limpio y crear una rama de integración
-                dedicada.
+                <code>tools/specnative.py</code> valida el repositorio, muestra el estado
+                de specs y tareas, y exporta índices o trazabilidad en JSON.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Instalador standalone</h3>
+              <p>
+                <code>install.py</code> inicializa SpecNative en un repositorio existente
+                desde un release de GitHub sin dependencias más allá de la biblioteca
+                estándar de Python.
               </p>
             </article>
           </div>
@@ -327,15 +331,25 @@
 │   ├── CONVENTIONS.md
 │   ├── COMMANDS.md
 │   ├── DECISIONS.md
+│   ├── ROADMAP.md
+│   ├── TRACEABILITY.md
 │   ├── SPEC.md
 │   └── specs/
-│       ├── README.md
 │       └── authentication/
-│           ├── README.md
-│           ├── SPEC.md
-│           └── TASKS.md
-└── workflows/
-    └── implementation.md</code></pre>
+│           └── SPEC.md
+├── tasks/
+│   └── authentication/
+│       └── TASKS.md
+├── workflows/
+│   ├── PLANNING.md
+│   ├── IMPLEMENTATION.md
+│   └── REVIEW.md
+├── pipelines/
+│   ├── CI.md
+│   └── CD.md
+└── .specnative/
+    ├── SCHEMA.md
+    └── CLI.md</code></pre>
             </div>
             <div class="stack-list">
               <article class="stack-item">
@@ -356,8 +370,16 @@
               <article class="stack-item">
                 <h3>Artefactos de ejecución</h3>
                 <p>
-                  Los archivos o secciones de tareas descomponen specs en unidades
-                  implementables y las conectan con validación.
+                  Los archivos de tareas descomponen specs en unidades implementables con
+                  estado, responsables, dependencias y criterio de cierre.
+                </p>
+              </article>
+              <article class="stack-item">
+                <h3>Infraestructura del framework</h3>
+                <p>
+                  <code>.specnative/</code> contiene el contrato del framework y la
+                  referencia del CLI, separados del contenido del proyecto para poder
+                  actualizarlos de forma independiente.
                 </p>
               </article>
             </div>
@@ -614,6 +636,14 @@ documentados y actualiza DECISIONS.md si cambia un trade-off persistente.</code>
             <a class="resource-link" href="https://github.com/rafex/SpecNative-Development/tree/main/Template-Project-Agents-AI">
               <strong>Template-Project-Agents-AI</strong>
               <span>Plantilla mínima del repositorio</span>
+            </a>
+            <a class="resource-link" href="https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py">
+              <strong>install.py</strong>
+              <span>Instalador standalone — sin dependencias</span>
+            </a>
+            <a class="resource-link" href="https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/.specnative/CLI.md">
+              <strong>.specnative/CLI.md</strong>
+              <span>Referencia del CLI: validate, status, export, install</span>
             </a>
             <a class="resource-link" href="https://opencode.ai/docs/agents/">
               <strong>Docs de OpenCode</strong>
