@@ -196,21 +196,28 @@
 
         <section class="section">
           <div class="section-heading">
-            <p class="eyebrow">v0.3</p>
-            <h2>What the v0.3 proposal adds</h2>
+            <p class="eyebrow">v0.4</p>
+            <h2>What the framework provides</h2>
             <p>
-              The current template separates framework infrastructure from project content,
-              makes TOML metadata optional, adds a CI/CD context layer, and provides
-              a standalone installer to bootstrap the structure into any existing repository.
+              The template separates framework infrastructure from project content,
+              keeps TOML optional, and exposes the full repository as an MCP server
+              so any compatible agent works spec-first out of the box.
             </p>
           </div>
           <div class="adoption-grid">
             <article class="card">
+              <h3>MCP server</h3>
+              <p>
+                <code>tools/specnative_mcp.py</code> exposes the repository as typed
+                resources (<code>spec://</code> URIs), tools, and structured prompts for
+                Claude Code, Claude Desktop, OpenCode, and Codex. Requires <code>pip install mcp</code>.
+              </p>
+            </article>
+            <article class="card">
               <h3>Explicit framework contract</h3>
               <p>
                 <code>.specnative/SCHEMA.md</code> defines required documents, ownership
-                boundaries, and allowed state models. Lives in a hidden folder, separate
-                from project content.
+                boundaries, and allowed state models — separate from project content.
               </p>
             </article>
             <article class="card">
@@ -221,25 +228,10 @@
               </p>
             </article>
             <article class="card">
-              <h3>Optional machine-readable metadata</h3>
+              <h3>Optional TOML metadata</h3>
               <p>
                 Specs and task files can include <code>toml</code> blocks for automated
-                validation and export. TOML is not required — the base contract is
-                documentary.
-              </p>
-            </article>
-            <article class="card">
-              <h3>Traceability</h3>
-              <p>
-                <code>TRACEABILITY.md</code> links specs, tasks, decisions, files, and
-                validation evidence.
-              </p>
-            </article>
-            <article class="card">
-              <h3>Operational workflows</h3>
-              <p>
-                <code>workflows/</code> defines repeatable procedures for planning,
-                implementation, and review.
+                validation and export. The base contract is documentary — TOML is opt-in.
               </p>
             </article>
             <article class="card">
@@ -248,6 +240,13 @@
                 <code>pipelines/CI.md</code> and <code>pipelines/CD.md</code> document
                 automated gates and delivery process so agents understand how changes are
                 validated and shipped.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Traceability</h3>
+              <p>
+                <code>TRACEABILITY.md</code> links specs, tasks, decisions, files, and
+                validation evidence across the full initiative lifecycle.
               </p>
             </article>
             <article class="card">
@@ -477,6 +476,21 @@
   }
 }</code></pre>
               </div>
+              <h4>MCP configuration</h4>
+              <div class="snippet">
+                <pre><code>// .opencode/config.json
+{
+  "mcp": {
+    "servers": {
+      "specnative": {
+        "command": "python3",
+        "args": ["/path/to/specnative_mcp.py",
+                 "--repo", "/path/to/project"]
+      }
+    }
+  }
+}</code></pre>
+              </div>
               <p class="source">
                 Source: <a href="https://opencode.ai/docs/agents/">OpenCode agents and permissions docs</a>
               </p>
@@ -508,6 +522,17 @@ Use files under ./agents/ as source documents.
 If implementing a feature, locate the relevant SPEC.md first.
 Do not treat this file as the source of truth for product or architecture.</code></pre>
               </div>
+              <h4>MCP configuration</h4>
+              <div class="snippet">
+                <pre><code>claude mcp add specnative \
+  python3 /path/to/specnative_mcp.py \
+  -- --repo /path/to/project
+
+# Prompts available in Claude Code:
+# /mcp specnative start_initiative
+# /mcp specnative plan_tasks
+# /mcp specnative close_initiative</code></pre>
+              </div>
               <p class="source">
                 Source: <a href="https://code.claude.com/docs/en/overview">Claude Code overview</a>
               </p>
@@ -538,6 +563,15 @@ Then read agents/README.md, agents/ARCHITECTURE.md,
 agents/CONVENTIONS.md, and agents/specs/authentication/SPEC.md.
 Plan the work, implement it, run the documented validation commands,
 and update DECISIONS.md if a persistent trade-off changes.</code></pre>
+              </div>
+              <h4>MCP configuration</h4>
+              <div class="snippet">
+                <pre><code># ~/.codex/config.toml or codex.toml
+[mcp_servers.specnative]
+command = "python3"
+args = ["/path/to/specnative_mcp.py",
+        "--repo", "/path/to/project"]
+type = "stdio"</code></pre>
               </div>
               <p class="source">
                 Sources:

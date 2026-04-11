@@ -89,6 +89,31 @@ Agrega al archivo `.opencode/config.json` del proyecto:
 }
 ```
 
+### Codex CLI
+
+Agrega al archivo `~/.codex/config.toml` (global) o `codex.toml` (raíz del proyecto):
+
+```toml
+[mcp_servers.specnative]
+command = "python3"
+args = [
+  "/ruta/a/SpecNative-Development/tools/specnative_mcp.py",
+  "--repo", "/ruta/a/tu/proyecto"
+]
+type = "stdio"
+```
+
+También puedes definir `SPECNATIVE_REPO` como variable de entorno en el perfil
+de Codex para evitar repetir `--repo`:
+
+```toml
+[mcp_servers.specnative]
+command = "python3"
+args = ["/ruta/a/SpecNative-Development/tools/specnative_mcp.py"]
+type = "stdio"
+env = { SPECNATIVE_REPO = "/ruta/a/tu/proyecto" }
+```
+
 ### Variable de entorno (alternativa)
 
 Si prefieres no pasar `--repo` como argumento puedes exportar:
