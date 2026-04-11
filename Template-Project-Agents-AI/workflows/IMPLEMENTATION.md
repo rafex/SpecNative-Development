@@ -11,7 +11,6 @@ Workflow base para ejecutar una iniciativa.
 5. Implementar en lotes pequenos.
 6. Ejecutar validacion definida en la spec o en las tareas.
 7. Actualizar estados, trazabilidad y decisiones persistentes.
-8. Ejecutar `python3 ./tools/specnative.py validate`.
 
 ## Regla de cierre
 

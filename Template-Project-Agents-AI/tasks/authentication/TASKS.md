@@ -1,13 +1,5 @@
 # TASKS.md
 
-```toml
-artifact_type = "task_file"
-initiative = "authentication"
-spec_id = "SPEC-AUTH-0001"
-owner = "team-auth"
-state = "in_progress"
-```
-
 ## Metadata
 
 - Iniciativa: authentication
