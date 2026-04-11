@@ -18,6 +18,7 @@ that move the framework from human-readable structure toward exportable tooling:
 - parseable TOML metadata in specs and task files
 - canonical per-task metadata instead of loose bullet parsing
 - a Python CLI in [`specnative.py`](./Template-Project-Agents-AI/tools/specnative.py) for validation and export
+- a safe installer for adopting the framework in an existing repository through a dedicated branch
 - an end-to-end example initiative for authentication
 
 This makes the proposal closer to a protocol than a loose documentation pattern.

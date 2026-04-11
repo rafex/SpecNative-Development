@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -28,6 +30,37 @@ REQUIRED_FILES = [
 ]
 SPEC_STATES = {"draft", "active", "blocked", "done", "superseded"}
 TASK_STATES = {"todo", "in_progress", "blocked", "done"}
+INSTALL_BRANCH_PREFIX = "specnative/install"
+
+INSTALL_PATHS_MINIMAL = [
+    "AGENTS.md",
+    "agents/README.md",
+    "agents/PRODUCT.md",
+    "agents/ARCHITECTURE.md",
+    "agents/STACK.md",
+    "agents/CONVENTIONS.md",
+    "agents/COMMANDS.md",
+    "agents/DECISIONS.md",
+    "agents/ROADMAP.md",
+    "agents/SCHEMA.md",
+    "agents/SPEC.md",
+    "agents/TRACEABILITY.md",
+    "agents/specs/README.md",
+    "tasks/README.md",
+    "tasks/TASKS.template.md",
+    "workflows/README.md",
+    "workflows/IMPLEMENTATION.md",
+    "workflows/PLANNING.md",
+    "workflows/REVIEW.md",
+    "tools/specnative.py",
+]
+
+INSTALL_PATHS_EXAMPLES = [
+    "agents/specs/authentication/README.md",
+    "agents/specs/authentication/SPEC.md",
+    "tasks/authentication/README.md",
+    "tasks/authentication/TASKS.md",
+]
 
 
 def load_text(path: Path) -> str:
@@ -211,6 +244,89 @@ def write_output(payload: dict[str, Any], output: str | None) -> int:
     return 0
 
 
+def run_git(args: list[str], cwd: Path, check: bool = True) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", *args],
+        cwd=cwd,
+        text=True,
+        capture_output=True,
+        check=check,
+    )
+
+
+def ensure_git_repo(target: Path) -> None:
+    if not target.exists():
+        raise ValueError(f"target does not exist: {target}")
+    try:
+        result = run_git(["rev-parse", "--is-inside-work-tree"], cwd=target)
+    except subprocess.CalledProcessError as exc:
+        raise ValueError(f"target is not a git repository: {target}\n{exc.stderr.strip()}") from exc
+    if result.stdout.strip() != "true":
+        raise ValueError(f"target is not a git repository: {target}")
+
+
+def ensure_clean_worktree(target: Path) -> None:
+    result = run_git(["status", "--porcelain"], cwd=target)
+    if result.stdout.strip():
+        raise ValueError("target repository has uncommitted changes")
+
+
+def create_branch(target: Path, branch: str) -> None:
+    existing = run_git(["branch", "--list", branch], cwd=target)
+    if existing.stdout.strip():
+        raise ValueError(f"branch already exists in target repository: {branch}")
+    run_git(["checkout", "-b", branch], cwd=target)
+
+
+def copy_file(source_root: Path, target_root: Path, relative: str, force: bool, created: list[str], skipped: list[str]) -> None:
+    source = source_root / relative
+    target = target_root / relative
+
+    if not source.exists():
+        raise ValueError(f"installer source path does not exist: {relative}")
+
+    if target.exists() and not force:
+        skipped.append(relative)
+        return
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, target)
+    created.append(relative)
+
+
+def install_template(target: Path, profile: str, include_examples: bool, branch: str, force: bool) -> int:
+    ensure_git_repo(target)
+    ensure_clean_worktree(target)
+    create_branch(target, branch)
+
+    selected_paths = list(INSTALL_PATHS_MINIMAL)
+    if profile == "full":
+        selected_paths.append("README.md")
+    if include_examples:
+        selected_paths.extend(INSTALL_PATHS_EXAMPLES)
+
+    created: list[str] = []
+    skipped: list[str] = []
+
+    for relative in selected_paths:
+        if relative == "README.md" and (target / "README.md").exists() and not force:
+            skipped.append(relative)
+            continue
+        copy_file(ROOT, target, relative, force=force, created=created, skipped=skipped)
+
+    summary = {
+        "target": str(target),
+        "branch": branch,
+        "profile": profile,
+        "include_examples": include_examples,
+        "created_or_overwritten": created,
+        "skipped_existing": skipped,
+    }
+
+    print(json.dumps(summary, indent=2, ensure_ascii=False))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="SpecNative tooling")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -222,6 +338,30 @@ def build_parser() -> argparse.ArgumentParser:
 
     export_trace_parser = subparsers.add_parser("export-traceability", help="Export traceability data")
     export_trace_parser.add_argument("--output", help="Write JSON to a file")
+
+    install_parser = subparsers.add_parser("install", help="Install SpecNative into an existing repository")
+    install_parser.add_argument("--target", required=True, help="Target repository path")
+    install_parser.add_argument(
+        "--profile",
+        choices=("minimal", "full"),
+        default="minimal",
+        help="Installation profile. 'full' also installs the template root README when possible.",
+    )
+    install_parser.add_argument(
+        "--include-examples",
+        action="store_true",
+        help="Install the example authentication initiative.",
+    )
+    install_parser.add_argument(
+        "--branch",
+        default=f"{INSTALL_BRANCH_PREFIX}-v0.3",
+        help="Branch to create in the target repository before installation.",
+    )
+    install_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing files in the target repository.",
+    )
 
     return parser
 
@@ -236,6 +376,22 @@ def main() -> int:
         return write_output(export_index(), args.output)
     if args.command == "export-traceability":
         return write_output(export_traceability(), args.output)
+    if args.command == "install":
+        try:
+            return install_template(
+                target=Path(args.target).resolve(),
+                profile=args.profile,
+                include_examples=args.include_examples,
+                branch=args.branch,
+                force=args.force,
+            )
+        except ValueError as exc:
+            print(f"Install failed: {exc}", file=sys.stderr)
+            return 1
+        except subprocess.CalledProcessError as exc:
+            stderr = exc.stderr.strip() if exc.stderr else str(exc)
+            print(f"Install failed: {stderr}", file=sys.stderr)
+            return 1
 
     parser.error(f"unknown command: {args.command}")
     return 2

@@ -14,6 +14,7 @@ Esta version `v0.3` endurece el framework agregando:
 - metadata parseable en TOML dentro de markdown
 - metadata canonica por tarea, no solo por archivo
 - tooling en Python para validar y exportar
+- instalacion segura sobre repos existentes con branch dedicado
 - ejemplo end-to-end por iniciativa
 
 ## Principios
@@ -61,6 +62,35 @@ Todos estos documentos viven dentro de `agents/`.
 5. Derivar tareas ejecutables en `tasks/`.
 6. Validar la estructura con `python3 ./tools/specnative.py validate`.
 7. Exportar indices o trazabilidad si hace falta integracion externa.
+8. Instalar el framework en otro repo con `python3 ./tools/specnative.py install`.
+
+## Instalacion segura en otro repositorio
+
+La CLI soporta adopcion segura sobre un repositorio existente:
+
+```bash
+python3 ./tools/specnative.py install \
+  --target /ruta/al/repo \
+  --profile minimal \
+  --include-examples \
+  --branch specnative/install-v0.3
+```
+
+Antes de copiar archivos, la CLI:
+
+1. verifica que el destino sea un repositorio git
+2. verifica que no existan cambios sin commit
+3. crea una rama dedicada para la instalacion
+4. copia la estructura seleccionada
+
+Esto deja el trabajo aislado para que luego el usuario haga merge a
+`main` o a su rama principal.
+
+Notas:
+
+- El perfil `minimal` no toca el `README.md` existente del repo destino.
+- El perfil `full` solo intenta copiar el `README.md` de la plantilla.
+- Si el archivo ya existe y no se usa `--force`, la CLI lo omite.
 
 ## Flujo recomendado
 

@@ -18,6 +18,7 @@ piezas que llevan el framework desde una estructura legible hacia tooling export
 - metadata TOML parseable en specs y archivos de tareas
 - metadata canónica por tarea en lugar de bullets ambiguos
 - una CLI en Python en [`specnative.py`](./Template-Project-Agents-AI/tools/specnative.py) para validar y exportar
+- un instalador seguro para adoptar el framework en otro repositorio mediante una rama dedicada
 - un ejemplo end-to-end de autenticacion
 
 Con esto la propuesta se acerca mas a un protocolo que a un patron documental suelto.
