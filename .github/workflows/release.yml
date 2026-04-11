@@ -27,12 +27,11 @@ jobs:
           VERSION: ${{ github.event.release.tag_name }}
         run: |
           sed "s/VERSION = \"dev\"/VERSION = \"${VERSION}\"/" install.py \
-            > install_release.py
+            > /tmp/install.py
 
       - name: Upload installer to release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ github.event.release.tag_name }}
         run: |
-          gh release upload "${VERSION}" install_release.py#install.py \
-            --clobber
+          gh release upload "${VERSION}" /tmp/install.py --clobber
