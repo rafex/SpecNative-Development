@@ -81,19 +81,19 @@ Agrega a `claude_desktop_config.json`
 
 ### OpenCode
 
-Agrega a `.opencode/config.json` en la raíz del proyecto:
+Agrega a `opencode.json` en la raíz del proyecto:
 
 ```json
 {
+  "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "servers": {
-      "specnative": {
-        "command": "/ruta/a/tu/proyecto/.specnative/.venv/bin/python3",
-        "args": [
-          "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
-          "--repo", "/ruta/a/tu/proyecto"
-        ]
-      }
+    "specnative_mcp": {
+      "type": "local",
+      "enabled": true,
+      "command": [
+        "./.specnative/.venv/bin/python3",
+        "./.specnative/specnative_mcp.py"
+      ]
     }
   }
 }
