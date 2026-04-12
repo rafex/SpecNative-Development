@@ -32,6 +32,7 @@ import argparse
 import json
 import subprocess
 import sys
+import venv as _venv
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen, Request
@@ -171,6 +172,52 @@ def create_branch(target: Path, branch: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Venv helpers
+# ---------------------------------------------------------------------------
+
+def setup_venv(target: Path) -> tuple[Path, list[str]]:
+    """Create .specnative/.venv, upgrade pip, and install mcp."""
+    venv_dir = target / ".specnative" / ".venv"
+    errors: list[str] = []
+
+    print("Setting up .specnative/.venv …", file=sys.stderr, flush=True)
+    try:
+        builder = _venv.EnvBuilder(with_pip=True, clear=False, upgrade=False)
+        builder.create(str(venv_dir))
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"venv creation failed: {exc}")
+        return venv_dir, errors
+
+    python = (
+        venv_dir / ("Scripts" if sys.platform == "win32" else "bin") /
+        ("python.exe" if sys.platform == "win32" else "python3")
+    )
+    if not python.exists():
+        errors.append(f"venv python not found: {python}")
+        return venv_dir, errors
+
+    print("Upgrading pip …", file=sys.stderr, flush=True)
+    try:
+        subprocess.run(
+            [str(python), "-m", "pip", "install", "-U", "pip"],
+            check=True, capture_output=True, text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        errors.append(f"pip upgrade failed: {exc.stderr.strip()}")
+
+    print("Installing mcp …", file=sys.stderr, flush=True)
+    try:
+        subprocess.run(
+            [str(python), "-m", "pip", "install", "mcp"],
+            check=True, capture_output=True, text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        errors.append(f"mcp install failed: {exc.stderr.strip()}")
+
+    return venv_dir, errors
+
+
+# ---------------------------------------------------------------------------
 # Install
 # ---------------------------------------------------------------------------
 
@@ -226,6 +273,14 @@ def install(
         except RuntimeError as exc:
             errors.append(str(exc))
 
+    # Create .specnative/.venv and install mcp
+    venv_dir, venv_errors = setup_venv(target)
+    if sys.platform == "win32":
+        venv_python = str(venv_dir / "Scripts" / "python.exe")
+    else:
+        venv_python = str(venv_dir / "bin" / "python3")
+    errors.extend(venv_errors)
+
     print(json.dumps({
         "version": version,
         "target": str(target),
@@ -234,16 +289,19 @@ def install(
         "include_examples": include_examples,
         "created": created,
         "skipped_existing": skipped,
+        "venv": str(venv_dir),
+        "venv_python": venv_python,
         "errors": errors,
     }, indent=2, ensure_ascii=False))
 
     if errors:
-        print(f"\n{len(errors)} file(s) failed to download.", file=sys.stderr)
+        print(f"\n{len(errors)} error(s) during install.", file=sys.stderr)
         sys.exit(1)
 
     print(
         f"\nSpecNative {version} installed on branch '{branch}'.\n"
-        f"MCP server available at: .specnative/specnative_mcp.py\n"
+        f"MCP server : .specnative/specnative_mcp.py\n"
+        f"Venv Python: {venv_python}\n"
         f"Configure your agent following: .specnative/MCP.md\n"
         f"Review the files, then merge the branch into your main branch."
     )

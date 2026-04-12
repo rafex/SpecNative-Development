@@ -6,38 +6,40 @@ spec-first sin navegar manualmente el árbol de archivos.
 
 ## Instalación
 
-El instalador de SpecNative descarga el servidor MCP automáticamente y lo coloca en:
+El instalador de SpecNative descarga el servidor MCP y crea un entorno virtual
+aislado con todas sus dependencias automáticamente:
 
 ```
-.specnative/specnative_mcp.py
+.specnative/specnative_mcp.py   ← servidor MCP
+.specnative/.venv/              ← entorno virtual con mcp instalado
 ```
 
-Si necesitas instalarlo manualmente o actualizarlo:
+Si necesitas instalarlo manualmente o actualizar el servidor:
 
 ```bash
+# Descargar servidor actualizado
 curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/specnative_mcp.py \
   -o .specnative/specnative_mcp.py && chmod +x .specnative/specnative_mcp.py
-```
 
-Requiere Python con el paquete MCP:
-
-```bash
-pip install mcp
+# Crear venv e instalar dependencias (si no existe)
+python3 -m venv .specnative/.venv
+.specnative/.venv/bin/python3 -m pip install -U pip
+.specnative/.venv/bin/python3 -m pip install mcp
 ```
 
 ---
 
 ## Configuración por agente
 
-El servidor vive en `.specnative/specnative_mcp.py` dentro de tu proyecto.
-Apunta tu agente a esa ruta.
+El servidor usa el Python del venv aislado en `.specnative/.venv/`.
+Reemplaza `/ruta/a/tu/proyecto` con la ruta absoluta real de tu repositorio.
 
 ### Claude Code
 
 ```bash
 # Desde la raíz de tu proyecto:
 claude mcp add specnative \
-  python3 "$(pwd)/.specnative/specnative_mcp.py" \
+  "$(pwd)/.specnative/.venv/bin/python3" "$(pwd)/.specnative/specnative_mcp.py" \
   -- --repo "$(pwd)"
 ```
 
@@ -47,7 +49,7 @@ O agrega a `.claude/mcp_settings.json` (proyecto) o `~/.claude/mcp_settings.json
 {
   "mcpServers": {
     "specnative": {
-      "command": "python3",
+      "command": "/ruta/a/tu/proyecto/.specnative/.venv/bin/python3",
       "args": [
         "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
         "--repo", "/ruta/a/tu/proyecto"
@@ -67,7 +69,7 @@ Agrega a `claude_desktop_config.json`
 {
   "mcpServers": {
     "specnative": {
-      "command": "python3",
+      "command": "/ruta/a/tu/proyecto/.specnative/.venv/bin/python3",
       "args": [
         "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
         "--repo", "/ruta/a/tu/proyecto"
@@ -86,7 +88,7 @@ Agrega a `.opencode/config.json` en la raíz del proyecto:
   "mcp": {
     "servers": {
       "specnative": {
-        "command": "python3",
+        "command": "/ruta/a/tu/proyecto/.specnative/.venv/bin/python3",
         "args": [
           "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
           "--repo", "/ruta/a/tu/proyecto"
@@ -103,7 +105,7 @@ Agrega a `~/.codex/config.toml` (global) o `codex.toml` (raíz del proyecto):
 
 ```toml
 [mcp_servers.specnative]
-command = "python3"
+command = "/ruta/a/tu/proyecto/.specnative/.venv/bin/python3"
 args = [
   "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
   "--repo", "/ruta/a/tu/proyecto"
@@ -115,7 +117,7 @@ Alternativa con variable de entorno:
 
 ```toml
 [mcp_servers.specnative]
-command = "python3"
+command = "/ruta/a/tu/proyecto/.specnative/.venv/bin/python3"
 args = ["/ruta/a/tu/proyecto/.specnative/specnative_mcp.py"]
 type = "stdio"
 env = { SPECNATIVE_REPO = "/ruta/a/tu/proyecto" }
@@ -123,17 +125,15 @@ env = { SPECNATIVE_REPO = "/ruta/a/tu/proyecto" }
 
 ### Variable de entorno (alternativa universal)
 
-Si prefieres no pasar `--repo` como argumento:
-
 ```bash
 export SPECNATIVE_REPO=/ruta/a/tu/proyecto
-python3 .specnative/specnative_mcp.py
+.specnative/.venv/bin/python3 .specnative/specnative_mcp.py
 ```
 
 ### Transporte SSE (agentes remotos)
 
 ```bash
-python3 .specnative/specnative_mcp.py \
+.specnative/.venv/bin/python3 .specnative/specnative_mcp.py \
   --repo /ruta/al/proyecto \
   --transport sse \
   --port 8765
@@ -197,5 +197,6 @@ El servidor MCP es **infraestructura del framework**, no contenido del proyecto:
 - Las reglas de ownership siguen siendo las de `AGENTS.md` y `SCHEMA.md`.
 - El servidor no escribe en el repositorio — las escrituras las hace el agente
   siguiendo los documentos fuente correctos.
-- `.specnative/specnative_mcp.py` puede agregarse a `.gitignore` si prefieres
-  no versionarlo; o commitearlo si quieres que el equipo use la misma versión.
+- `.specnative/specnative_mcp.py` y `.specnative/.venv/` pueden agregarse a
+  `.gitignore` si prefieres no versionarlos; o commitearlos si quieres que el
+  equipo use exactamente la misma versión.
