@@ -8,20 +8,41 @@ repository on a dedicated branch, without touching uncommitted work.
 Usage:
     python3 install.py
     python3 install.py --target /path/to/repo
-    python3 install.py --include-examples
-    python3 install.py --profile full --branch specnative/setup
+    python3 install.py --profile spec
+    python3 install.py --profile team --branch specnative/setup
+    python3 install.py --profile platform --include-examples
 
 The installer:
   1. Validates the target is a clean git repository.
   2. Creates a dedicated branch.
   3. Downloads template files from the SpecNative GitHub release.
   4. Writes them to the target repository.
+  5. Creates .specnative/.venv and installs the mcp package.
+
+Profiles:
+    context   Living AI context layer only — AGENTS.md + project docs.
+              No spec lifecycle, no tasks, no pipelines. Ideal for solo
+              developers or any project that wants an AI agent to understand
+              its codebase without extra process overhead.
+
+    spec      Spec-driven development without CI/CD pipelines. Adds the full
+              initiative lifecycle: specs, tasks, workflows, decisions, roadmap,
+              and traceability. Ideal for startups and solo developers building
+              features spec-first.
+
+    team      Full spec lifecycle plus pipeline documentation (CI/CD). Adds
+              schema governance and the CLI reference. Ideal for small-to-medium
+              teams that review pull requests and maintain automated pipelines.
+
+    platform  Everything in team plus README.md (if absent) and example
+              initiatives. Ideal for open-source projects, enterprise platforms,
+              or multi-team organisations that need reference implementations.
 
 Options:
     --target PATH         Target repository path (default: current directory)
     --version VERSION     SpecNative version to install (default: latest release)
-    --profile PROFILE     minimal (default) or full (also installs README.md)
-    --include-examples    Install the authentication example initiative
+    --profile PROFILE     context | spec | team (default) | platform
+    --include-examples    Add example initiatives to any profile
     --branch NAME         Branch to create (default: specnative/install-VERSION)
     --force               Overwrite existing files
 """
@@ -43,7 +64,13 @@ VERSION = "dev"  # replaced by CI on release
 TEMPLATE_ROOT = "Template-Project-Agents-AI"
 INSTALL_BRANCH_PREFIX = "specnative/install"
 
-PATHS_MINIMAL = [
+# ---------------------------------------------------------------------------
+# Profile file lists (each layer is cumulative)
+# ---------------------------------------------------------------------------
+
+# context — living AI context layer (AGENTS.md philosophy)
+# Just enough for an agent to understand the project. No process overhead.
+PATHS_CONTEXT = [
     "AGENTS.md",
     "agents/README.md",
     "agents/PRODUCT.md",
@@ -51,6 +78,13 @@ PATHS_MINIMAL = [
     "agents/STACK.md",
     "agents/CONVENTIONS.md",
     "agents/COMMANDS.md",
+    ".specnative/README.md",
+    ".specnative/MCP.md",
+]
+
+# spec — full initiative lifecycle without CI/CD (Agent OS philosophy)
+# Adds specs, tasks, workflows, decisions, roadmap, and traceability.
+PATHS_SPEC = [
     "agents/DECISIONS.md",
     "agents/ROADMAP.md",
     "agents/SPEC.md",
@@ -62,21 +96,33 @@ PATHS_MINIMAL = [
     "workflows/IMPLEMENTATION.md",
     "workflows/PLANNING.md",
     "workflows/REVIEW.md",
+]
+
+# team — adds CI/CD pipeline docs and schema governance
+PATHS_TEAM = [
     "pipelines/README.md",
     "pipelines/CI.md",
     "pipelines/CD.md",
-    ".specnative/README.md",
     ".specnative/CLI.md",
     ".specnative/SCHEMA.md",
-    ".specnative/MCP.md",
 ]
 
+# platform — example initiatives (also adds README.md if absent)
 PATHS_EXAMPLES = [
     "agents/specs/authentication/README.md",
     "agents/specs/authentication/SPEC.md",
     "tasks/authentication/README.md",
     "tasks/authentication/TASKS.md",
 ]
+
+PROFILE_PATHS: dict[str, list[str]] = {
+    "context": PATHS_CONTEXT,
+    "spec":    PATHS_CONTEXT + PATHS_SPEC,
+    "team":    PATHS_CONTEXT + PATHS_SPEC + PATHS_TEAM,
+    "platform": PATHS_CONTEXT + PATHS_SPEC + PATHS_TEAM,
+}
+
+DEFAULT_PROFILE = "team"
 
 
 # ---------------------------------------------------------------------------
@@ -233,11 +279,13 @@ def install(
     ensure_clean_worktree(target)
     create_branch(target, branch)
 
-    paths = list(PATHS_MINIMAL)
-    if profile == "full" and not (target / "README.md").exists():
+    paths = list(PROFILE_PATHS[profile])
+    if profile == "platform" and not (target / "README.md").exists():
         paths.append("README.md")
-    if include_examples:
-        paths.extend(PATHS_EXAMPLES)
+    if include_examples or profile == "platform":
+        for ex in PATHS_EXAMPLES:
+            if ex not in paths:
+                paths.append(ex)
 
     created: list[str] = []
     skipped: list[str] = []
@@ -329,9 +377,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--profile",
-        choices=("minimal", "full"),
-        default="minimal",
-        help="minimal (default) or full (also installs README.md if absent)",
+        choices=tuple(PROFILE_PATHS),
+        default=DEFAULT_PROFILE,
+        help=(
+            "context — AI context layer only | "
+            "spec — context + full initiative lifecycle | "
+            "team — spec + CI/CD pipelines (default) | "
+            "platform — team + README + examples"
+        ),
     )
     parser.add_argument(
         "--include-examples",
