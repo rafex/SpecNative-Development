@@ -221,17 +221,67 @@ def create_branch(target: Path, branch: str) -> None:
 # Venv helpers
 # ---------------------------------------------------------------------------
 
+MCP_MIN_PYTHON = (3, 10)
+
+
+def find_python310() -> str | None:
+    """Return the path to a Python >= 3.10 interpreter, or None if not found.
+
+    Tries the current interpreter first, then common versioned names so that
+    systems whose default python3 is older (e.g. macOS with Python 3.9) can
+    still build a working venv for mcp.
+    """
+    if sys.version_info >= MCP_MIN_PYTHON:
+        return sys.executable
+
+    candidates: list[str] = []
+    # Prefer explicit versioned names (newest first)
+    for minor in range(14, 9, -1):
+        candidates.append(f"python3.{minor}")
+    candidates += ["python3", "python"]
+
+    for candidate in candidates:
+        try:
+            result = subprocess.run(
+                [candidate, "-c",
+                 "import sys; print(sys.version_info >= (3, 10))"],
+                capture_output=True, text=True, check=True, timeout=5,
+            )
+            if result.stdout.strip() == "True":
+                which = subprocess.run(
+                    ["which", candidate],
+                    capture_output=True, text=True, check=True,
+                )
+                return which.stdout.strip()
+        except (subprocess.CalledProcessError, FileNotFoundError,
+                subprocess.TimeoutExpired):
+            continue
+    return None
+
+
 def setup_venv(target: Path) -> tuple[Path, list[str]]:
-    """Create .specnative/.venv, upgrade pip, and install mcp."""
+    """Create .specnative/.venv with a Python >= 3.10, upgrade pip, install mcp."""
     venv_dir = target / ".specnative" / ".venv"
     errors: list[str] = []
 
-    print("Setting up .specnative/.venv …", file=sys.stderr, flush=True)
+    python_bin = find_python310()
+    if python_bin is None:
+        errors.append(
+            "mcp requires Python >= 3.10 but none was found on this system.\n"
+            "  Install Python 3.10+ (e.g. 'brew install python@3.12') then\n"
+            "  re-run the installer with --force to retry the venv setup."
+        )
+        return venv_dir, errors
+
+    print(f"Setting up .specnative/.venv (Python: {python_bin}) …",
+          file=sys.stderr, flush=True)
     try:
-        builder = _venv.EnvBuilder(with_pip=True, clear=False, upgrade=False)
-        builder.create(str(venv_dir))
-    except Exception as exc:  # noqa: BLE001
-        errors.append(f"venv creation failed: {exc}")
+        subprocess.run(
+            [python_bin, "-m", "venv", str(venv_dir)],
+            check=True, capture_output=True, text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        errors.append(f"venv creation failed: {exc.stderr.strip()}")
         return venv_dir, errors
 
     python = (
