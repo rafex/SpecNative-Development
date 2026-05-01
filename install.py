@@ -52,6 +52,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import shutil
 import sys
 import venv as _venv
 from pathlib import Path
@@ -222,6 +223,42 @@ def create_branch(target: Path, branch: str) -> None:
 # ---------------------------------------------------------------------------
 
 MCP_MIN_PYTHON = (3, 10)
+VENV_GITIGNORE_ENTRY = ".specnative/.venv/"
+VENV_GITIGNORE_COMMENT = "# SpecNative — venv is generated; do not commit\n"
+
+
+def purge_stale_venv(target: Path) -> None:
+    """Remove a leftover .specnative/.venv/ before git operations.
+
+    A failed previous install may leave venv files (with Windows CRLF
+    line endings, binary data, etc.) that cause 'fatal: CRLF would be
+    replaced by LF' errors when git inspects the working tree.
+    The venv is always recreated by setup_venv(), so it is safe to delete.
+    """
+    venv_dir = target / ".specnative" / ".venv"
+    if venv_dir.exists():
+        print("Removing stale .specnative/.venv/ before git operations …",
+              file=sys.stderr, flush=True)
+        shutil.rmtree(venv_dir)
+
+
+def ensure_venv_gitignore(target: Path, created: list[str]) -> None:
+    """Add .specnative/.venv/ to .gitignore so git never tracks venv files."""
+    gitignore = target / ".gitignore"
+    if gitignore.exists():
+        content = gitignore.read_text(encoding="utf-8")
+        if VENV_GITIGNORE_ENTRY in content:
+            return  # already ignored
+        updated = (content.rstrip("\n")
+                   + f"\n\n{VENV_GITIGNORE_COMMENT}{VENV_GITIGNORE_ENTRY}\n")
+        gitignore.write_text(updated, encoding="utf-8")
+        created.append(".gitignore")
+    else:
+        gitignore.write_text(
+            f"{VENV_GITIGNORE_COMMENT}{VENV_GITIGNORE_ENTRY}\n",
+            encoding="utf-8",
+        )
+        created.append(".gitignore")
 
 
 def find_python310() -> str | None:
@@ -326,6 +363,7 @@ def install(
     force: bool,
 ) -> None:
     ensure_git_repo(target)
+    purge_stale_venv(target)      # remove leftover venv before git sees it
     ensure_clean_worktree(target)
     create_branch(target, branch)
 
@@ -340,6 +378,8 @@ def install(
     created: list[str] = []
     skipped: list[str] = []
     errors: list[str] = []
+
+    ensure_venv_gitignore(target, created)  # add .venv to .gitignore early
 
     for relative in paths:
         dest = target / relative
