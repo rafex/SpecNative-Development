@@ -25,24 +25,31 @@ The installer:
   Does not require a clean worktree. Use this to repair a broken MCP.
   Usage: python3 install.py --reinstall [--target /path/to/repo]
 
-Profiles:
-    context   Living AI context layer only — AGENTS.md + project docs.
-              No spec lifecycle, no tasks, no pipelines. Ideal for solo
-              developers or any project that wants an AI agent to understand
-              its codebase without extra process overhead.
+Profiles (each layer is cumulative):
 
-    spec      Spec-driven development without CI/CD pipelines. Adds the full
-              initiative lifecycle: specs, tasks, workflows, decisions, roadmap,
-              and traceability. Ideal for startups and solo developers building
-              features spec-first.
+    context   AI context layer — just enough for an agent to understand the
+              project. No spec lifecycle, no tasks, no pipelines.
+              Files: AGENTS.md, agents/{README,PRODUCT,ARCHITECTURE,STACK,
+                     CONVENTIONS,COMMANDS}.md, .specnative/{README,MCP}.md
 
-    team      Full spec lifecycle plus pipeline documentation (CI/CD). Adds
-              schema governance and the CLI reference. Ideal for small-to-medium
-              teams that review pull requests and maintain automated pipelines.
+    spec      Adds the full initiative lifecycle on top of context: specs,
+              tasks, workflows, decisions, roadmap, and traceability.
+              Ideal for solo developers and startups building spec-first.
+              Adds: agents/{DECISIONS,ROADMAP,SPEC,TRACEABILITY}.md,
+                    agents/specs/README.md, tasks/{README,TASKS.template}.md,
+                    workflows/{README,IMPLEMENTATION,PLANNING,REVIEW}.md
 
-    platform  Everything in team plus README.md (if absent) and example
-              initiatives. Ideal for open-source projects, enterprise platforms,
-              or multi-team organisations that need reference implementations.
+    team      Adds CI/CD pipeline docs and schema governance on top of spec.
+              Ideal for teams that run automated pipelines and code review.
+              Adds: pipelines/{README,CI,CD}.md,
+                    .specnative/{CLI,SCHEMA}.md
+
+    platform  Everything in team plus README.md (if absent) and reference
+              example initiatives. Ideal for open-source projects or
+              organisations that need working examples to onboard contributors.
+              Adds: README.md (if missing),
+                    agents/specs/authentication/{README,SPEC}.md,
+                    tasks/authentication/{README,TASKS}.md
 
 Options:
     --target PATH         Target repository path (default: current directory)

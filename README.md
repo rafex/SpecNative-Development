@@ -24,7 +24,7 @@ Instead of rebuilding project context in every session, the repository encodes i
 
 ## Quick Start
 
-**Current Release:** [v0.4.7](https://github.com/rafex/SpecNative-Development/releases/tag/v0.4.7)
+**Current Release:** [v0.4.8](https://github.com/rafex/SpecNative-Development/releases/tag/v0.4.8)
 
 ### Install into an existing repository
 
@@ -68,12 +68,16 @@ python3 install.py --reinstall --target /path/to/your/repo
 
 ### Installation profiles
 
-| Profile | Includes | Best for |
-|---------|----------|----------|
-| `context` | AGENTS.md + project docs | Solo devs, simple projects |
-| `spec` | context + specs, tasks, workflows | Startups, spec-driven teams |
-| `team` | spec + CI/CD pipelines | Small-to-medium teams |
-| `platform` | team + README + examples | Open source, enterprise |
+Profiles are cumulative — each one adds files on top of the previous layer.
+
+| Profile | What it installs | Best for |
+|---------|-----------------|----------|
+| `context` | `AGENTS.md` · `agents/{PRODUCT,ARCHITECTURE,STACK,CONVENTIONS,COMMANDS}.md` · `.specnative/{README,MCP}.md` | Solo devs, any project that wants AI context without process overhead |
+| `spec` | **context** + `agents/{DECISIONS,ROADMAP,SPEC,TRACEABILITY}.md` · `agents/specs/README.md` · `tasks/` · `workflows/{PLANNING,IMPLEMENTATION,REVIEW}.md` | Startups and solo devs building spec-first without CI/CD |
+| `team` *(default)* | **spec** + `pipelines/{CI,CD}.md` · `.specnative/{CLI,SCHEMA}.md` | Teams with automated pipelines and pull request workflows |
+| `platform` | **team** + `README.md` (if absent) + authentication example initiative | Open-source projects and orgs that need reference implementations |
+
+Add `--include-examples` to any profile to include the example authentication initiative.
 
 ### Connect via MCP (Claude Code, Claude Desktop, OpenCode)
 
