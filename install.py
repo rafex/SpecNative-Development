@@ -11,6 +11,7 @@ Usage:
     python3 install.py --profile spec
     python3 install.py --profile team --branch specnative/setup
     python3 install.py --profile platform --include-examples
+    python3 install.py --reinstall                              # Repair MCP only
 
 The installer:
   1. Validates the target is a clean git repository.
@@ -18,6 +19,11 @@ The installer:
   3. Downloads template files from the SpecNative GitHub release.
   4. Writes them to the target repository.
   5. Creates .specnative/.venv and installs the mcp package.
+
+--reinstall mode:
+  Reinstalls only the MCP server and venv without touching other files.
+  Does not require a clean worktree. Use this to repair a broken MCP.
+  Usage: python3 install.py --reinstall [--target /path/to/repo]
 
 Profiles:
     context   Living AI context layer only — AGENTS.md + project docs.
@@ -45,6 +51,7 @@ Options:
     --include-examples    Add example initiatives to any profile
     --branch NAME         Branch to create (default: specnative/install-VERSION)
     --force               Overwrite existing files
+    --reinstall           Repair MCP only (no branch, no worktree check)
 """
 
 from __future__ import annotations
@@ -351,6 +358,65 @@ def setup_venv(target: Path) -> tuple[Path, list[str]]:
 
 
 # ---------------------------------------------------------------------------
+# Reinstall MCP only
+# ---------------------------------------------------------------------------
+
+def reinstall_mcp(target: Path, version: str) -> None:
+    """Repair MCP server and venv without touching other files.
+
+    Does not require a clean worktree or create a git branch.
+    Only reinstalls .specnative/specnative_mcp.py and .specnative/.venv.
+    """
+    ensure_git_repo(target)
+
+    errors: list[str] = []
+
+    print("Reinstalling MCP server …", file=sys.stderr, flush=True)
+
+    # Download and write MCP server
+    mcp_dest = target / ".specnative" / "specnative_mcp.py"
+    mcp_url = release_asset_url(version, "specnative_mcp.py")
+    try:
+        mcp_content = download_file(mcp_url)
+        mcp_dest.parent.mkdir(parents=True, exist_ok=True)
+        mcp_dest.write_bytes(mcp_content)
+        mcp_dest.chmod(0o755)
+        print(f"✓ Downloaded .specnative/specnative_mcp.py", file=sys.stderr)
+    except RuntimeError as exc:
+        errors.append(str(exc))
+
+    # Purge and recreate venv
+    purge_stale_venv(target)
+    venv_dir, venv_errors = setup_venv(target)
+    errors.extend(venv_errors)
+
+    if sys.platform == "win32":
+        venv_python = str(venv_dir / "Scripts" / "python.exe")
+    else:
+        venv_python = str(venv_dir / "bin" / "python3")
+
+    print(json.dumps({
+        "version": version,
+        "target": str(target),
+        "mode": "reinstall_mcp_only",
+        "venv": str(venv_dir),
+        "venv_python": venv_python,
+        "errors": errors,
+    }, indent=2, ensure_ascii=False))
+
+    if errors:
+        print(f"\n{len(errors)} error(s) during MCP reinstall.", file=sys.stderr)
+        sys.exit(1)
+
+    print(
+        f"\n✓ MCP reinstalled successfully.\n"
+        f"MCP server : .specnative/specnative_mcp.py\n"
+        f"Venv Python: {venv_python}\n"
+        f"Configure your agent following: .specnative/MCP.md"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Install
 # ---------------------------------------------------------------------------
 
@@ -491,6 +557,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Overwrite existing files",
     )
+    parser.add_argument(
+        "--reinstall",
+        action="store_true",
+        help="Repair MCP only (no branch, no worktree check)",
+    )
     return parser
 
 
@@ -499,17 +570,20 @@ def main() -> int:
     args = parser.parse_args()
 
     version = resolve_version(args.version)
-    branch = args.branch or f"{INSTALL_BRANCH_PREFIX}-{version}"
     target = Path(args.target).resolve()
 
-    install(
-        target=target,
-        version=version,
-        profile=args.profile,
-        include_examples=args.include_examples,
-        branch=branch,
-        force=args.force,
-    )
+    if args.reinstall:
+        reinstall_mcp(target=target, version=version)
+    else:
+        branch = args.branch or f"{INSTALL_BRANCH_PREFIX}-{version}"
+        install(
+            target=target,
+            version=version,
+            profile=args.profile,
+            include_examples=args.include_examples,
+            branch=branch,
+            force=args.force,
+        )
     return 0
 
 
