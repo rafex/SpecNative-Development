@@ -358,6 +358,38 @@ def setup_venv(target: Path) -> tuple[Path, list[str]]:
 
 
 # ---------------------------------------------------------------------------
+# MCP client configuration
+# ---------------------------------------------------------------------------
+
+def setup_mcp_configs(target: Path, created: list[str], errors: list[str]) -> None:
+    """Create MCP configuration files for OpenCode, Claude Desktop, and other clients."""
+    venv_python = str(target / ".specnative" / (".venv/Scripts/python3" if sys.platform == "win32" else ".venv/bin/python3"))
+
+    # OpenCode configuration
+    opencode_config = {
+        "$schema": "https://opencode.ai/config.json",
+        "mcp": {
+            "specnative": {
+                "type": "local",
+                "enabled": True,
+                "command": [
+                    venv_python,
+                    "./.specnative/specnative_mcp.py"
+                ]
+            }
+        }
+    }
+
+    opencode_file = target / "opencode.json"
+    try:
+        with open(opencode_file, 'w', encoding='utf-8') as f:
+            json.dump(opencode_config, f, indent=2, ensure_ascii=False)
+        created.append("opencode.json")
+    except Exception as exc:
+        errors.append(f"Failed to create opencode.json: {exc}")
+
+
+# ---------------------------------------------------------------------------
 # Reinstall MCP only
 # ---------------------------------------------------------------------------
 
@@ -395,12 +427,16 @@ def reinstall_mcp(target: Path, version: str) -> None:
     else:
         venv_python = str(venv_dir / "bin" / "python3")
 
+    created: list[str] = []
+    setup_mcp_configs(target, created, errors)
+
     print(json.dumps({
         "version": version,
         "target": str(target),
         "mode": "reinstall_mcp_only",
         "venv": str(venv_dir),
         "venv_python": venv_python,
+        "created": created,
         "errors": errors,
     }, indent=2, ensure_ascii=False))
 
@@ -484,6 +520,9 @@ def install(
     else:
         venv_python = str(venv_dir / "bin" / "python3")
     errors.extend(venv_errors)
+
+    # Create MCP configuration files for OpenCode and other clients
+    setup_mcp_configs(target, created, errors)
 
     print(json.dumps({
         "version": version,
