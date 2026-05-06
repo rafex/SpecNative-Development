@@ -24,31 +24,82 @@ Instead of rebuilding project context in every session, the repository encodes i
 
 ## Quick Start
 
+**Current Release:** [v0.4.7](https://github.com/rafex/SpecNative-Development/releases/tag/v0.4.7)
+
 ### Install into an existing repository
 
+Download and run in one step:
+
 ```bash
+# Minimal context layer (AGENTS.md + docs)
 curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
-  | python3 - --target /path/to/your/repo --profile minimal
+  | python3 - --target /path/to/your/repo --profile context
+
+# Full spec lifecycle + CI/CD pipelines (recommended)
+curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
+  | python3 - --target /path/to/your/repo --profile team
+
+# Full setup with examples
+curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
+  | python3 - --target /path/to/your/repo --profile platform --include-examples
 ```
 
 Or download once and run locally:
 
 ```bash
-python3 install.py --target /path/to/your/repo --profile minimal --include-examples
+python3 install.py --target /path/to/your/repo --profile team
+python3 install.py --target /path/to/your/repo --profile platform --include-examples
 ```
 
-### Connect via MCP (Claude Code, Claude Desktop, OpenCode, Codex)
+### Repair broken MCP
+
+If your MCP installation is broken, reinstall it without touching other files:
 
 ```bash
-pip install mcp
-
-# Claude Code
-claude mcp add specnative \
-  python3 .specnative/specnative_mcp.py \
-  -- --repo /path/to/your/project
+curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
+  | python3 - --reinstall --target /path/to/your/repo
 ```
 
-See [`.specnative/MCP.md`](./Template-Project-Agents-AI/.specnative/MCP.md) for full configuration per agent.
+Or locally:
+
+```bash
+python3 install.py --reinstall --target /path/to/your/repo
+```
+
+### Installation profiles
+
+| Profile | Includes | Best for |
+|---------|----------|----------|
+| `context` | AGENTS.md + project docs | Solo devs, simple projects |
+| `spec` | context + specs, tasks, workflows | Startups, spec-driven teams |
+| `team` | spec + CI/CD pipelines | Small-to-medium teams |
+| `platform` | team + README + examples | Open source, enterprise |
+
+### Connect via MCP (Claude Code, Claude Desktop, OpenCode)
+
+**MCP configs are created automatically** during installation to `opencode.json`.
+
+For Claude Desktop, add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "specnative": {
+      "command": "python3",
+      "args": ["/path/to/.specnative/specnative_mcp.py"]
+    }
+  }
+}
+```
+
+For Claude Code:
+
+```bash
+claude mcp add specnative \
+  python3 /path/to/.specnative/specnative_mcp.py
+```
+
+See [`.specnative/MCP.md`](./Template-Project-Agents-AI/.specnative/MCP.md) for full per-agent configuration.
 
 ---
 
@@ -222,6 +273,7 @@ Less useful for very small, short-lived prototypes where maintaining structured 
 | v0.2 | Structured specs and task files |
 | v0.3 | Framework contract (`.specnative/`), `pipelines/`, `install.py`, TOML optional, `status` command |
 | v0.4 | MCP server — resources, tools, and prompts for Claude Code, Claude Desktop, OpenCode, Codex |
+| **v0.4.7** | **`--reinstall` flag for quick MCP repair · Auto-generate client configs (opencode.json)** |
 
 ---
 
