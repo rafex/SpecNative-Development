@@ -11,3 +11,6 @@
 .opencode/node_modules/
 # opencode — exportaciones de sesión
 session-ses_*.md
+
+.DS_Store
+
