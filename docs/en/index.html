@@ -196,21 +196,55 @@
 
         <section class="section">
           <div class="section-heading">
-            <p class="eyebrow">v0.4</p>
+            <p class="eyebrow">v0.6</p>
             <h2>What the framework provides</h2>
             <p>
-              The template separates framework infrastructure from project content,
-              keeps TOML optional, and exposes the full repository as an MCP server
-              so any compatible agent works spec-first out of the box.
+              The template consolidates all project context under <code>spec-native/</code>,
+              exposes the repository as an MCP server, and ships ready-to-use commands
+              for Claude Code, OpenCode, and Codex out of the box.
             </p>
           </div>
           <div class="adoption-grid">
             <article class="card">
               <h3>MCP server</h3>
               <p>
-                <code>tools/specnative_mcp.py</code> exposes the repository as typed
-                resources (<code>spec://</code> URIs), tools, and structured prompts for
-                Claude Code, Claude Desktop, OpenCode, and Codex. Requires <code>pip install mcp</code>.
+                <code>.specnative/specnative_mcp.py</code> exposes the repository as typed
+                resources (<code>spec://</code> URIs), tools, and prompts for
+                Claude Code, Claude Desktop, OpenCode, and Codex.
+                Installed automatically with its own venv.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Native agent commands</h3>
+              <p>
+                <code>/spec-init</code>, <code>/spec-update</code>, <code>/spec-status</code>,
+                <code>/spec-handoff</code> — installed automatically in every profile.
+                Available as slash commands in Claude Code, prompts in OpenCode, and
+                <code>codex --prompt</code> in Codex.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Multi-agent continuity</h3>
+              <p>
+                <code>spec-native/SESSION.md</code> persists active work state in git.
+                <code>checkpoint()</code> saves where you are; <code>resume()</code> tells
+                the next agent — whether Claude Code, Codex, or Cursor — exactly what to do next.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Init &amp; update wizard</h3>
+              <p>
+                <code>specnative init</code> interviews the developer and fills context
+                documents in minutes. <code>specnative update</code> runs a health check,
+                detects gaps, and guides iterative refinement.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Unified context folder</h3>
+              <p>
+                Everything lives in <code>spec-native/</code>: product docs, specs,
+                tasks, workflows, pipelines, and the session state. One entry point,
+                zero navigation friction for any agent.
               </p>
             </article>
             <article class="card">
@@ -221,47 +255,19 @@
               </p>
             </article>
             <article class="card">
-              <h3>Execution layer</h3>
-              <p>
-                <code>tasks/</code> turns specs into executable units with state, owners,
-                dependencies, and closure criteria.
-              </p>
-            </article>
-            <article class="card">
-              <h3>Optional TOML metadata</h3>
-              <p>
-                Specs and task files can include <code>toml</code> blocks for automated
-                validation and export. The base contract is documentary — TOML is opt-in.
-              </p>
-            </article>
-            <article class="card">
-              <h3>CI/CD context</h3>
-              <p>
-                <code>pipelines/CI.md</code> and <code>pipelines/CD.md</code> document
-                automated gates and delivery process so agents understand how changes are
-                validated and shipped.
-              </p>
-            </article>
-            <article class="card">
-              <h3>Traceability</h3>
-              <p>
-                <code>TRACEABILITY.md</code> links specs, tasks, decisions, files, and
-                validation evidence across the full initiative lifecycle.
-              </p>
-            </article>
-            <article class="card">
               <h3>Python CLI</h3>
               <p>
                 <code>tools/specnative.py</code> validates the repository, shows spec and
-                task status, and exports project indices or traceability as JSON.
+                task status, exports project indices as JSON, and runs the
+                interactive init/update wizard without an agent.
               </p>
             </article>
             <article class="card">
               <h3>Standalone installer</h3>
               <p>
                 <code>install.py</code> bootstraps SpecNative into an existing repository
-                from a GitHub release with no dependencies beyond the Python standard
-                library.
+                from a GitHub release. Four profiles: <code>context</code>, <code>spec</code>,
+                <code>team</code>, <code>platform</code>. No dependencies beyond stdlib.
               </p>
             </article>
           </div>
@@ -309,45 +315,45 @@
             <p class="eyebrow">Structure</p>
             <h2>Repository layout for agent-guided work</h2>
             <p>
-              The repository template in this project keeps most context under
-              <code>agents/</code>. In larger systems, the same model can be expanded into
-              dedicated <code>specs/</code>, <code>tasks/</code>, <code>architecture/</code>,
-              and <code>workflows/</code> areas.
+              All project context lives under <code>spec-native/</code> — one entry point
+              for any agent. <code>AGENTS.md</code> is the universal meta-index that
+              explains SpecNative, points to <code>spec-native/</code>, and documents
+              how to use the MCP server.
             </p>
           </div>
 
           <div class="structure-layout">
             <div class="code-card">
               <pre><code>repo/
-├── AGENTS.md
-├── README.md
-├── agents/
-│   ├── README.md
-│   ├── PRODUCT.md
-│   ├── ARCHITECTURE.md
-│   ├── STACK.md
-│   ├── CONVENTIONS.md
-│   ├── COMMANDS.md
-│   ├── DECISIONS.md
-│   ├── ROADMAP.md
-│   ├── TRACEABILITY.md
-│   ├── SPEC.md
-│   └── specs/
-│       └── authentication/
-│           └── SPEC.md
-├── tasks/
-│   └── authentication/
-│       └── TASKS.md
-├── workflows/
-│   ├── PLANNING.md
-│   ├── IMPLEMENTATION.md
-│   └── REVIEW.md
-├── pipelines/
-│   ├── CI.md
-│   └── CD.md
+├── AGENTS.md               # Meta-index: what is SpecNative, MCP reference
+├── spec-native/
+│   ├── PRODUCT.md          # Problem, users, goals (permanent)
+│   ├── ARCHITECTURE.md     # System structure and boundaries
+│   ├── STACK.md            # Tech stack and version constraints
+│   ├── CONVENTIONS.md      # Code rules, naming, testing
+│   ├── COMMANDS.md         # Project dev/test/build commands
+│   ├── DECISIONS.md        # Persistent decisions and trade-offs
+│   ├── ROADMAP.md          # Temporal direction
+│   ├── TRACEABILITY.md     # Links between artifacts
+│   ├── SESSION.md          # Active work state (multi-agent continuity)
+│   ├── specs/
+│   │   └── &lt;initiative&gt;/SPEC.md
+│   ├── tasks/
+│   │   └── &lt;initiative&gt;/TASKS.md
+│   ├── workflows/
+│   │   ├── PLANNING.md
+│   │   ├── IMPLEMENTATION.md
+│   │   └── REVIEW.md
+│   └── pipelines/
+│       ├── CI.md
+│       └── CD.md
+├── .claude/commands/       # /spec-init, /spec-update, /spec-status, /spec-handoff
+├── codex.toml              # Codex prompt commands
+├── opencode.json           # OpenCode MCP + prompts
 └── .specnative/
     ├── SCHEMA.md
-    └── CLI.md</code></pre>
+    ├── MCP.md
+    └── specnative_mcp.py   # MCP server (auto-installed)</code></pre>
             </div>
             <div class="stack-list">
               <article class="stack-item">
@@ -476,18 +482,23 @@
   }
 }</code></pre>
               </div>
-              <h4>MCP configuration</h4>
+              <h4>MCP + prompts (auto-configured)</h4>
               <div class="snippet">
-                <pre><code>// .opencode/config.json
+                <pre><code>// opencode.json — generated automatically by install.py
 {
+  "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "servers": {
-      "specnative": {
-        "command": "python3",
-        "args": ["/path/to/specnative_mcp.py",
-                 "--repo", "/path/to/project"]
-      }
+    "specnative": {
+      "type": "local", "enabled": true,
+      "command": ["./.specnative/.venv/bin/python3",
+                  "./.specnative/specnative_mcp.py"]
     }
+  },
+  "prompts": {
+    "spec-init":    { "description": "Guided project setup" },
+    "spec-update":  { "description": "Detect gaps, refine docs" },
+    "spec-status":  { "description": "Quick health check" },
+    "spec-handoff": { "description": "Handoff for next agent" }
   }
 }</code></pre>
               </div>
@@ -502,36 +513,29 @@
                 <span>CLI and agent teams</span>
               </div>
               <p>
-                Claude Code reads a root <code>CLAUDE.md</code>, supports custom commands,
-                hooks, MCP, and multiple agents. In a SpecNative repository, use
-                <code>CLAUDE.md</code> as a bootstrap file rather than a monolithic project manual.
+                Claude Code reads <code>AGENTS.md</code> and supports custom slash commands
+                via <code>.claude/commands/</code>. SpecNative installs four commands automatically
+                so the developer can start with <code>/spec-init</code> on day one.
               </p>
               <h4>Recommended pattern</h4>
               <ul>
-                <li>Create a short <code>CLAUDE.md</code> that points to <code>AGENTS.md</code> and the local navigation model.</li>
-                <li>Store real project truth in versioned context files, not in one giant instruction file.</li>
-                <li>Use subagents or parallel agents per spec area, not per vague prompt.</li>
-                <li>Encode reusable flows as commands such as <code>/implement-spec authentication</code>.</li>
+                <li>Use <code>/spec-init</code> to fill context documents the first time.</li>
+                <li>Use <code>/spec-status</code> to check active work at the start of each session.</li>
+                <li>Use <code>/spec-handoff</code> before ending a session so the next agent can resume.</li>
+                <li>Encode domain flows as MCP prompts (<code>start_initiative</code>, <code>plan_tasks</code>).</li>
               </ul>
               <div class="snippet">
-                <pre><code># CLAUDE.md
+                <pre><code># Built-in slash commands (from .claude/commands/)
+/spec-init     # Interview developer, fill spec-native/ docs
+/spec-update   # Detect gaps, guide iterative refinement
+/spec-status   # Session + specs + tasks + alerts
+/spec-handoff  # Generate SESSION.md handoff for next agent
 
-Start by reading ./AGENTS.md.
-In each folder, read the local README.md before making changes.
-Use files under ./agents/ as source documents.
-If implementing a feature, locate the relevant SPEC.md first.
-Do not treat this file as the source of truth for product or architecture.</code></pre>
-              </div>
-              <h4>MCP configuration</h4>
-              <div class="snippet">
-                <pre><code>claude mcp add specnative \
-  python3 /path/to/specnative_mcp.py \
-  -- --repo /path/to/project
-
-# Prompts available in Claude Code:
-# /mcp specnative start_initiative
-# /mcp specnative plan_tasks
-# /mcp specnative close_initiative</code></pre>
+# MCP setup (auto-installed)
+claude mcp add specnative \
+  "$(pwd)/.specnative/.venv/bin/python3" \
+  "$(pwd)/.specnative/specnative_mcp.py" \
+  -- --repo "$(pwd)"</code></pre>
               </div>
               <p class="source">
                 Source: <a href="https://code.claude.com/docs/en/overview">Claude Code overview</a>
@@ -544,34 +548,29 @@ Do not treat this file as the source of truth for product or architecture.</code
                 <span>Local, IDE, GitHub, cloud</span>
               </div>
               <p>
-                Codex can work locally or in cloud environments and is effective when the
-                repository already exposes constraints and setup clearly. SpecNative gives
-                Codex a stable context surface across terminal, IDE, and delegated tasks.
+                Codex reads <code>AGENTS.md</code> and works best when the repository
+                already exposes constraints clearly. SpecNative gives Codex a stable
+                context surface and installs ready-to-use prompts via <code>codex.toml</code>.
               </p>
               <h4>Recommended pattern</h4>
               <ul>
-                <li>Put repository rules in <code>AGENTS.md</code> and spec files, not only in task prompts.</li>
-                <li>For cloud tasks, ensure setup, commands, and validation live in repository files.</li>
-                <li>Delegate work by naming the spec or initiative folder, not by rewriting the entire project context.</li>
-                <li>Use Codex for implementation, refactoring, and review against explicit repository artifacts.</li>
+                <li>Start every session with <code>codex --prompt spec-status</code> to check active work.</li>
+                <li>Delegate work by naming the spec or initiative, not by rewriting the context.</li>
+                <li>Use <code>resume()</code> MCP tool to continue from the last agent's checkpoint.</li>
+                <li>Use <code>codex --prompt spec-handoff</code> before closing to save session state.</li>
               </ul>
               <div class="snippet">
-                <pre><code>Implement the authentication initiative.
-
-Read AGENTS.md first.
-Then read agents/README.md, agents/ARCHITECTURE.md,
-agents/CONVENTIONS.md, and agents/specs/authentication/SPEC.md.
-Plan the work, implement it, run the documented validation commands,
-and update DECISIONS.md if a persistent trade-off changes.</code></pre>
-              </div>
-              <h4>MCP configuration</h4>
-              <div class="snippet">
-                <pre><code># ~/.codex/config.toml or codex.toml
+                <pre><code># codex.toml — generated automatically by install.py
 [mcp_servers.specnative]
-command = "python3"
-args = ["/path/to/specnative_mcp.py",
-        "--repo", "/path/to/project"]
-type = "stdio"</code></pre>
+command = "./.specnative/.venv/bin/python3"
+args    = ["./.specnative/specnative_mcp.py"]
+type    = "stdio"
+
+# Ready-to-use prompts:
+# codex --prompt spec-init
+# codex --prompt spec-update
+# codex --prompt spec-status
+# codex --prompt spec-handoff</code></pre>
               </div>
               <p class="source">
                 Sources:

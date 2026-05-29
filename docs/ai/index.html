@@ -100,31 +100,29 @@
 
           <!-- MCP -->
           <section class="ref-section" id="mcp">
-            <h2>MCP server — v0.4</h2>
+            <h2>MCP server — v0.6</h2>
             <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
-              <code>tools/specnative_mcp.py</code> exposes the repository as MCP
+              <code>.specnative/specnative_mcp.py</code> exposes the repository as MCP
               <strong>resources</strong>, <strong>tools</strong>, and <strong>prompts</strong>
-              so any MCP-compatible agent (Claude Desktop, Claude Code, OpenCode) can work
-              spec-first without manually navigating the file tree.
-              Requires: <code>pip install mcp</code>.
+              so any agent works spec-first without navigating files manually.
+              Installed automatically with its own venv. Supports stdio and SSE transport.
             </p>
 
             <h3>Quick setup — Claude Code</h3>
             <div class="code-card">
-              <pre><code># Add via CLI
+              <pre><code># Add via CLI (from project root)
 claude mcp add specnative \
-  python3 .specnative/specnative_mcp.py \
-  -- --repo /path/to/your/project
+  "$(pwd)/.specnative/.venv/bin/python3" \
+  "$(pwd)/.specnative/specnative_mcp.py" \
+  -- --repo "$(pwd)"
 
 # Or add to .claude/mcp_settings.json
 {
   "mcpServers": {
     "specnative": {
-      "command": "python3",
-      "args": [
-        ".specnative/specnative_mcp.py",
-        "--repo", "/path/to/your/project"
-      ]
+      "command": "/your/project/.specnative/.venv/bin/python3",
+      "args": ["/your/project/.specnative/specnative_mcp.py",
+               "--repo", "/your/project"]
     }
   }
 }</code></pre>
@@ -134,22 +132,23 @@ claude mcp add specnative \
             <table class="ref-table">
               <thead><tr><th>URI</th><th>Document</th></tr></thead>
               <tbody>
-                <tr><td><code>spec://agents</code></td><td>AGENTS.md — operating contract</td></tr>
-                <tr><td><code>spec://context/product</code></td><td>agents/PRODUCT.md</td></tr>
-                <tr><td><code>spec://context/architecture</code></td><td>agents/ARCHITECTURE.md</td></tr>
-                <tr><td><code>spec://context/stack</code></td><td>agents/STACK.md</td></tr>
-                <tr><td><code>spec://context/conventions</code></td><td>agents/CONVENTIONS.md</td></tr>
-                <tr><td><code>spec://context/commands</code></td><td>agents/COMMANDS.md</td></tr>
-                <tr><td><code>spec://context/decisions</code></td><td>agents/DECISIONS.md</td></tr>
-                <tr><td><code>spec://context/roadmap</code></td><td>agents/ROADMAP.md</td></tr>
-                <tr><td><code>spec://context/traceability</code></td><td>agents/TRACEABILITY.md</td></tr>
-                <tr><td><code>spec://pipelines/ci</code></td><td>pipelines/CI.md</td></tr>
-                <tr><td><code>spec://pipelines/cd</code></td><td>pipelines/CD.md</td></tr>
+                <tr><td><code>spec://agents</code></td><td>AGENTS.md — meta-index and MCP reference</td></tr>
+                <tr><td><code>spec://session</code></td><td>spec-native/SESSION.md — active work state</td></tr>
+                <tr><td><code>spec://context/product</code></td><td>spec-native/PRODUCT.md</td></tr>
+                <tr><td><code>spec://context/architecture</code></td><td>spec-native/ARCHITECTURE.md</td></tr>
+                <tr><td><code>spec://context/stack</code></td><td>spec-native/STACK.md</td></tr>
+                <tr><td><code>spec://context/conventions</code></td><td>spec-native/CONVENTIONS.md</td></tr>
+                <tr><td><code>spec://context/commands</code></td><td>spec-native/COMMANDS.md</td></tr>
+                <tr><td><code>spec://context/decisions</code></td><td>spec-native/DECISIONS.md</td></tr>
+                <tr><td><code>spec://context/roadmap</code></td><td>spec-native/ROADMAP.md</td></tr>
+                <tr><td><code>spec://context/traceability</code></td><td>spec-native/TRACEABILITY.md</td></tr>
+                <tr><td><code>spec://pipelines/ci</code></td><td>spec-native/pipelines/CI.md</td></tr>
+                <tr><td><code>spec://pipelines/cd</code></td><td>spec-native/pipelines/CD.md</td></tr>
                 <tr><td><code>spec://schema</code></td><td>.specnative/SCHEMA.md</td></tr>
               </tbody>
             </table>
 
-            <h3>Tools</h3>
+            <h3>Tools — query</h3>
             <table class="ref-table">
               <thead><tr><th>Tool</th><th>Description</th></tr></thead>
               <tbody>
@@ -158,8 +157,30 @@ claude mcp add specnative \
                 <tr><td><code>list_specs()</code></td><td>All specs with ID, state, owner</td></tr>
                 <tr><td><code>list_tasks(initiative)</code></td><td>Tasks for an initiative</td></tr>
                 <tr><td><code>read_spec(initiative)</code></td><td>Read a spec file</td></tr>
-                <tr><td><code>read_context(document)</code></td><td>Read any context doc by name</td></tr>
+                <tr><td><code>read_context(document)</code></td><td>Read any context doc by name (includes <code>session</code>)</td></tr>
                 <tr><td><code>export_index()</code></td><td>Export all metadata as JSON</td></tr>
+                <tr><td><code>context_snapshot(initiative?)</code></td><td>Full context dump for new-agent onboarding</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Tools — multi-agent continuity</h3>
+            <table class="ref-table">
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><code>resume()</code></td><td>Read SESSION.md and return structured continuity summary</td></tr>
+                <tr><td><code>checkpoint(initiative, task_id, intent, next_steps, …)</code></td><td>Save active work state before pausing or switching agents</td></tr>
+                <tr><td><code>update_task(initiative, task_id, state, notes?)</code></td><td>Update task state in TASKS.md directly from MCP</td></tr>
+                <tr><td><code>log_decision(title, context, decision, consequences)</code></td><td>Append a new decision to DECISIONS.md</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Tools — project definition</h3>
+            <table class="ref-table">
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><code>health_check()</code></td><td>Scan spec-native/ for empty docs, missing files, stale session, specs without tasks</td></tr>
+                <tr><td><code>suggest_next()</code></td><td>Top 3 recommended actions based on roadmap and current state</td></tr>
+                <tr><td><code>refine_document(document, what_changed, new_content)</code></td><td>Overwrite a context doc with new content from developer interview</td></tr>
               </tbody>
             </table>
 
@@ -167,16 +188,18 @@ claude mcp add specnative \
             <table class="ref-table">
               <thead><tr><th>Prompt</th><th>Description</th></tr></thead>
               <tbody>
+                <tr><td><code>init_project_guided(name, problem, users, goals, …)</code></td><td>Fill all core docs from developer interview answers</td></tr>
                 <tr><td><code>start_initiative(name, problem)</code></td><td>Begin a new spec-driven initiative</td></tr>
                 <tr><td><code>plan_tasks(initiative)</code></td><td>Derive tasks from a spec</td></tr>
                 <tr><td><code>implement_task(initiative, task_id)</code></td><td>Implement a specific task</td></tr>
                 <tr><td><code>review_against_spec(initiative)</code></td><td>Review against acceptance criteria</td></tr>
+                <tr><td><code>handoff(summary, next_steps, decisions?)</code></td><td>Generate structured SESSION.md handoff for next agent</td></tr>
                 <tr><td><code>record_decision(title, ctx, dec, cons)</code></td><td>Record a persistent decision</td></tr>
                 <tr><td><code>close_initiative(initiative)</code></td><td>Close and update traceability</td></tr>
               </tbody>
             </table>
             <p style="font-size: 0.85rem; color: #4a5568; margin-top: 1rem;">
-              Full configuration for Claude Desktop, OpenCode, and SSE transport:
+              Full configuration for OpenCode, Claude Desktop, Codex, and SSE transport:
               <a href="https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/.specnative/MCP.md">.specnative/MCP.md</a>
             </p>
           </section>
@@ -186,40 +209,41 @@ claude mcp add specnative \
             <h2>Repository structure</h2>
             <div class="code-card" style="margin-bottom: 1.5rem;">
               <pre><code>repo/
-├── AGENTS.md              # Agent operating contract — read first
-├── README.md              # Navigation index
-├── agents/
-│   ├── README.md          # Context folder index
+├── AGENTS.md              # Meta-index: what is SpecNative, MCP reference — read first
+├── spec-native/
+│   ├── README.md          # Context folder navigation index
 │   ├── PRODUCT.md         # Problem, users, goals (permanent)
 │   ├── ARCHITECTURE.md    # System structure and boundaries
 │   ├── STACK.md           # Tech stack and version constraints
 │   ├── CONVENTIONS.md     # Code rules, naming, testing
 │   ├── COMMANDS.md        # Project dev/test/build commands only
-│   ├── SPEC.md            # Active spec (or entry point to specs/)
 │   ├── DECISIONS.md       # Persistent decisions and trade-offs
 │   ├── ROADMAP.md         # Temporal direction, no implementation
 │   ├── TRACEABILITY.md    # Links between artifacts
-│   └── specs/
-│       └── &lt;initiative&gt;/
-│           └── SPEC.md
-├── tasks/
-│   └── &lt;initiative&gt;/
-│       └── TASKS.md
-├── workflows/
-│   ├── PLANNING.md
-│   ├── IMPLEMENTATION.md
-│   └── REVIEW.md
-├── pipelines/
-│   ├── CI.md              # Automated validation gates
-│   └── CD.md              # Delivery process and environments
+│   ├── SESSION.md         # Active work state (multi-agent continuity)
+│   ├── specs/
+│   │   └── &lt;initiative&gt;/SPEC.md
+│   ├── tasks/
+│   │   └── &lt;initiative&gt;/TASKS.md
+│   ├── workflows/
+│   │   ├── PLANNING.md
+│   │   ├── IMPLEMENTATION.md
+│   │   └── REVIEW.md
+│   └── pipelines/
+│       ├── CI.md          # Automated validation gates
+│       └── CD.md          # Delivery process and environments
+├── .claude/commands/      # Slash commands: /spec-init /spec-update /spec-status /spec-handoff
+├── codex.toml             # Codex CLI prompt commands
+├── opencode.json          # OpenCode MCP + prompts
 └── .specnative/
     ├── SCHEMA.md           # Framework contract (not project content)
-    └── CLI.md              # CLI reference</code></pre>
+    ├── MCP.md              # MCP server configuration per agent
+    └── specnative_mcp.py   # MCP server (installed automatically)</code></pre>
             </div>
             <p style="font-size: 0.9rem; color: #4a5568;">
               Files in uppercase are context for agents. <code>README.md</code> files are
               navigation indexes, not the source of truth. Load the minimum context needed
-              for the current task. Do not ingest the whole repository.
+              for the current task. SESSION.md persists active work state across agents.
             </p>
           </section>
 
@@ -228,7 +252,7 @@ claude mcp add specnative \
             <h2>Document ownership — one truth per document</h2>
             <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
               Each document owns one semantic domain. Never duplicate information across files.
-              Update the source of truth, not a parallel summary.
+              Update the source of truth, not a parallel summary. All documents live under <code>spec-native/</code>.
             </p>
             <table class="ref-table">
               <thead>
@@ -240,62 +264,67 @@ claude mcp add specnative \
               </thead>
               <tbody>
                 <tr>
-                  <td><code>PRODUCT.md</code></td>
+                  <td><code>spec-native/PRODUCT.md</code></td>
                   <td>Problem, target users, goals, non-goals, differential value</td>
                   <td>Implementation, technical decisions</td>
                 </tr>
                 <tr>
-                  <td><code>SPEC.md</code></td>
+                  <td><code>spec-native/specs/*/SPEC.md</code></td>
                   <td>What must be built in this initiative: requirements, scope, acceptance criteria, risks</td>
                   <td>Persistent trade-offs (→ DECISIONS), product vision (→ PRODUCT), direction (→ ROADMAP)</td>
                 </tr>
                 <tr>
-                  <td><code>DECISIONS.md</code></td>
+                  <td><code>spec-native/DECISIONS.md</code></td>
                   <td>Persistent trade-offs that future initiatives must respect</td>
                   <td>What will be built (→ SPEC), temporal priorities (→ ROADMAP)</td>
                 </tr>
                 <tr>
-                  <td><code>ROADMAP.md</code></td>
+                  <td><code>spec-native/ROADMAP.md</code></td>
                   <td>What comes first and why (temporal direction)</td>
                   <td>How to implement, specific trade-offs</td>
                 </tr>
                 <tr>
-                  <td><code>ARCHITECTURE.md</code></td>
+                  <td><code>spec-native/ARCHITECTURE.md</code></td>
                   <td>System modules, boundaries, data flows, architectural constraints</td>
                   <td>What to build, why decisions were made</td>
                 </tr>
                 <tr>
-                  <td><code>STACK.md</code></td>
+                  <td><code>spec-native/STACK.md</code></td>
                   <td>Languages, runtimes, frameworks, versions, prohibited tech</td>
                   <td>System structure, code conventions</td>
                 </tr>
                 <tr>
-                  <td><code>CONVENTIONS.md</code></td>
+                  <td><code>spec-native/CONVENTIONS.md</code></td>
                   <td>Naming rules, code style, testing approach, commit/PR conventions</td>
                   <td>Project commands, tech stack</td>
                 </tr>
                 <tr>
-                  <td><code>COMMANDS.md</code></td>
+                  <td><code>spec-native/COMMANDS.md</code></td>
                   <td>Project-specific commands: build, test, lint, run, migrations</td>
                   <td>Framework CLI commands (specnative.py), deployment scripts</td>
                 </tr>
                 <tr>
-                  <td><code>tasks/**/TASKS.md</code></td>
+                  <td><code>spec-native/tasks/**/TASKS.md</code></td>
                   <td>Executable plan: tasks with state, owner, dependencies, close criteria</td>
                   <td>Requirements (→ SPEC), persistent decisions (→ DECISIONS)</td>
                 </tr>
                 <tr>
-                  <td><code>TRACEABILITY.md</code></td>
+                  <td><code>spec-native/TRACEABILITY.md</code></td>
                   <td>Cross-artifact links: spec → tasks → decisions → artifacts → validation</td>
                   <td>Content of any linked document</td>
                 </tr>
                 <tr>
-                  <td><code>pipelines/CI.md</code></td>
+                  <td><code>spec-native/SESSION.md</code></td>
+                  <td>Active work state: current agent, initiative, task, intent, next steps</td>
+                  <td>Spec content, decisions, product vision</td>
+                </tr>
+                <tr>
+                  <td><code>spec-native/pipelines/CI.md</code></td>
                   <td>Automated gate definitions, triggers, required checks</td>
                   <td>Local dev commands, implementation logic</td>
                 </tr>
                 <tr>
-                  <td><code>pipelines/CD.md</code></td>
+                  <td><code>spec-native/pipelines/CD.md</code></td>
                   <td>Delivery process, environments, promotion gates, rollback</td>
                   <td>Deployment scripts, credentials</td>
                 </tr>
@@ -304,13 +333,14 @@ claude mcp add specnative \
 
             <h3>Decision test — where to write something</h3>
             <div class="decision-test">
-              <p>If it <strong>disappears when the initiative closes</strong> → <code>SPEC.md</code></p>
+              <p>If it <strong>disappears when the initiative closes</strong> → <code>specs/*/SPEC.md</code></p>
               <p>If it <strong>must be respected in the next initiative</strong> → <code>DECISIONS.md</code></p>
               <p>If it <strong>explains the product</strong> → <code>PRODUCT.md</code></p>
               <p>If it <strong>sets temporal priority</strong> → <code>ROADMAP.md</code></p>
               <p>If it <strong>describes system structure</strong> → <code>ARCHITECTURE.md</code></p>
               <p>If it <strong>defines automated validation gates</strong> → <code>pipelines/CI.md</code></p>
               <p>If it <strong>describes how code reaches production</strong> → <code>pipelines/CD.md</code></p>
+              <p>If it <strong>is the active work state right now</strong> → <code>SESSION.md</code></p>
             </div>
           </section>
 
@@ -325,111 +355,141 @@ claude mcp add specnative \
               <li>
                 <div>
                   <strong>Bootstrap the structure</strong>
-                  <p>Run <code>python3 install.py --target /path/to/repo --profile minimal</code>
-                  or copy Template-Project-Agents-AI into the target repository.
-                  This creates all required folders and placeholder files.</p>
+                  <p>Run <code>python3 install.py --target /path/to/repo --profile team</code>.
+                  This creates all required folders, placeholder files, agent commands, and configures
+                  opencode.json and codex.toml automatically.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Fill <code>agents/PRODUCT.md</code></strong>
+                  <strong>Initialize project context — guided</strong>
+                  <p>Use <code>/spec-init</code> (Claude Code), <code>spec-init</code> prompt (OpenCode/Codex),
+                  or <code>python3 specnative.py init</code> (CLI without agent).
+                  The wizard interviews the developer and fills all five core documents.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <strong>Fill <code>spec-native/PRODUCT.md</code></strong>
                   <p>Problem (what friction exists and for whom), Users (segments, needs, context),
                   Goals (measurable outcomes), Non-goals (explicit exclusions),
-                  Differential value (why this solution deserves to exist).</p>
+                  Differential value. Use <code>refine_document('product', …)</code> to update via MCP.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Fill <code>agents/ARCHITECTURE.md</code></strong>
+                  <strong>Fill <code>spec-native/ARCHITECTURE.md</code></strong>
                   <p>System modules and their responsibilities, module boundaries and data flows,
                   key architectural constraints. No implementation detail.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Fill <code>agents/STACK.md</code></strong>
+                  <strong>Fill <code>spec-native/STACK.md</code></strong>
                   <p>Languages and runtimes with exact versions, frameworks and libraries,
                   infrastructure and tooling, constraints and prohibited technologies.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Fill <code>agents/CONVENTIONS.md</code></strong>
+                  <strong>Fill <code>spec-native/CONVENTIONS.md</code></strong>
                   <p>Naming conventions (files, classes, variables), code style and formatting rules,
                   testing approach (unit / integration / e2e), commit and PR conventions.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Fill <code>agents/COMMANDS.md</code></strong>
-                  <p>Actual project commands only: build, test, lint, run/start, migrations,
-                  and any project-specific operational commands.
+                  <strong>Fill <code>spec-native/COMMANDS.md</code></strong>
+                  <p>Actual project commands only: build, test, lint, run/start, migrations.
                   Never include framework CLI commands here.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Fill <code>agents/ROADMAP.md</code></strong>
-                  <p>Current priorities in order with rationale for ordering.
-                  Rough time horizon. No implementation detail, no spec content.</p>
+                  <strong>Fill <code>spec-native/ROADMAP.md</code></strong>
+                  <p>Current priorities in order with rationale. Rough time horizon.
+                  No implementation detail, no spec content.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Create <code>agents/SPEC.md</code> (or <code>agents/specs/&lt;initiative&gt;/SPEC.md</code>)</strong>
+                  <strong>Create <code>spec-native/specs/&lt;initiative&gt;/SPEC.md</code></strong>
                   <p>ID, state, owner, creation/update dates. Summary, problem, objective.
                   Scope (includes / excludes). Functional and non-functional requirements.
                   Acceptance criteria (Given / When / Then). Dependencies and risks.
-                  Execution plan. Validation plan.</p>
+                  Execution plan. Validation plan. Use MCP prompt <code>start_initiative()</code>.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Derive <code>tasks/&lt;initiative&gt;/TASKS.md</code></strong>
+                  <strong>Derive <code>spec-native/tasks/&lt;initiative&gt;/TASKS.md</code></strong>
                   <p>One task per implementable unit. Each task: ID, state, owner, dependencies,
-                  expected files, observable close criteria, validation command.</p>
+                  expected files, observable close criteria, validation command.
+                  Use MCP prompt <code>plan_tasks()</code>.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Record decisions in <code>agents/DECISIONS.md</code></strong>
+                  <strong>Record decisions in <code>spec-native/DECISIONS.md</code></strong>
                   <p>Only persistent trade-offs that future initiatives must respect.
-                  Format: DEC-XXXX, date, state, context, decision, consequences, replaces.</p>
+                  Format: DEC-XXXX, date, state, context, decision, consequences, replaces.
+                  Use MCP tool <code>log_decision()</code> for quick inline recording.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Fill <code>pipelines/CI.md</code> and <code>pipelines/CD.md</code></strong>
+                  <strong>Fill <code>spec-native/pipelines/CI.md</code> and <code>pipelines/CD.md</code></strong>
                   <p>CI: platform, triggers, mandatory and optional gates, failure policy.
                   CD: environments, release process, promotion gates, rollback process.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Update <code>agents/TRACEABILITY.md</code> when an initiative closes</strong>
+                  <strong>Use <code>checkpoint()</code> at each session pause</strong>
+                  <p>Call <code>checkpoint(initiative, task_id, intent, next_steps)</code> before
+                  ending any session. The next agent — regardless of tool — calls <code>resume()</code>
+                  to continue exactly from here.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <strong>Update <code>spec-native/TRACEABILITY.md</code> when an initiative closes</strong>
                   <p>Link spec → tasks → decisions → main artifacts → validation evidence.
-                  Update at close, not during execution.</p>
+                  Update at close, not during execution. Use MCP prompt <code>close_initiative()</code>.</p>
                 </div>
               </li>
             </ol>
 
             <h3>Agent workflow (from AGENTS.md)</h3>
             <ol class="step-list">
-              <li><div><strong>Read the README.md of the current folder</strong><p>Entry point for navigation in any directory.</p></div></li>
-              <li><div><strong>Check agents/ROADMAP.md</strong><p>Confirm the initiative aligns with current project direction before creating a spec.</p></div></li>
-              <li><div><strong>Read agents/PRODUCT.md and relevant technical context</strong><p>Load minimum context: ARCHITECTURE.md, STACK.md, CONVENTIONS.md as needed.</p></div></li>
-              <li><div><strong>Read agents/DECISIONS.md</strong><p>Respect persistent trade-offs that condition the current design.</p></div></li>
-              <li><div><strong>Review or create a SPEC.md</strong><p>Use agents/SPEC.md for single active specs; agents/specs/&lt;initiative&gt;/SPEC.md for larger projects.</p></div></li>
-              <li><div><strong>Derive or read tasks in tasks/</strong><p>Follow workflows/PLANNING.md to turn spec into executable task list.</p></div></li>
-              <li><div><strong>Implement following workflows/IMPLEMENTATION.md</strong><p>Verify CI gates from pipelines/CI.md before considering work complete.</p></div></li>
-              <li><div><strong>Record persistent trade-offs in DECISIONS.md</strong><p>Only if the decision must survive beyond the current initiative.</p></div></li>
-              <li><div><strong>Update TRACEABILITY.md at initiative close</strong><p>Link all related artifacts. Not during execution — only at close.</p></div></li>
+              <li><div><strong>Check for active session</strong><p>Call <code>resume()</code> — if SESSION.md state is not idle, read what the previous agent left and continue from there.</p></div></li>
+              <li><div><strong>Load minimum context</strong><p>Call <code>context_snapshot()</code> for a full dump, or read individual docs via <code>read_context()</code>.</p></div></li>
+              <li><div><strong>Check spec-native/ROADMAP.md</strong><p>Confirm the initiative aligns with current project direction before creating a spec.</p></div></li>
+              <li><div><strong>Read spec-native/DECISIONS.md</strong><p>Respect persistent trade-offs that condition the current design.</p></div></li>
+              <li><div><strong>Review or create a SPEC.md in spec-native/specs/</strong><p>Use MCP prompt <code>start_initiative()</code> for new initiatives.</p></div></li>
+              <li><div><strong>Derive or read tasks in spec-native/tasks/</strong><p>Follow spec-native/workflows/PLANNING.md or use MCP prompt <code>plan_tasks()</code>.</p></div></li>
+              <li><div><strong>Implement following spec-native/workflows/IMPLEMENTATION.md</strong><p>Use <code>update_task()</code> to mark tasks in_progress and done. Verify CI gates from spec-native/pipelines/CI.md.</p></div></li>
+              <li><div><strong>Record persistent trade-offs with <code>log_decision()</code></strong><p>Only if the decision must survive beyond the current initiative.</p></div></li>
+              <li><div><strong>Checkpoint before pausing</strong><p>Call <code>checkpoint(initiative, task_id, intent, next_steps)</code> before every session end.</p></div></li>
+              <li><div><strong>Update TRACEABILITY.md at initiative close</strong><p>Link all related artifacts. Use MCP prompt <code>close_initiative()</code>.</p></div></li>
             </ol>
           </section>
 
           <!-- STATES -->
           <section class="ref-section" id="states">
             <h2>Required states</h2>
+
+            <h3>SESSION.md</h3>
+            <div class="tag-row">
+              <span class="tag tag-superseded">idle</span>
+              <span class="tag tag-inprogress">in_progress</span>
+              <span class="tag tag-blocked">blocked</span>
+              <span class="tag tag-proposed">waiting_handoff</span>
+            </div>
+            <p style="font-size: 0.85rem; color: #4a5568; margin-top: 0.75rem;">
+              Updated by <code>checkpoint()</code> and <code>handoff()</code>.
+              Reset to <code>idle</code> by <code>close_initiative()</code>.
+            </p>
 
             <h3>Specs</h3>
             <div class="tag-row">
@@ -475,9 +535,10 @@ claude mcp add specnative \
               without TOML. Add TOML blocks when you want <code>validate</code>,
               <code>status</code>, and <code>export</code> CLI commands to work automatically.
               Place the block near the top of the file.
+              SESSION.md uses <code>+++</code> TOML front matter (not a <code>```toml</code> block).
             </p>
 
-            <h3>Spec header (<code>agents/SPEC.md</code> or <code>agents/specs/**/SPEC.md</code>)</h3>
+            <h3>Spec header (<code>spec-native/specs/**/SPEC.md</code>)</h3>
             <div class="code-card">
               <pre><code>```toml
 artifact_type = "spec"
@@ -494,7 +555,7 @@ validation          = ["pytest", "manual walkthrough"]
 ```</code></pre>
             </div>
 
-            <h3>Task file header (<code>tasks/**/TASKS.md</code>)</h3>
+            <h3>Task file header (<code>spec-native/tasks/**/TASKS.md</code>)</h3>
             <div class="code-card">
               <pre><code>```toml
 artifact_type = "task_file"
@@ -524,14 +585,22 @@ validation     = ["pytest tests/example_test.py"]
           <section class="ref-section" id="cli">
             <h2>CLI reference</h2>
             <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
-              <code>tools/specnative.py</code> lives in the SpecNative Development repository,
-              not in the adopting project. Invoke it pointing to the project root.
+              <code>tools/specnative.py</code> — invoke it from the project root.
+              Use <code>init</code> and <code>update</code> when no agent is available.
             </p>
             <table class="ref-table">
               <thead>
                 <tr><th>Command</th><th>What it does</th></tr>
               </thead>
               <tbody>
+                <tr>
+                  <td><code>init [--target .] [--force]</code></td>
+                  <td>Interactive wizard: interviews the developer in the terminal and fills spec-native/ core documents with real project content. Alternative to /spec-init when no agent is available.</td>
+                </tr>
+                <tr>
+                  <td><code>update [--target .] [--doc NAME]</code></td>
+                  <td>Runs a health check, shows gaps, and guides iterative refinement. Use <code>--doc product|stack|architecture|conventions|commands|roadmap</code> to target one document.</td>
+                </tr>
                 <tr>
                   <td><code>status</code></td>
                   <td>Shows each spec with its state and a summary of task states (todo, in_progress, done, blocked counts).</td>
@@ -542,52 +611,50 @@ validation     = ["pytest tests/example_test.py"]
                 </tr>
                 <tr>
                   <td><code>export-index</code></td>
-                  <td>Exports all specs and task files with TOML metadata as JSON. Use <code>--output file.json</code> to write to disk.</td>
+                  <td>Exports all specs and task files with TOML metadata as JSON. Use <code>--output file.json</code>.</td>
                 </tr>
                 <tr>
                   <td><code>export-traceability</code></td>
-                  <td>Exports traceability matrix linking each spec to its task file, decisions, artifacts, and validation. Use <code>--output file.json</code>.</td>
-                </tr>
-                <tr>
-                  <td><code>install</code></td>
-                  <td>Copies the template structure into an existing git repository. Requires clean worktree and creates a dedicated branch. Options: <code>--target</code>, <code>--profile minimal|full</code>, <code>--include-examples</code>, <code>--branch</code>, <code>--force</code>.</td>
+                  <td>Exports traceability matrix linking each spec to its task file, decisions, artifacts, and validation.</td>
                 </tr>
               </tbody>
             </table>
 
             <div class="code-card" style="margin-top: 1rem;">
-              <pre><code># Show spec and task state overview
+              <pre><code># Interactive project setup (no agent needed)
+python3 specnative.py init
+
+# Detect gaps and refine iteratively
+python3 specnative.py update
+python3 specnative.py update --doc stack
+
+# Show spec and task state overview
 python3 specnative.py status
 
 # Validate required files and TOML consistency
 python3 specnative.py validate
 
 # Export full index
-python3 specnative.py export-index --output exports/index.json
-
-# Export traceability matrix
-python3 specnative.py export-traceability --output exports/traceability.json
-
-# Install into existing repository
-python3 specnative.py install \
-  --target /path/to/repo \
-  --profile minimal \
-  --include-examples \
-  --branch specnative/install-v0.3.1</code></pre>
+python3 specnative.py export-index --output exports/index.json</code></pre>
             </div>
 
             <h3>Standalone installer</h3>
             <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 0.75rem;">
               <code>install.py</code> bootstraps SpecNative from a GitHub release with no
-              dependencies beyond the Python standard library.
+              dependencies beyond the Python standard library. Installs agent commands,
+              configures opencode.json and codex.toml, and sets up the MCP venv.
             </p>
             <div class="code-card">
-              <pre><code># Download and run
+              <pre><code># Minimal — AI context layer only
 curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
-  | python3 - --target /path/to/repo
+  | python3 - --target /path/to/repo --profile context
 
-# Or download first, then run
-python3 install.py --target /path/to/repo --profile minimal --include-examples</code></pre>
+# Team (default) — full lifecycle + CI/CD
+curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
+  | python3 - --target /path/to/repo --profile team
+
+# Repair broken MCP (no branch, no worktree check)
+python3 install.py --reinstall --target /path/to/repo</code></pre>
             </div>
           </section>
 

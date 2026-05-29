@@ -101,56 +101,43 @@
 
           <!-- MCP -->
           <section class="ref-section" id="mcp">
-            <h2>Servidor MCP — v0.4</h2>
+            <h2>Servidor MCP — v0.6</h2>
             <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
-              <code>tools/specnative_mcp.py</code> expone el repositorio como
+              <code>.specnative/specnative_mcp.py</code> expone el repositorio como
               <strong>recursos</strong>, <strong>herramientas</strong> y <strong>prompts</strong>
-              MCP para que cualquier agente compatible (Claude Desktop, Claude Code, OpenCode)
-              trabaje en modo spec-first sin navegar manualmente el árbol de archivos.
-              Requiere: <code>pip install mcp</code>.
+              MCP. Se instala automáticamente con su propio venv. Soporta transporte stdio y SSE.
             </p>
 
             <h3>Configuración rápida — Claude Code</h3>
             <div class="code-card">
-              <pre><code># Agregar desde la CLI
+              <pre><code># Agregar desde la CLI (desde la raíz del proyecto)
 claude mcp add specnative \
-  python3 .specnative/specnative_mcp.py \
-  -- --repo /ruta/a/tu/proyecto
-
-# O agregar a .claude/mcp_settings.json
-{
-  "mcpServers": {
-    "specnative": {
-      "command": "python3",
-      "args": [
-        ".specnative/specnative_mcp.py",
-        "--repo", "/ruta/a/tu/proyecto"
-      ]
-    }
-  }
-}</code></pre>
+  "$(pwd)/.specnative/.venv/bin/python3" \
+  "$(pwd)/.specnative/specnative_mcp.py" \
+  -- --repo "$(pwd)"</code></pre>
             </div>
 
             <h3>Recursos</h3>
             <table class="ref-table">
               <thead><tr><th>URI</th><th>Documento</th></tr></thead>
               <tbody>
-                <tr><td><code>spec://agents</code></td><td>AGENTS.md — contrato operativo</td></tr>
-                <tr><td><code>spec://context/product</code></td><td>agents/PRODUCT.md</td></tr>
-                <tr><td><code>spec://context/architecture</code></td><td>agents/ARCHITECTURE.md</td></tr>
-                <tr><td><code>spec://context/stack</code></td><td>agents/STACK.md</td></tr>
-                <tr><td><code>spec://context/conventions</code></td><td>agents/CONVENTIONS.md</td></tr>
-                <tr><td><code>spec://context/commands</code></td><td>agents/COMMANDS.md</td></tr>
-                <tr><td><code>spec://context/decisions</code></td><td>agents/DECISIONS.md</td></tr>
-                <tr><td><code>spec://context/roadmap</code></td><td>agents/ROADMAP.md</td></tr>
-                <tr><td><code>spec://context/traceability</code></td><td>agents/TRACEABILITY.md</td></tr>
-                <tr><td><code>spec://pipelines/ci</code></td><td>pipelines/CI.md</td></tr>
-                <tr><td><code>spec://pipelines/cd</code></td><td>pipelines/CD.md</td></tr>
+                <tr><td><code>spec://agents</code></td><td>AGENTS.md — meta-índice y referencia MCP</td></tr>
+                <tr><td><code>spec://session</code></td><td>spec-native/SESSION.md — estado activo</td></tr>
+                <tr><td><code>spec://context/product</code></td><td>spec-native/PRODUCT.md</td></tr>
+                <tr><td><code>spec://context/architecture</code></td><td>spec-native/ARCHITECTURE.md</td></tr>
+                <tr><td><code>spec://context/stack</code></td><td>spec-native/STACK.md</td></tr>
+                <tr><td><code>spec://context/conventions</code></td><td>spec-native/CONVENTIONS.md</td></tr>
+                <tr><td><code>spec://context/commands</code></td><td>spec-native/COMMANDS.md</td></tr>
+                <tr><td><code>spec://context/decisions</code></td><td>spec-native/DECISIONS.md</td></tr>
+                <tr><td><code>spec://context/roadmap</code></td><td>spec-native/ROADMAP.md</td></tr>
+                <tr><td><code>spec://context/traceability</code></td><td>spec-native/TRACEABILITY.md</td></tr>
+                <tr><td><code>spec://pipelines/ci</code></td><td>spec-native/pipelines/CI.md</td></tr>
+                <tr><td><code>spec://pipelines/cd</code></td><td>spec-native/pipelines/CD.md</td></tr>
                 <tr><td><code>spec://schema</code></td><td>.specnative/SCHEMA.md</td></tr>
               </tbody>
             </table>
 
-            <h3>Herramientas</h3>
+            <h3>Herramientas — consulta</h3>
             <table class="ref-table">
               <thead><tr><th>Herramienta</th><th>Descripción</th></tr></thead>
               <tbody>
@@ -159,8 +146,30 @@ claude mcp add specnative \
                 <tr><td><code>list_specs()</code></td><td>Todas las specs con ID, estado y owner</td></tr>
                 <tr><td><code>list_tasks(initiative)</code></td><td>Tareas de una iniciativa</td></tr>
                 <tr><td><code>read_spec(initiative)</code></td><td>Leer una spec</td></tr>
-                <tr><td><code>read_context(document)</code></td><td>Leer cualquier documento de contexto por nombre</td></tr>
+                <tr><td><code>read_context(document)</code></td><td>Leer cualquier documento de contexto (incluye <code>session</code>)</td></tr>
                 <tr><td><code>export_index()</code></td><td>Exportar toda la metadata como JSON</td></tr>
+                <tr><td><code>context_snapshot(initiative?)</code></td><td>Dump completo de contexto para onboarding</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Herramientas — continuidad multi-agente</h3>
+            <table class="ref-table">
+              <thead><tr><th>Herramienta</th><th>Descripción</th></tr></thead>
+              <tbody>
+                <tr><td><code>resume()</code></td><td>Lee SESSION.md y retorna resumen estructurado de continuidad</td></tr>
+                <tr><td><code>checkpoint(initiative, task_id, intent, next_steps, …)</code></td><td>Guarda estado activo antes de pausar o cambiar de agente</td></tr>
+                <tr><td><code>update_task(initiative, task_id, state, notes?)</code></td><td>Actualiza estado de tarea en TASKS.md directamente desde MCP</td></tr>
+                <tr><td><code>log_decision(title, context, decision, consequences)</code></td><td>Append rápido a DECISIONS.md</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Herramientas — definición del proyecto</h3>
+            <table class="ref-table">
+              <thead><tr><th>Herramienta</th><th>Descripción</th></tr></thead>
+              <tbody>
+                <tr><td><code>health_check()</code></td><td>Escanea spec-native/ — docs vacíos, faltantes, sesión obsoleta, specs sin tareas</td></tr>
+                <tr><td><code>suggest_next()</code></td><td>Top 3 acciones recomendadas basadas en roadmap y estado actual</td></tr>
+                <tr><td><code>refine_document(document, what_changed, new_content)</code></td><td>Actualiza un documento de contexto con nuevo contenido</td></tr>
               </tbody>
             </table>
 
@@ -168,16 +177,18 @@ claude mcp add specnative \
             <table class="ref-table">
               <thead><tr><th>Prompt</th><th>Descripción</th></tr></thead>
               <tbody>
+                <tr><td><code>init_project_guided(name, problem, users, goals, …)</code></td><td>Llena los documentos core desde respuestas del desarrollador</td></tr>
                 <tr><td><code>start_initiative(name, problem)</code></td><td>Iniciar una nueva iniciativa spec-driven</td></tr>
                 <tr><td><code>plan_tasks(initiative)</code></td><td>Derivar tareas desde una spec</td></tr>
                 <tr><td><code>implement_task(initiative, task_id)</code></td><td>Implementar una tarea específica</td></tr>
                 <tr><td><code>review_against_spec(initiative)</code></td><td>Revisar contra criterios de aceptación</td></tr>
+                <tr><td><code>handoff(summary, next_steps, decisions?)</code></td><td>Generar traspaso estructurado en SESSION.md para el siguiente agente</td></tr>
                 <tr><td><code>record_decision(title, ctx, dec, cons)</code></td><td>Registrar una decisión persistente</td></tr>
                 <tr><td><code>close_initiative(initiative)</code></td><td>Cerrar y actualizar trazabilidad</td></tr>
               </tbody>
             </table>
             <p style="font-size: 0.85rem; color: #4a5568; margin-top: 1rem;">
-              Configuración completa para Claude Desktop, OpenCode y transporte SSE:
+              Configuración completa para Claude Desktop, OpenCode, Codex y transporte SSE:
               <a href="https://github.com/rafex/SpecNative-Development/blob/main/Template-Project-Agents-AI/.specnative/MCP.md">.specnative/MCP.md</a>
             </p>
           </section>
@@ -187,40 +198,41 @@ claude mcp add specnative \
             <h2>Estructura del repositorio</h2>
             <div class="code-card" style="margin-bottom: 1.5rem;">
               <pre><code>repo/
-├── AGENTS.md              # Contrato operativo para agentes — leer primero
-├── README.md              # Índice de navegación
-├── agents/
-│   ├── README.md          # Índice de la carpeta de contexto
+├── AGENTS.md              # Meta-índice: qué es SpecNative, referencia MCP — leer primero
+├── spec-native/
+│   ├── README.md          # Índice de navegación de la carpeta de contexto
 │   ├── PRODUCT.md         # Problema, usuarios, objetivos (permanente)
 │   ├── ARCHITECTURE.md    # Estructura del sistema y límites
-│   ├── STACK.md           # Stack tecnológico y restricciones de versión
+│   ├── STACK.md           # Stack tecnológico y restricciones
 │   ├── CONVENTIONS.md     # Reglas de código, naming, testing
 │   ├── COMMANDS.md        # Comandos del proyecto (build, test, lint...)
-│   ├── SPEC.md            # Spec activa (o entrada a specs/)
 │   ├── DECISIONS.md       # Decisiones persistentes y tradeoffs
 │   ├── ROADMAP.md         # Dirección temporal, sin detalle de implementación
 │   ├── TRACEABILITY.md    # Vínculos entre artefactos
-│   └── specs/
-│       └── &lt;iniciativa&gt;/
-│           └── SPEC.md
-├── tasks/
-│   └── &lt;iniciativa&gt;/
-│       └── TASKS.md
-├── workflows/
-│   ├── PLANNING.md
-│   ├── IMPLEMENTATION.md
-│   └── REVIEW.md
-├── pipelines/
-│   ├── CI.md              # Gates de validación automatizados
-│   └── CD.md              # Proceso de entrega y ambientes
+│   ├── SESSION.md         # Estado activo de trabajo (continuidad multi-agente)
+│   ├── specs/
+│   │   └── &lt;iniciativa&gt;/SPEC.md
+│   ├── tasks/
+│   │   └── &lt;iniciativa&gt;/TASKS.md
+│   ├── workflows/
+│   │   ├── PLANNING.md
+│   │   ├── IMPLEMENTATION.md
+│   │   └── REVIEW.md
+│   └── pipelines/
+│       ├── CI.md          # Gates de validación automatizados
+│       └── CD.md          # Proceso de entrega y ambientes
+├── .claude/commands/      # Slash commands: /spec-init /spec-update /spec-status /spec-handoff
+├── codex.toml             # Comandos prompt para Codex CLI
+├── opencode.json          # MCP + prompts para OpenCode
 └── .specnative/
     ├── SCHEMA.md           # Contrato del framework (no contenido del proyecto)
-    └── CLI.md              # Referencia del CLI</code></pre>
+    ├── MCP.md              # Configuración del servidor MCP por agente
+    └── specnative_mcp.py   # Servidor MCP (instalado automáticamente)</code></pre>
             </div>
             <p style="font-size: 0.9rem; color: #4a5568;">
               Los archivos en MAYÚSCULAS son contexto para agentes. Los <code>README.md</code>
               son índices de navegación, no la fuente de verdad. Carga el mínimo contexto
-              necesario para la tarea actual. No ingieras todo el repositorio.
+              necesario para la tarea actual. SESSION.md persiste el estado activo entre agentes.
             </p>
           </section>
 
