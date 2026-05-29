@@ -1072,6 +1072,371 @@ def close_initiative(initiative_name: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Tools — project definition and health (v0.6)
+# ---------------------------------------------------------------------------
+
+_PLACEHOLDER_PATTERNS = [
+    r"<!--",
+    r"^#\s+Template",
+    r"^\s*$",
+    r"- Plataforma de CI:\s*$",
+    r"- Plataforma de CD:\s*$",
+    r"Tu nombre\b",
+    r"tu proyecto\b",
+    r"descripcion del proyecto\b",
+    r"Describe\b.*\baqui\b",
+]
+_PLACEHOLDER_RE = re.compile(
+    "|".join(_PLACEHOLDER_PATTERNS), re.IGNORECASE | re.MULTILINE
+)
+
+_CORE_DOCS = [
+    ("product",      "PRODUCT.md",      "Problema, usuarios, objetivos"),
+    ("architecture", "ARCHITECTURE.md", "Estructura del sistema, módulos, límites"),
+    ("stack",        "STACK.md",        "Tecnologías y restricciones de versión"),
+    ("conventions",  "CONVENTIONS.md",  "Reglas de código, naming, testing"),
+    ("commands",     "COMMANDS.md",     "Comandos de dev, test, build"),
+    ("decisions",    "DECISIONS.md",    "Decisiones persistentes y tradeoffs"),
+    ("roadmap",      "ROADMAP.md",      "Prioridades de mediano plazo"),
+]
+
+
+def _doc_has_real_content(path: Path) -> bool:
+    """Return True when the file exists and has non-placeholder content."""
+    if not path.exists():
+        return False
+    text = path.read_text(encoding="utf-8").strip()
+    if len(text) < 80:
+        return False
+    # Count non-empty, non-comment, non-placeholder lines
+    real_lines = [
+        ln for ln in text.splitlines()
+        if ln.strip() and not _PLACEHOLDER_RE.search(ln)
+    ]
+    return len(real_lines) >= 5
+
+
+@mcp.tool()
+def health_check() -> str:
+    """
+    Scan spec-native/ and report documentation gaps, missing files, stale
+    session state, and specs with no linked tasks. Call this before init or
+    update to get a prioritised action list.
+    """
+    lines: list[str] = [f"SpecNative health check — {REPO.name}\n"]
+    issues: list[str] = []
+    ok: list[str] = []
+
+    # 1. Core documents
+    for short, filename, description in _CORE_DOCS:
+        path = SN / filename
+        if not path.exists():
+            issues.append(f"  ✗ MISSING   spec-native/{filename}  ({description})")
+        elif not _doc_has_real_content(path):
+            issues.append(f"  ⚠ EMPTY     spec-native/{filename}  ({description})")
+        else:
+            ok.append(f"  ✓ OK        spec-native/{filename}")
+
+    # 2. SESSION.md state
+    session_path = SN / "SESSION.md"
+    if not session_path.exists():
+        issues.append("  ✗ MISSING   spec-native/SESSION.md")
+    else:
+        meta = _toml_loads(session_path.read_text(encoding="utf-8"))
+        session = meta.get("session", meta)
+        state = session.get("state", "idle")
+        updated = session.get("last_updated", "")
+        if state in ("in_progress", "blocked", "waiting_handoff"):
+            issues.append(
+                f"  ⚠ SESSION   state={state} | agent={session.get('agent', '?')} | "
+                f"task={session.get('task', '?')} | updated={updated or 'unknown'}\n"
+                f"            → Call resume() to see details or checkpoint() to clear."
+            )
+        else:
+            ok.append("  ✓ OK        spec-native/SESSION.md  (idle)")
+
+    # 3. Specs without tasks
+    for sp in _find_specs():
+        initiative = sp.parent.name
+        tasks_path = SN / "tasks" / initiative / "TASKS.md"
+        if not tasks_path.exists() and initiative not in ("spec-native", "specs"):
+            issues.append(
+                f"  ⚠ NO TASKS  spec-native/specs/{initiative}/SPEC.md has no task file"
+            )
+
+    # 4. Required framework files
+    for rel in ["AGENTS.md", ".specnative/SCHEMA.md", ".specnative/MCP.md"]:
+        if not (REPO / rel).exists():
+            issues.append(f"  ✗ MISSING   {rel}")
+
+    if issues:
+        lines.append("Issues found:\n" + "\n".join(issues))
+    if ok:
+        lines.append("\nHealthy:\n" + "\n".join(ok))
+
+    score = len(ok)
+    total = len(ok) + len(issues)
+    lines.append(f"\nScore: {score}/{total} documents healthy.")
+
+    if not issues:
+        lines.append("✓ All good. Run suggest_next() for recommended next steps.")
+    else:
+        lines.append(
+            "\nRun /spec-init (Claude Code), spec-init prompt (OpenCode/Codex), "
+            "or `specnative init` (CLI) to fill gaps interactively."
+        )
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def suggest_next() -> str:
+    """
+    Based on ROADMAP.md, current spec/task status and health check gaps,
+    suggest the 3 most impactful next actions.
+    """
+    suggestions: list[tuple[int, str, str]] = []  # (priority, label, action)
+
+    # 1. Empty core documents → init
+    empty_docs = [
+        name for _, name, _ in _CORE_DOCS
+        if not _doc_has_real_content(SN / name)
+    ]
+    if empty_docs:
+        doc_list = ", ".join(empty_docs[:3])
+        suggestions.append((
+            1,
+            "Fill project context",
+            f"Core documents are empty: {doc_list}.\n"
+            f"   → Run /spec-init or `specnative init` to fill them interactively.",
+        ))
+
+    # 2. Active session waiting
+    session_path = SN / "SESSION.md"
+    if session_path.exists():
+        meta = _toml_loads(session_path.read_text(encoding="utf-8"))
+        session = meta.get("session", meta)
+        state = session.get("state", "idle")
+        if state in ("in_progress", "waiting_handoff"):
+            suggestions.append((
+                1,
+                "Resume active work",
+                f"SESSION.md shows state={state} on initiative={session.get('initiative', '?')}, "
+                f"task={session.get('task', '?')}.\n"
+                f"   → Call resume() to see details and continue.",
+            ))
+
+    # 3. Specs without tasks
+    for sp in _find_specs():
+        initiative = sp.parent.name
+        if initiative in ("spec-native", "specs"):
+            continue
+        tasks_path = SN / "tasks" / initiative / "TASKS.md"
+        if not tasks_path.exists():
+            suggestions.append((
+                2,
+                f"Plan tasks for {initiative}",
+                f"spec-native/specs/{initiative}/SPEC.md exists but has no task file.\n"
+                f"   → Use the plan_tasks('{initiative}') prompt to break it into tasks.",
+            ))
+
+    # 4. Roadmap mentions → suggest starting an initiative
+    roadmap_path = SN / "ROADMAP.md"
+    if roadmap_path.exists() and _doc_has_real_content(roadmap_path):
+        roadmap_text = roadmap_path.read_text(encoding="utf-8")
+        spec_ids = {
+            _toml_loads(sp.read_text(encoding="utf-8")).get("id", "") for sp in _find_specs()
+        }
+        # Simple heuristic: look for bullet lines with verbs that suggest work
+        for line in roadmap_text.splitlines():
+            if re.search(r"^\s*[-*]\s+\w", line) and len(line.strip()) > 10:
+                if not any(sid.lower() in line.lower() for sid in spec_ids if sid):
+                    initiative_hint = re.sub(r"[^\w\s-]", "", line.strip("- *")).strip()[:60]
+                    suggestions.append((
+                        3,
+                        "Start a ROADMAP initiative",
+                        f"ROADMAP.md mentions: '{initiative_hint}' — no spec exists yet.\n"
+                        f"   → Use start_initiative() to create a spec for it.",
+                    ))
+                    break  # one hint is enough
+
+    if not suggestions:
+        suggestions.append((
+            3,
+            "Review and evolve",
+            "Everything looks healthy. Consider:\n"
+            "   → Updating ROADMAP.md with new priorities.\n"
+            "   → Recording new decisions with log_decision().\n"
+            "   → Closing completed initiatives with close_initiative().",
+        ))
+
+    suggestions.sort(key=lambda x: x[0])
+    lines = [f"Suggested next actions — {REPO.name}\n"]
+    for i, (_, label, action) in enumerate(suggestions[:3], 1):
+        lines.append(f"{i}. {label}\n   {action}\n")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def refine_document(document: str, what_changed: str, new_content: str) -> str:
+    """
+    Overwrite a spec-native/ document with new content.
+    Use this after interviewing the developer to update project context.
+
+    Args:
+        document:     Short name: product, architecture, stack, conventions,
+                      commands, decisions, roadmap, traceability
+        what_changed: One-line note describing what changed and why
+        new_content:  Complete new Markdown content for the document
+    """
+    writable = {
+        "product":      SN / "PRODUCT.md",
+        "architecture": SN / "ARCHITECTURE.md",
+        "stack":        SN / "STACK.md",
+        "conventions":  SN / "CONVENTIONS.md",
+        "commands":     SN / "COMMANDS.md",
+        "decisions":    SN / "DECISIONS.md",
+        "roadmap":      SN / "ROADMAP.md",
+        "traceability": SN / "TRACEABILITY.md",
+    }
+    path = writable.get(document.lower())
+    if not path:
+        valid = ", ".join(sorted(writable))
+        return f"Unknown document '{document}'. Valid names: {valid}"
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(new_content.rstrip() + "\n", encoding="utf-8")
+
+    return (
+        f"spec-native/{path.name} updated.\n"
+        f"Change: {what_changed}\n"
+        f"Next: call health_check() to verify, or refine_document() on another doc."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Prompts — project definition (v0.6)
+# ---------------------------------------------------------------------------
+
+@mcp.prompt()
+def init_project_guided(
+    project_name: str,
+    problem: str,
+    users: str,
+    goals: str,
+    non_goals: str,
+    stack: str,
+    architecture_notes: str,
+    conventions_notes: str,
+    commands_notes: str,
+) -> str:
+    """
+    Fill the core spec-native/ documents with real project content gathered
+    from the developer. Call health_check() first, then interview the developer
+    in the chat, then invoke this prompt with the collected answers.
+
+    Args:
+        project_name:         Name of the project
+        problem:              What problem it solves
+        users:                Who uses it and their main pain
+        goals:                Measurable success goals
+        non_goals:            What is explicitly out of scope
+        stack:                Tech stack — language, framework, DB, key deps
+        architecture_notes:   Main modules/components and their boundaries
+        conventions_notes:    Naming, testing, commit conventions
+        commands_notes:       Install, run, test, build commands
+    """
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    return f"""You are filling the SpecNative context documents for '{project_name}'.
+
+Developer answers gathered:
+  Project     : {project_name}
+  Problem     : {problem}
+  Users       : {users}
+  Goals       : {goals}
+  Non-goals   : {non_goals}
+  Stack       : {stack}
+  Architecture: {architecture_notes}
+  Conventions : {conventions_notes}
+  Commands    : {commands_notes}
+
+## Steps
+
+1. Use tool refine_document('product', 'Initial setup {today}', ...) with:
+
+   # PRODUCT.md
+
+   ## Problema
+   {problem}
+
+   ## Usuarios
+   {users}
+
+   ## Objetivos
+   {goals}
+
+   ## No objetivos
+   {non_goals}
+
+   ## Valor diferencial
+   (Derive from the above — what makes this solution worth building)
+
+2. Use tool refine_document('stack', 'Initial setup {today}', ...) with:
+
+   # STACK.md
+
+   ## Tecnologias principales
+   {stack}
+
+   ## Restricciones
+   (List version constraints or incompatibilities you know of)
+
+   ## Dependencias clave
+   (Core libraries that the architecture depends on)
+
+3. Use tool refine_document('architecture', 'Initial setup {today}', ...) with:
+
+   # ARCHITECTURE.md
+
+   ## Modulos principales
+   {architecture_notes}
+
+   ## Limites y reglas
+   (What must not cross module boundaries — derive from the notes above)
+
+4. Use tool refine_document('conventions', 'Initial setup {today}', ...) with:
+
+   # CONVENTIONS.md
+
+   ## Convenciones de codigo
+   {conventions_notes}
+
+   ## Testing
+   (Derive from conventions_notes — coverage expectations, patterns)
+
+   ## Commits y PRs
+   (Derive from conventions_notes — branch naming, commit style)
+
+5. Use tool refine_document('commands', 'Initial setup {today}', ...) with:
+
+   # COMMANDS.md
+
+   ## Setup
+   {commands_notes}
+
+   (Format as: `# comment` then the actual command, one block per category)
+
+6. Call health_check() to verify all documents are now healthy.
+
+7. Report to the developer:
+   - Which files were updated
+   - Overall health score
+   - Suggested next step: "Use start_initiative() to create your first spec."
+"""
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 

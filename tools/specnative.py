@@ -364,6 +364,320 @@ def install_template(target: Path, profile: str, include_examples: bool, branch:
     return 0
 
 
+# ---------------------------------------------------------------------------
+# Init — interactive wizard
+# ---------------------------------------------------------------------------
+
+_INIT_QUESTIONS: list[tuple[str, str, str]] = [
+    # (document, section_title, question)
+    ("product",      "Problema",    "¿Qué problema principal resuelve este proyecto?"),
+    ("product",      "Usuarios",    "¿Para quién lo construyes? ¿Cuál es su dolor principal?"),
+    ("product",      "Objetivos",   "¿Cuál es el objetivo concreto y medible de éxito?"),
+    ("product",      "No objetivos","¿Qué queda explícitamente fuera del alcance?"),
+    ("stack",        "Stack",       "¿Qué lenguajes, frameworks y base de datos usan?"),
+    ("stack",        "Restricciones","¿Restricciones de versión o dependencias clave?"),
+    ("architecture", "Modulos",     "¿Cuáles son los módulos o componentes principales?"),
+    ("architecture", "Limites",     "¿Hay límites o fronteras importantes entre módulos?"),
+    ("conventions",  "Codigo",      "¿Convenciones de naming y estructura de carpetas?"),
+    ("conventions",  "Testing",     "¿Política de testing? ¿Cobertura esperada?"),
+    ("conventions",  "Commits",     "¿Convención para commits y PRs?"),
+    ("commands",     "Setup",       "¿Cómo se instalan las dependencias?"),
+    ("commands",     "Desarrollo",  "¿Cómo se corre el proyecto en local?"),
+    ("commands",     "Tests",       "¿Cómo se corren los tests?"),
+    ("commands",     "Build",       "¿Cómo se hace el build o deploy?"),
+]
+
+_DOC_HEADERS: dict[str, str] = {
+    "product":      "# PRODUCT.md\n\nFuente de verdad del producto.\n",
+    "stack":        "# STACK.md\n\nTecnologías, versiones y restricciones técnicas.\n",
+    "architecture": "# ARCHITECTURE.md\n\nEstructura del sistema, módulos y límites.\n",
+    "conventions":  "# CONVENTIONS.md\n\nReglas de código, naming, testing y commits.\n",
+    "commands":     "# COMMANDS.md\n\nComandos de desarrollo, test, lint y build.\n",
+}
+
+
+def _ask(prompt: str, default: str = "") -> str:
+    """Print prompt and return stripped input. Returns default on empty input."""
+    hint = f" [{default}]" if default else ""
+    try:
+        answer = input(f"\n{prompt}{hint}\n> ").strip()
+    except (EOFError, KeyboardInterrupt):
+        print("\nCancelled.", file=sys.stderr)
+        sys.exit(1)
+    return answer or default
+
+
+def _confirm(question: str, default: bool = True) -> bool:
+    hint = "[Y/n]" if default else "[y/N]"
+    try:
+        answer = input(f"\n{question} {hint} ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print("\nCancelled.", file=sys.stderr)
+        sys.exit(1)
+    if not answer:
+        return default
+    return answer.startswith("y")
+
+
+def init_interactive(target: Path, force: bool) -> int:
+    """
+    Interactive wizard: ask the developer about their project and fill
+    spec-native/ documents with real content.
+    """
+    sn = target / "spec-native"
+    if not sn.exists():
+        print(
+            f"Error: spec-native/ not found in {target}.\n"
+            "Run install.py first to set up the SpecNative structure.",
+            file=sys.stderr,
+        )
+        return 1
+
+    print("\n🟢 SpecNative Init — definamos el contexto base de tu proyecto\n")
+    print("Responde cada pregunta. Puedes dejar en blanco para completar más tarde.")
+
+    # Collect answers grouped by document
+    answers: dict[str, dict[str, str]] = {
+        "product": {}, "stack": {}, "architecture": {}, "conventions": {}, "commands": {}
+    }
+
+    for doc, section, question in _INIT_QUESTIONS:
+        answers[doc][section] = _ask(question)
+
+    # Write files
+    created: list[str] = []
+    skipped: list[str] = []
+
+    for doc, sections in answers.items():
+        dest = sn / f"{doc.upper()}.md"
+        if dest.exists() and not force:
+            if not _confirm(f"spec-native/{doc.upper()}.md ya existe. ¿Sobreescribir?", default=False):
+                skipped.append(f"spec-native/{doc.upper()}.md")
+                continue
+
+        content = _DOC_HEADERS[doc]
+        for section, answer in sections.items():
+            if answer:
+                content += f"\n## {section}\n\n{answer}\n"
+
+        dest.write_text(content, encoding="utf-8")
+        created.append(f"spec-native/{doc.upper()}.md")
+
+    print("\n✓ SpecNative Init completado")
+    if created:
+        print("  Archivos creados/actualizados:")
+        for f in created:
+            print(f"    {f}")
+    if skipped:
+        print("  Omitidos (ya existían):")
+        for f in skipped:
+            print(f"    {f}")
+
+    print(
+        "\nPróximos pasos:"
+        "\n  1. Conecta el MCP: ver .specnative/MCP.md"
+        "\n  2. Refina con:  python3 specnative.py update --target ."
+        "\n  3. Crea tu primera spec con el prompt start_initiative() del MCP"
+    )
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# Update — health check + guided refinement
+# ---------------------------------------------------------------------------
+
+_PLACEHOLDER_RE_CLI = re.compile(
+    r"<!--|\bTemplate\b|^\s*$|\bDescribe\b.*\baqui\b|Tu nombre\b",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+_REFINE_PROMPTS: dict[str, list[tuple[str, str]]] = {
+    "product": [
+        ("Problema",    "¿Cómo describirías ahora el problema que resuelve el proyecto?"),
+        ("Usuarios",    "¿Ha cambiado tu comprensión de los usuarios o su dolor principal?"),
+        ("Objetivos",   "¿Cuál es el objetivo medible de éxito hoy?"),
+        ("No objetivos","¿Qué queda fuera del alcance?"),
+    ],
+    "stack": [
+        ("Stack",          "¿Qué tecnologías, versiones y base de datos usan actualmente?"),
+        ("Restricciones",  "¿Restricciones de versión o dependencias clave nuevas?"),
+    ],
+    "architecture": [
+        ("Modulos",  "¿Cuáles son los módulos principales hoy?"),
+        ("Limites",  "¿Hay límites o reglas entre módulos que deban documentarse?"),
+    ],
+    "conventions": [
+        ("Codigo",   "¿Convenciones de naming y estructura de carpetas vigentes?"),
+        ("Testing",  "¿Política de testing actual?"),
+        ("Commits",  "¿Convención de commits y PRs?"),
+    ],
+    "commands": [
+        ("Setup",       "Comando para instalar dependencias:"),
+        ("Desarrollo",  "Comando para correr el proyecto en local:"),
+        ("Tests",       "Comando para correr tests:"),
+        ("Build",       "Comando de build o deploy:"),
+    ],
+    "roadmap": [
+        ("Ahora",         "¿Qué iniciativas están activas ahora mismo?"),
+        ("Después",       "¿Cuáles son las siguientes prioridades?"),
+        ("Más adelante",  "¿Qué apuestas de largo plazo hay?"),
+        ("No por ahora",  "¿Qué se ha descartado temporalmente?"),
+    ],
+}
+
+
+def _doc_is_empty_cli(path: Path) -> bool:
+    if not path.exists():
+        return True
+    text = path.read_text(encoding="utf-8").strip()
+    if len(text) < 80:
+        return True
+    real = [ln for ln in text.splitlines() if ln.strip() and not _PLACEHOLDER_RE_CLI.search(ln)]
+    return len(real) < 5
+
+
+def update_interactive(target: Path, doc: str | None) -> int:
+    """
+    Detect documentation gaps and guide the developer to refine them.
+    Without --doc: shows health check and asks what to update.
+    With --doc: refines that specific document.
+    """
+    sn = target / "spec-native"
+    if not sn.exists():
+        print(
+            f"Error: spec-native/ not found in {target}.\n"
+            "Run install.py first.",
+            file=sys.stderr,
+        )
+        return 1
+
+    print("\n🟡 SpecNative Update\n")
+
+    docs_to_check = [
+        ("product",      "PRODUCT.md"),
+        ("stack",        "STACK.md"),
+        ("architecture", "ARCHITECTURE.md"),
+        ("conventions",  "CONVENTIONS.md"),
+        ("commands",     "COMMANDS.md"),
+        ("roadmap",      "ROADMAP.md"),
+    ]
+
+    if doc:
+        # Refine a single document
+        target_docs = [(d, f) for d, f in docs_to_check if d == doc.lower()]
+        if not target_docs:
+            print(
+                f"Unknown document '{doc}'. "
+                f"Valid: {', '.join(d for d, _ in docs_to_check)}",
+                file=sys.stderr,
+            )
+            return 1
+    else:
+        # Health check first
+        empty = [(d, f) for d, f in docs_to_check if _doc_is_empty_cli(sn / f)]
+        filled = [(d, f) for d, f in docs_to_check if not _doc_is_empty_cli(sn / f)]
+
+        print("Estado de la documentación:")
+        for d, f in filled:
+            print(f"  ✓  spec-native/{f}")
+        for d, f in empty:
+            print(f"  ⚠  spec-native/{f}  (vacío o incompleto)")
+
+        if not empty:
+            print("\n✓ Todos los documentos core tienen contenido.")
+            choice = _ask(
+                "¿Qué quieres actualizar?\n"
+                "  1) Un documento específico\n"
+                "  2) El ROADMAP\n"
+                "  3) Nada por ahora (salir)\n"
+                "Elige (1/2/3)",
+                default="3",
+            )
+            if choice == "3":
+                return 0
+            elif choice == "2":
+                doc = "roadmap"
+                target_docs = [("roadmap", "ROADMAP.md")]
+            else:
+                doc_name = _ask(
+                    "¿Qué documento quieres actualizar? "
+                    "(product, stack, architecture, conventions, commands, roadmap)"
+                )
+                target_docs = [(d, f) for d, f in docs_to_check if d == doc_name.lower()]
+                if not target_docs:
+                    print(f"Documento '{doc_name}' no reconocido.", file=sys.stderr)
+                    return 1
+        else:
+            print(f"\n{len(empty)} documento(s) con vacíos.")
+            choice = _ask(
+                "¿Qué quieres hacer?\n"
+                "  1) Llenar los vacíos detectados\n"
+                "  2) Actualizar un documento específico\n"
+                "  3) Salir\n"
+                "Elige (1/2/3)",
+                default="1",
+            )
+            if choice == "3":
+                return 0
+            elif choice == "2":
+                doc_name = _ask(
+                    "¿Qué documento? "
+                    "(product, stack, architecture, conventions, commands, roadmap)"
+                )
+                target_docs = [(d, f) for d, f in docs_to_check if d == doc_name.lower()]
+                if not target_docs:
+                    print(f"Documento '{doc_name}' no reconocido.", file=sys.stderr)
+                    return 1
+            else:
+                target_docs = empty
+
+    updated: list[str] = []
+    for doc_key, filename in target_docs:
+        path = sn / filename
+        questions = _REFINE_PROMPTS.get(doc_key, [])
+        if not questions:
+            continue
+
+        print(f"\n── {filename} ──")
+        if path.exists():
+            print(path.read_text(encoding="utf-8")[:400].rstrip())
+            print("  …")
+
+        sections: dict[str, str] = {}
+        for section, question in questions:
+            answer = _ask(question)
+            if answer:
+                sections[section] = answer
+
+        if not sections:
+            print(f"  Omitido (sin respuestas).")
+            continue
+
+        header = _DOC_HEADERS.get(doc_key, f"# {filename}\n\n")
+        if doc_key == "roadmap":
+            header = "# ROADMAP.md\n\nDirección y prioridades del proyecto.\n"
+
+        content = header
+        for section, answer in sections.items():
+            content += f"\n## {section}\n\n{answer}\n"
+
+        path.write_text(content, encoding="utf-8")
+        updated.append(f"spec-native/{filename}")
+
+    if updated:
+        print("\n✓ Documentos actualizados:")
+        for f in updated:
+            print(f"  {f}")
+    else:
+        print("\nNada actualizado.")
+
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="SpecNative tooling")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -383,22 +697,34 @@ def build_parser() -> argparse.ArgumentParser:
         "--profile",
         choices=("minimal", "full"),
         default="minimal",
-        help="Installation profile. 'full' also installs the template root README when possible.",
+        help="Installation profile.",
     )
-    install_parser.add_argument(
-        "--include-examples",
-        action="store_true",
-        help="Install the example authentication initiative.",
+    install_parser.add_argument("--include-examples", action="store_true")
+    install_parser.add_argument("--branch", default=f"{INSTALL_BRANCH_PREFIX}-v0.6")
+    install_parser.add_argument("--force", action="store_true")
+
+    init_parser = subparsers.add_parser(
+        "init",
+        help="Interactive wizard to fill spec-native/ documents with real project content",
     )
-    install_parser.add_argument(
-        "--branch",
-        default=f"{INSTALL_BRANCH_PREFIX}-v0.3",
-        help="Branch to create in the target repository before installation.",
+    init_parser.add_argument(
+        "--target", default=".", help="Path to the repository (default: current directory)"
     )
-    install_parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Overwrite existing files in the target repository.",
+    init_parser.add_argument(
+        "--force", action="store_true", help="Overwrite existing documents"
+    )
+
+    update_parser = subparsers.add_parser(
+        "update",
+        help="Detect documentation gaps and guide iterative refinement",
+    )
+    update_parser.add_argument(
+        "--target", default=".", help="Path to the repository (default: current directory)"
+    )
+    update_parser.add_argument(
+        "--doc",
+        default=None,
+        help="Refine a specific document: product, stack, architecture, conventions, commands, roadmap",
     )
 
     return parser
@@ -432,6 +758,10 @@ def main() -> int:
             stderr = exc.stderr.strip() if exc.stderr else str(exc)
             print(f"Install failed: {stderr}", file=sys.stderr)
             return 1
+    if args.command == "init":
+        return init_interactive(Path(args.target).resolve(), args.force)
+    if args.command == "update":
+        return update_interactive(Path(args.target).resolve(), args.doc)
 
     parser.error(f"unknown command: {args.command}")
     return 2

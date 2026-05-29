@@ -85,6 +85,7 @@ INSTALL_BRANCH_PREFIX = "specnative/install"
 
 # context — AI context layer. Just enough for an agent to understand the project.
 # No spec lifecycle, no tasks, no pipelines. Includes SESSION.md for continuity.
+# Includes native commands for Claude Code, OpenCode and Codex out of the box.
 PATHS_CONTEXT = [
     "AGENTS.md",
     "spec-native/README.md",
@@ -96,6 +97,12 @@ PATHS_CONTEXT = [
     "spec-native/SESSION.md",
     ".specnative/README.md",
     ".specnative/MCP.md",
+    # Native agent commands — installed in every profile
+    ".claude/commands/spec-init.md",
+    ".claude/commands/spec-update.md",
+    ".claude/commands/spec-status.md",
+    ".claude/commands/spec-handoff.md",
+    "codex.toml",
 ]
 
 # spec — adds full initiative lifecycle on top of context.
@@ -369,10 +376,10 @@ def setup_venv(target: Path) -> tuple[Path, list[str]]:
 # ---------------------------------------------------------------------------
 
 def setup_mcp_configs(target: Path, created: list[str], errors: list[str]) -> None:
-    """Create MCP configuration files for OpenCode, Claude Desktop, and other clients."""
+    """Create MCP configuration files for OpenCode, Claude Desktop, and Codex."""
     venv_python = str(target / ".specnative" / (".venv/Scripts/python3" if sys.platform == "win32" else ".venv/bin/python3"))
 
-    # OpenCode configuration
+    # OpenCode — MCP server + built-in prompts
     opencode_config = {
         "$schema": "https://opencode.ai/config.json",
         "mcp": {
@@ -384,13 +391,52 @@ def setup_mcp_configs(target: Path, created: list[str], errors: list[str]) -> No
                     "./.specnative/specnative_mcp.py"
                 ]
             }
-        }
+        },
+        "prompts": {
+            "spec-init": {
+                "description": "Initialize SpecNative — guided project setup",
+                "prompt": (
+                    "Use the specnative MCP server. "
+                    "Call health_check() to see which spec-native/ documents are empty. "
+                    "Then interview the developer and fill PRODUCT.md, STACK.md, "
+                    "ARCHITECTURE.md, CONVENTIONS.md and COMMANDS.md using refine_document(). "
+                    "Finish by suggesting start_initiative() for the first spec."
+                ),
+            },
+            "spec-update": {
+                "description": "Update SpecNative docs — detect gaps, refine iteratively",
+                "prompt": (
+                    "Use the specnative MCP server. "
+                    "Call health_check() and suggest_next() to identify gaps. "
+                    "Ask the developer what to refine today, then use refine_document() "
+                    "to update the chosen documents."
+                ),
+            },
+            "spec-status": {
+                "description": "Quick SpecNative project health check",
+                "prompt": (
+                    "Use the specnative MCP server. "
+                    "Call resume(), status() and health_check(). "
+                    "Summarize in 5 lines what is healthy and what needs attention."
+                ),
+            },
+            "spec-handoff": {
+                "description": "Generate structured handoff for next agent",
+                "prompt": (
+                    "Use the specnative MCP server. "
+                    "Ask the developer what they were doing and what the next step is. "
+                    "Call checkpoint() with the gathered info, then log_decision() for "
+                    "any unrecorded decisions. Confirm with read_context('session')."
+                ),
+            },
+        },
     }
 
     opencode_file = target / "opencode.json"
     try:
-        with open(opencode_file, 'w', encoding='utf-8') as f:
+        with open(opencode_file, "w", encoding="utf-8") as f:
             json.dump(opencode_config, f, indent=2, ensure_ascii=False)
+            f.write("\n")
         created.append("opencode.json")
     except Exception as exc:
         errors.append(f"Failed to create opencode.json: {exc}")

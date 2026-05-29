@@ -1,4 +1,9 @@
 .claude/
+# Allow .claude/commands/ inside the template (these are the project-level commands,
+# not the global Claude Code config folder)
+!Template-Project-Agents-AI/.claude/
+!Template-Project-Agents-AI/.claude/commands/
+!Template-Project-Agents-AI/.claude/commands/*.md
 .opencode/
 # opencode (local, no versionar)
 .opencode/sessions.db

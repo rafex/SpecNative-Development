@@ -1,13 +1,55 @@
-# MCP.md — SpecNative MCP Server v0.5
+# MCP.md — SpecNative MCP Server v0.6
 
 El servidor MCP de SpecNative expone el repositorio como **recursos**, **herramientas**
 y **prompts** para que cualquier agente compatible con MCP pueda trabajar en modo
 spec-first sin navegar manualmente el árbol de archivos.
 
-La versión 0.5 agrega continuidad multi-agente: `checkpoint`, `resume`,
-`update_task`, `log_decision` y `context_snapshot` permiten que un agente
-continúe exactamente donde lo dejó otro — sin importar si fue Claude Code,
-Codex, Cursor, o cualquier otro.
+**v0.6 agrega comandos nativos para Claude Code, OpenCode y Codex**, plus
+herramientas de definición guiada (`health_check`, `suggest_next`, `refine_document`,
+`init_project_guided`) para que adoptar SpecNative tome minutos, no horas.
+
+## Comandos por agente
+
+Instalados automáticamente en tu repositorio. Disponibles desde el primer día.
+
+### Claude Code — slash commands
+
+| Comando | Descripción |
+|---------|-------------|
+| `/spec-init` | Wizard guiado: entrevista al desarrollador y llena los documentos core |
+| `/spec-update` | Detecta vacíos, sugiere refinamientos, actualiza iterativamente |
+| `/spec-status` | Vista rápida: sesión activa, specs, tareas, alertas |
+| `/spec-handoff` | Genera traspaso estructurado para el siguiente agente |
+
+Archivos en `.claude/commands/spec-*.md`.
+
+### OpenCode — prompts integrados
+
+Disponibles en el menú de prompts de OpenCode (configurados en `opencode.json`):
+
+| Prompt | Descripción |
+|--------|-------------|
+| `spec-init` | Initialize SpecNative — guided project setup |
+| `spec-update` | Update SpecNative docs — detect gaps, refine |
+| `spec-status` | Quick SpecNative health check |
+| `spec-handoff` | Generate handoff for next agent |
+
+### Codex CLI — prompts en codex.toml
+
+```bash
+codex --prompt spec-init     # guided project setup
+codex --prompt spec-update   # detect gaps and refine
+codex --prompt spec-status   # health check
+codex --prompt spec-handoff  # generate handoff
+```
+
+### CLI sin agente
+
+```bash
+python3 specnative.py init              # wizard interactivo en terminal
+python3 specnative.py update            # health check + refinamiento guiado
+python3 specnative.py update --doc stack  # actualizar solo un documento
+```
 
 ## Instalación
 
@@ -173,9 +215,25 @@ export SPECNATIVE_REPO=/ruta/a/tu/proyecto
 | `update_task(initiative, task_id, state, notes?)` | Actualiza estado de tarea en TASKS.md              |
 | `log_decision(title, context, decision, consequences)` | Append rápido a DECISIONS.md              |
 
+### Definición y salud del proyecto (v0.6)
+
+| Herramienta                               | Descripción                                                    |
+|-------------------------------------------|----------------------------------------------------------------|
+| `health_check()`                          | Escanea spec-native/ y reporta vacíos, docs faltantes, sesión obsoleta |
+| `suggest_next()`                          | Sugiere las 3 acciones más impactantes basado en estado actual |
+| `refine_document(document, what_changed, new_content)` | Actualiza un documento con nuevo contenido     |
+
 ---
 
 ## Prompts disponibles
+
+### Definición del proyecto (v0.6)
+
+| Prompt                                    | Descripción                                              |
+|-------------------------------------------|----------------------------------------------------------|
+| `init_project_guided(name, problem, users, goals, non_goals, stack, arch, conv, cmds)` | Llena los documentos core con contenido real del proyecto |
+
+### Flujo de iniciativas
 
 | Prompt                                    | Descripción                                              |
 |-------------------------------------------|----------------------------------------------------------|
