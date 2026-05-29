@@ -19,7 +19,7 @@ criterio de cierre verificable.
 ## Estructura sugerida
 
 ```text
-tasks/
+spec-native/tasks/
   README.md
   TASKS.template.md
   authentication/
@@ -29,8 +29,8 @@ tasks/
 
 ## Flujo
 
-1. Leer la spec asociada.
+1. Leer la spec asociada en `../specs/<iniciativa>/`.
 2. Descomponer en tareas pequenas y validables.
 3. Ejecutar segun prioridad y dependencias.
-4. Actualizar estado real durante la ejecucion.
-5. Reflejar cierre y evidencia en `TRACEABILITY.md`.
+4. Actualizar estado real durante la ejecucion (via MCP: `update_task`).
+5. Reflejar cierre y evidencia en `../TRACEABILITY.md`.

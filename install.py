@@ -83,51 +83,51 @@ INSTALL_BRANCH_PREFIX = "specnative/install"
 # Profile file lists (each layer is cumulative)
 # ---------------------------------------------------------------------------
 
-# context — living AI context layer (AGENTS.md philosophy)
-# Just enough for an agent to understand the project. No process overhead.
+# context — AI context layer. Just enough for an agent to understand the project.
+# No spec lifecycle, no tasks, no pipelines. Includes SESSION.md for continuity.
 PATHS_CONTEXT = [
     "AGENTS.md",
-    "agents/README.md",
-    "agents/PRODUCT.md",
-    "agents/ARCHITECTURE.md",
-    "agents/STACK.md",
-    "agents/CONVENTIONS.md",
-    "agents/COMMANDS.md",
+    "spec-native/README.md",
+    "spec-native/PRODUCT.md",
+    "spec-native/ARCHITECTURE.md",
+    "spec-native/STACK.md",
+    "spec-native/CONVENTIONS.md",
+    "spec-native/COMMANDS.md",
+    "spec-native/SESSION.md",
     ".specnative/README.md",
     ".specnative/MCP.md",
 ]
 
-# spec — full initiative lifecycle without CI/CD (Agent OS philosophy)
-# Adds specs, tasks, workflows, decisions, roadmap, and traceability.
+# spec — adds full initiative lifecycle on top of context.
+# Specs, tasks, workflows, decisions, roadmap, and traceability.
 PATHS_SPEC = [
-    "agents/DECISIONS.md",
-    "agents/ROADMAP.md",
-    "agents/SPEC.md",
-    "agents/TRACEABILITY.md",
-    "agents/specs/README.md",
-    "tasks/README.md",
-    "tasks/TASKS.template.md",
-    "workflows/README.md",
-    "workflows/IMPLEMENTATION.md",
-    "workflows/PLANNING.md",
-    "workflows/REVIEW.md",
+    "spec-native/DECISIONS.md",
+    "spec-native/ROADMAP.md",
+    "spec-native/TRACEABILITY.md",
+    "spec-native/specs/README.md",
+    "spec-native/tasks/README.md",
+    "spec-native/tasks/TASKS.template.md",
+    "spec-native/workflows/README.md",
+    "spec-native/workflows/IMPLEMENTATION.md",
+    "spec-native/workflows/PLANNING.md",
+    "spec-native/workflows/REVIEW.md",
 ]
 
-# team — adds CI/CD pipeline docs and schema governance
+# team — adds CI/CD pipeline docs and schema governance on top of spec.
 PATHS_TEAM = [
-    "pipelines/README.md",
-    "pipelines/CI.md",
-    "pipelines/CD.md",
+    "spec-native/pipelines/README.md",
+    "spec-native/pipelines/CI.md",
+    "spec-native/pipelines/CD.md",
     ".specnative/CLI.md",
     ".specnative/SCHEMA.md",
 ]
 
-# platform — example initiatives (also adds README.md if absent)
+# platform — adds README.md (if absent) and reference example initiatives.
 PATHS_EXAMPLES = [
-    "agents/specs/authentication/README.md",
-    "agents/specs/authentication/SPEC.md",
-    "tasks/authentication/README.md",
-    "tasks/authentication/TASKS.md",
+    "spec-native/specs/authentication/README.md",
+    "spec-native/specs/authentication/SPEC.md",
+    "spec-native/tasks/authentication/README.md",
+    "spec-native/tasks/authentication/TASKS.md",
 ]
 
 PROFILE_PATHS: dict[str, list[str]] = {

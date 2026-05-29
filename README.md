@@ -24,7 +24,7 @@ Instead of rebuilding project context in every session, the repository encodes i
 
 ## Quick Start
 
-**Current Release:** [v0.4.8](https://github.com/rafex/SpecNative-Development/releases/tag/v0.4.8)
+**Current Release:** [v0.5.0](https://github.com/rafex/SpecNative-Development/releases/tag/v0.5.0)
 
 ### Install into an existing repository
 
@@ -72,9 +72,9 @@ Profiles are cumulative — each one adds files on top of the previous layer.
 
 | Profile | What it installs | Best for |
 |---------|-----------------|----------|
-| `context` | `AGENTS.md` · `agents/{PRODUCT,ARCHITECTURE,STACK,CONVENTIONS,COMMANDS}.md` · `.specnative/{README,MCP}.md` | Solo devs, any project that wants AI context without process overhead |
-| `spec` | **context** + `agents/{DECISIONS,ROADMAP,SPEC,TRACEABILITY}.md` · `agents/specs/README.md` · `tasks/` · `workflows/{PLANNING,IMPLEMENTATION,REVIEW}.md` | Startups and solo devs building spec-first without CI/CD |
-| `team` *(default)* | **spec** + `pipelines/{CI,CD}.md` · `.specnative/{CLI,SCHEMA}.md` | Teams with automated pipelines and pull request workflows |
+| `context` | `AGENTS.md` · `spec-native/{PRODUCT,ARCHITECTURE,STACK,CONVENTIONS,COMMANDS,SESSION}.md` · `.specnative/{README,MCP}.md` | Solo devs, any project that wants AI context without process overhead |
+| `spec` | **context** + `spec-native/{DECISIONS,ROADMAP,TRACEABILITY}.md` · `spec-native/specs/` · `spec-native/tasks/` · `spec-native/workflows/` | Startups and solo devs building spec-first without CI/CD |
+| `team` *(default)* | **spec** + `spec-native/pipelines/{CI,CD}.md` · `.specnative/{CLI,SCHEMA}.md` | Teams with automated pipelines and pull request workflows |
 | `platform` | **team** + `README.md` (if absent) + authentication example initiative | Open-source projects and orgs that need reference implementations |
 
 Add `--include-examples` to any profile to include the example authentication initiative.
@@ -110,44 +110,47 @@ See [`.specnative/MCP.md`](./Template-Project-Agents-AI/.specnative/MCP.md) for 
 ## Repository layout
 
 ```
-Template-Project-Agents-AI/
-├── AGENTS.md              # Agent operating contract — read first
-├── README.md              # Navigation index
-├── agents/
-│   ├── PRODUCT.md         # Problem, users, goals (permanent)
-│   ├── ARCHITECTURE.md    # System structure and boundaries
-│   ├── STACK.md           # Tech stack and version constraints
-│   ├── CONVENTIONS.md     # Code rules, naming, testing
-│   ├── COMMANDS.md        # Project-specific dev/test/build commands
-│   ├── SPEC.md            # Active spec (or entry point to specs/)
-│   ├── DECISIONS.md       # Persistent decisions and trade-offs
-│   ├── ROADMAP.md         # Temporal direction
-│   ├── TRACEABILITY.md    # Cross-artifact links
-│   └── specs/<initiative>/SPEC.md
-├── tasks/<initiative>/TASKS.md
-├── workflows/             # PLANNING.md, IMPLEMENTATION.md, REVIEW.md
-├── pipelines/             # CI.md, CD.md — CI/CD context
-└── .specnative/           # Framework infrastructure
-    ├── SCHEMA.md          # Framework contract (required files, states)
-    ├── CLI.md             # CLI and MCP reference
-    └── MCP.md             # MCP server configuration per agent
+AGENTS.md                    # Meta-index — what is SpecNative, where is everything, MCP reference
+spec-native/
+├── README.md                # Navigation index
+├── PRODUCT.md               # Problem, users, goals (permanent)
+├── ARCHITECTURE.md          # System structure and boundaries
+├── STACK.md                 # Tech stack and version constraints
+├── CONVENTIONS.md           # Code rules, naming, testing
+├── COMMANDS.md              # Project-specific dev/test/build commands
+├── DECISIONS.md             # Persistent decisions and trade-offs
+├── ROADMAP.md               # Temporal direction
+├── TRACEABILITY.md          # Cross-artifact links
+├── SESSION.md               # Active work state — for multi-agent continuity
+├── specs/
+│   └── <initiative>/SPEC.md
+├── tasks/
+│   └── <initiative>/TASKS.md
+├── workflows/               # PLANNING.md, IMPLEMENTATION.md, REVIEW.md
+└── pipelines/               # CI.md, CD.md — CI/CD context
+.specnative/                 # Framework infrastructure
+├── SCHEMA.md                # Framework contract (required files, states)
+├── CLI.md                   # CLI reference
+├── MCP.md                   # MCP server configuration per agent
+└── specnative_mcp.py        # MCP server (installed automatically)
 ```
 
 ### Document ownership — one truth per document
 
 | Document | Owns |
 |---|---|
-| `PRODUCT.md` | Problem, users, goals, non-goals |
-| `SPEC.md` | What must be built in this initiative (time-bounded) |
-| `DECISIONS.md` | Persistent trade-offs future initiatives must respect |
-| `ROADMAP.md` | Temporal direction without implementation detail |
-| `ARCHITECTURE.md` | System structure, modules, boundaries |
-| `CONVENTIONS.md` | Naming, style, testing, commit conventions |
-| `COMMANDS.md` | Project commands only — never framework CLI |
-| `tasks/**/TASKS.md` | Executable plan with state, owner, close criteria |
-| `TRACEABILITY.md` | Cross-artifact links (update at initiative close) |
-| `pipelines/CI.md` | Automated gate definitions |
-| `pipelines/CD.md` | Delivery process and environments |
+| `spec-native/PRODUCT.md` | Problem, users, goals, non-goals |
+| `spec-native/specs/*/SPEC.md` | What must be built in this initiative (time-bounded) |
+| `spec-native/DECISIONS.md` | Persistent trade-offs future initiatives must respect |
+| `spec-native/ROADMAP.md` | Temporal direction without implementation detail |
+| `spec-native/ARCHITECTURE.md` | System structure, modules, boundaries |
+| `spec-native/CONVENTIONS.md` | Naming, style, testing, commit conventions |
+| `spec-native/COMMANDS.md` | Project commands only — never framework CLI |
+| `spec-native/tasks/**/TASKS.md` | Executable plan with state, owner, close criteria |
+| `spec-native/TRACEABILITY.md` | Cross-artifact links (update at initiative close) |
+| `spec-native/pipelines/CI.md` | Automated gate definitions |
+| `spec-native/pipelines/CD.md` | Delivery process and environments |
+| `spec-native/SESSION.md` | Active work state for multi-agent continuity |
 
 ---
 
@@ -160,38 +163,55 @@ python3 specnative.py status              # Spec and task state overview
 python3 specnative.py validate            # Check required files and TOML
 python3 specnative.py export-index        # Export specs/tasks as JSON
 python3 specnative.py export-traceability # Export traceability matrix as JSON
-python3 specnative.py install --target /path/to/repo --profile minimal
 ```
 
-### MCP server — `tools/specnative_mcp.py` (v0.4)
+### MCP server — `tools/specnative_mcp.py` (v0.5)
 
 Exposes the repository as MCP resources, tools, and prompts so any MCP-compatible
 agent works spec-first without manually navigating the file tree.
+
+**v0.5 adds multi-agent continuity** — agents can checkpoint their work and resume
+from exactly where another agent left off, regardless of which agent or tool was used.
 
 **Resources** — context documents by URI:
 
 ```
 spec://agents                  → AGENTS.md
-spec://context/product         → agents/PRODUCT.md
-spec://context/architecture    → agents/ARCHITECTURE.md
-spec://context/decisions       → agents/DECISIONS.md
-spec://context/roadmap         → agents/ROADMAP.md
-spec://pipelines/ci            → pipelines/CI.md
+spec://session                 → spec-native/SESSION.md  ← NEW
+spec://context/product         → spec-native/PRODUCT.md
+spec://context/architecture    → spec-native/ARCHITECTURE.md
+spec://context/decisions       → spec-native/DECISIONS.md
+spec://context/roadmap         → spec-native/ROADMAP.md
+spec://pipelines/ci            → spec-native/pipelines/CI.md
 spec://schema                  → .specnative/SCHEMA.md
-# … and more (see MCP.md)
 ```
 
-**Tools**: `status`, `validate`, `list_specs`, `list_tasks`, `read_spec`, `read_context`, `export_index`
+**Tools**:
 
-**Prompts**: `start_initiative`, `plan_tasks`, `implement_task`, `review_against_spec`, `record_decision`, `close_initiative`
+| Tool | Description |
+|------|-------------|
+| `status()` | Spec and task state overview |
+| `validate()` | Check required files |
+| `list_specs()` | List specs with states |
+| `list_tasks(initiative)` | List tasks for an initiative |
+| `read_spec(initiative)` | Read a spec file |
+| `read_context(document)` | Read a context document |
+| `export_index()` | Export specs/tasks as JSON |
+| `context_snapshot(initiative?)` | Full context dump for new-agent onboarding |
+| `resume()` | Read SESSION.md and return continuity summary |
+| `checkpoint(initiative, task_id, intent, next_steps, ...)` | Save work state |
+| `update_task(initiative, task_id, state, notes?)` | Update task state inline |
+| `log_decision(title, context, decision, consequences)` | Append decision |
+
+**Prompts**: `start_initiative`, `plan_tasks`, `implement_task`, `review_against_spec`, `handoff`, `record_decision`, `close_initiative`
 
 #### Configure per agent
 
 **Claude Code**
 ```bash
 claude mcp add specnative \
-  python3 .specnative/specnative_mcp.py \
-  -- --repo /path/to/project
+  "$(pwd)/.specnative/.venv/bin/python3" "$(pwd)/.specnative/specnative_mcp.py" \
+  -- --repo "$(pwd)"
 ```
 
 **Claude Desktop** — `~/Library/Application Support/Claude/claude_desktop_config.json`:
@@ -199,26 +219,14 @@ claude mcp add specnative \
 {
   "mcpServers": {
     "specnative": {
-      "command": "python3",
-      "args": ["/path/to/specnative_mcp.py", "--repo", "/path/to/project"]
+      "command": "/path/to/.specnative/.venv/bin/python3",
+      "args": ["/path/to/.specnative/specnative_mcp.py", "--repo", "/path/to/project"]
     }
   }
 }
 ```
 
-**OpenCode** — `.opencode/config.json`:
-```json
-{
-  "mcp": {
-    "servers": {
-      "specnative": {
-        "command": "python3",
-        "args": ["/path/to/specnative_mcp.py", "--repo", "/path/to/project"]
-      }
-    }
-  }
-}
-```
+**OpenCode** — generated automatically to `opencode.json` during install.
 
 **Codex CLI** — `~/.codex/config.toml` or `codex.toml`:
 ```toml
@@ -243,17 +251,37 @@ type = "stdio"
 
 ## How agents work with a SpecNative repository
 
-1. Read `AGENTS.md` — agent operating contract.
-2. Check `agents/ROADMAP.md` — confirm initiative aligns with direction.
-3. Read `agents/PRODUCT.md` + relevant technical context.
-4. Read `agents/DECISIONS.md` — respect persistent trade-offs.
-5. Review or create a `SPEC.md`.
-6. Derive tasks in `tasks/`.
-7. Implement following `workflows/IMPLEMENTATION.md`.
-8. Record persistent decisions in `DECISIONS.md`.
-9. Update `TRACEABILITY.md` when the initiative closes.
+**Any agent, any tool** — Claude Code, Codex, Cursor, or any other — follows the same flow:
 
-**With the MCP server**, agents access all of this through typed resources and structured prompts instead of manual file navigation.
+1. Read `AGENTS.md` — what is SpecNative, where is everything, how to use MCP.
+2. Call `resume()` — check if another agent left work in progress.
+3. Call `context_snapshot()` or read `spec-native/ROADMAP.md` for orientation.
+4. Read `spec-native/DECISIONS.md` — respect persistent trade-offs.
+5. Review or create a spec in `spec-native/specs/`.
+6. Derive tasks in `spec-native/tasks/`.
+7. Implement following `spec-native/workflows/IMPLEMENTATION.md`.
+8. Record decisions with `log_decision()` as they emerge.
+9. Call `checkpoint()` before ending the session.
+10. Update `spec-native/TRACEABILITY.md` when the initiative closes.
+
+**With the MCP server**, agents access all of this through typed resources and structured prompts. No manual file navigation. No context lost between sessions.
+
+### Multi-agent continuity
+
+```
+Agent A (Claude Code) — runs out of tokens mid-task:
+  → checkpoint(initiative='auth', task_id='TASK-AUTH-0002',
+               intent='Implementing JWT middleware',
+               next_steps='1. Add /refresh endpoint\n2. Write integration tests',
+               context_notes='JWT secret in env AUTH_SECRET. Do not hardcode.')
+
+Agent B (Codex) — picks up the work:
+  → resume()
+  ← "Task TASK-AUTH-0002 in progress. Next: Add /refresh endpoint..."
+  → Continues without friction, no context lost
+```
+
+SESSION.md is versioned in git — any agent on any machine can resume.
 
 ---
 
@@ -277,7 +305,8 @@ Less useful for very small, short-lived prototypes where maintaining structured 
 | v0.2 | Structured specs and task files |
 | v0.3 | Framework contract (`.specnative/`), `pipelines/`, `install.py`, TOML optional, `status` command |
 | v0.4 | MCP server — resources, tools, and prompts for Claude Code, Claude Desktop, OpenCode, Codex |
-| **v0.4.7** | **`--reinstall` flag for quick MCP repair · Auto-generate client configs (opencode.json)** |
+| v0.4.7–v0.4.9 | `--reinstall` flag · Auto-generate `opencode.json` · Profile documentation improved |
+| **v0.5.0** | **`agents/` → `spec-native/` · tasks/workflows/pipelines consolidated · `SESSION.md` · Multi-agent continuity tools: `checkpoint`, `resume`, `update_task`, `log_decision`, `context_snapshot`** |
 
 ---
 

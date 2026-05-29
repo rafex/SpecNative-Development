@@ -34,10 +34,10 @@ Estos checks deben pasar antes de mergear cualquier cambio:
 
 | Gate | Herramienta | Comando local |
 | --- | --- | --- |
-| Lint | | ver `agents/COMMANDS.md` |
-| Tests unitarios | | ver `agents/COMMANDS.md` |
-| Tests de integracion | | ver `agents/COMMANDS.md` |
-| Build | | ver `agents/COMMANDS.md` |
+| Lint | | ver `../COMMANDS.md` |
+| Tests unitarios | | ver `../COMMANDS.md` |
+| Tests de integracion | | ver `../COMMANDS.md` |
+| Build | | ver `../COMMANDS.md` |
 
 ### Gates opcionales o informativos
 

@@ -1,104 +1,134 @@
 # AGENTS.md
 
-Este archivo define como deben operar los agentes dentro de este repo.
+Eres un agente operando en un repositorio SpecNative.
 
-## Regla principal
+## Que es SpecNative
 
-Antes de trabajar en cualquier carpeta, leer primero su `README.md`.
+SpecNative es un modelo de desarrollo donde las especificaciones,
+decisiones arquitectonicas y el estado del trabajo viven en el
+repositorio. El repositorio es el contexto. No necesitas que te
+expliquen el proyecto en el chat.
 
-## Mapa rapido
+Cualquier agente — Claude Code, Codex, Cursor, Gemini, o cualquier
+otro — puede entrar a este repositorio y continuar exactamente donde
+lo dejo el anterior. Sin friccion. Sin perder contexto.
 
-- `README.md` del root: explica la estructura del repo.
-- `agents/README.md`: indice principal del contexto operativo.
-- `agents/specs/README.md`: indice de specs disponibles.
-- `tasks/README.md`: indice del sistema de ejecucion.
-- `workflows/README.md`: procedimientos repetibles de operacion.
-- `pipelines/README.md`: contexto de CI/CD del proyecto.
+## Donde esta todo
 
-## Politica de contexto
+Todo el contexto del proyecto vive en `spec-native/`.
+Lee `spec-native/README.md` para el indice completo.
+
+```
+spec-native/
+├── PRODUCT.md        ← que problema, para quien, por que
+├── ARCHITECTURE.md   ← estructura del sistema
+├── STACK.md          ← tecnologias y restricciones
+├── CONVENTIONS.md    ← reglas de codigo y naming
+├── COMMANDS.md       ← comandos del proyecto
+├── DECISIONS.md      ← decisiones persistentes y tradeoffs
+├── ROADMAP.md        ← prioridades de mediano plazo
+├── TRACEABILITY.md   ← vinculos entre artefactos
+├── SESSION.md        ← estado activo de trabajo
+├── specs/            ← especificaciones por iniciativa
+├── tasks/            ← tareas ejecutables por iniciativa
+├── workflows/        ← procedimientos operativos
+└── pipelines/        ← contexto de CI/CD
+```
+
+## Si vienes de otro agente
+
+Antes de empezar a trabajar, verifica si hay sesion activa:
+
+```
+Via MCP:   resume()
+Manual:    lee spec-native/SESSION.md
+```
+
+Si `SESSION.md` tiene `state = "idle"`, no hay trabajo activo.
+Lee `spec-native/ROADMAP.md` para ver que viene primero.
+
+## Flujo de trabajo
+
+1. Si hay sesion activa: `resume()` o leer `SESSION.md`.
+2. Si es una nueva iniciativa: `context_snapshot()` para entender el
+   proyecto, luego `start_initiative()` para arrancar.
+3. Implementar siguiendo `spec-native/workflows/IMPLEMENTATION.md`.
+4. Actualizar tareas: `update_task(initiative, task_id, state)`.
+5. Registrar decisiones: `log_decision(title, ctx, decision, cons)`.
+6. Al pausar o cambiar de agente: `checkpoint(initiative, task, intent,
+   next_steps)`.
+7. Al cerrar una iniciativa: `close_initiative(initiative)`.
+
+## Reglas de contexto
 
 - Los archivos en MAYUSCULAS son contexto para agentes.
-- Los `README.md` no reemplazan el contexto; lo enrutan.
-- Leer el minimo contexto suficiente para ejecutar bien la tarea.
-- Actualizar siempre el documento fuente de verdad, no un resumen
-  paralelo.
-- Si la verdad cambia de manera persistente, actualizar el documento
-  correcto antes de cerrar la tarea.
+- Los `README.md` enrutan; no reemplazan el contexto.
+- Leer el minimo contexto necesario para ejecutar bien la tarea.
+- Actualizar el documento fuente de verdad, no un resumen paralelo.
+- Si una verdad cambia de forma persistente, actualizarla antes de
+  cerrar la tarea.
 
 ## Separacion semantica de documentos
 
-Cada documento tiene un dominio exclusivo. No duplicar informacion
-entre ellos.
+Cada documento tiene un dominio exclusivo:
 
-- `SPEC.md`: define *que* debe construirse en esta iniciativa.
-  Contiene el problema, el objetivo, el alcance, los requisitos y
-  los riesgos especificos de este trabajo. Su horizonte es la
-  iniciativa. Cuando la spec cierra, su contenido es historia.
+- `spec-native/specs/*/SPEC.md` — *que* debe construirse, horizonte
+  de la iniciativa.
+- `spec-native/DECISIONS.md` — *por que el sistema es como es*,
+  tradeoffs que condicionan el futuro.
+- `spec-native/PRODUCT.md` — *para quien y por que existe* el
+  producto.
+- `spec-native/ROADMAP.md` — *que viene primero y por que*, sin
+  detalle de implementacion.
+- `spec-native/ARCHITECTURE.md` — *como esta estructurado* el sistema.
+- `spec-native/pipelines/CI.md` — *que gates automaticos* deben pasar.
+- `spec-native/pipelines/CD.md` — *como el codigo llega* a produccion.
+- `spec-native/SESSION.md` — *donde esta el trabajo ahora mismo*.
 
-- `DECISIONS.md`: registra *por que el sistema es como es*.
-  Contiene tradeoffs que condicionan iniciativas futuras y que
-  otros agentes deben respetar. Su horizonte es el proyecto
-  completo. No registra lo que se va a construir sino lo que
-  ya se decidio y no debe revertirse sin razon explicita.
+Prueba para saber donde escribir algo:
+- Desaparece cuando termina la iniciativa → spec.
+- Debe respetarse en la proxima iniciativa → DECISIONS.md.
+- Explica el producto → PRODUCT.md.
+- Orienta prioridad temporal → ROADMAP.md.
+- Describe estructura del sistema → ARCHITECTURE.md.
+- Es el estado activo de trabajo → SESSION.md.
 
-- `PRODUCT.md`: define *para quien y por que existe el producto*.
-  No describe implementacion ni decisiones tecnicas.
+## Usando el MCP de SpecNative
 
-- `ROADMAP.md`: define *que viene primero y por que*.
-  No describe como implementar ni que decidir.
+El servidor MCP expone el repositorio como herramientas tipadas.
 
-- `ARCHITECTURE.md`: describe *como esta estructurado el sistema*.
-  No describe que construir ni por que se tomaron las decisiones.
+### Herramientas disponibles
 
-- `pipelines/CI.md`: describe *que gates automaticos deben pasar*.
-  No contiene comandos locales ni logica de implementacion.
+| Herramienta | Descripcion |
+|---|---|
+| `status()` | Estado de specs y tareas |
+| `validate()` | Verifica estructura del repositorio |
+| `context_snapshot(initiative?)` | Dump completo de contexto para onboarding |
+| `resume()` | Lee SESSION.md y resume el trabajo activo |
+| `checkpoint(...)` | Guarda estado actual antes de pausar |
+| `update_task(initiative, task_id, state)` | Actualiza estado de tarea |
+| `log_decision(title, ctx, decision, cons)` | Registra decision persistente |
+| `list_specs()` | Lista specs con estado y owner |
+| `list_tasks(initiative)` | Lista tareas de una iniciativa |
+| `read_spec(initiative)` | Lee contenido de spec |
+| `read_context(document)` | Lee documento de contexto |
+| `export_index()` | Exporta specs y tareas como JSON |
 
-- `pipelines/CD.md`: describe *como el codigo llega a produccion*.
-  No contiene scripts de deploy ni credenciales.
+### Prompts disponibles
 
-La prueba para saber donde escribir algo:
-- Si desaparece cuando la iniciativa termina → va en la spec.
-- Si debe respetarse en la proxima iniciativa → va en DECISIONS.md.
-- Si explica el producto → va en PRODUCT.md.
-- Si orienta prioridad temporal → va en ROADMAP.md.
-- Si describe estructura del sistema → va en ARCHITECTURE.md.
-- Si describe gates automaticos de validacion → va en pipelines/CI.md.
-- Si describe como se despliega el sistema → va en pipelines/CD.md.
-
-## Flujo de trabajo recomendado
-
-1. Leer el `README.md` de la carpeta actual.
-2. Revisar `agents/ROADMAP.md` para confirmar que la iniciativa es
-   coherente con la direccion actual del proyecto.
-3. Revisar `agents/PRODUCT.md` y el contexto tecnico relevante.
-4. Revisar `agents/DECISIONS.md` para respetar tradeoffs persistentes.
-5. Revisar o crear un `SPEC.md` en `agents/` o en `agents/specs/`.
-6. Derivar o leer las tareas correspondientes en `tasks/`.
-7. Implementar y validar siguiendo `workflows/IMPLEMENTATION.md`.
-8. Registrar en `agents/DECISIONS.md` si surgieron tradeoffs que
-   deben persistir mas alla de esta iniciativa.
-9. Actualizar trazabilidad en `agents/TRACEABILITY.md` al cerrar.
-10. (Opcional) Si el proyecto usa el CLI de SpecNative, mantener
-    metadata parseable consistente al actualizar specs o tareas.
-
-## Criterio de actualizacion
-
-- `ROADMAP.md` cambia cuando cambia la direccion del proyecto.
-- `SPEC.md` cambia cuando cambia el alcance del trabajo.
-- `DECISIONS.md` cambia cuando un tradeoff debe persistir mas alla
-  de la iniciativa actual.
-- `tasks/` cambia cuando cambia el plan ejecutable o el estado real.
-- `pipelines/CI.md` cambia cuando cambia un gate o la plataforma de CI.
-- `pipelines/CD.md` cambia cuando cambia un ambiente, gate de
-  promocion o proceso de release.
-- `TRACEABILITY.md` cambia al cerrar una iniciativa o cuando una
-  decision modifica el alcance de una spec activa.
+| Prompt | Descripcion |
+|---|---|
+| `start_initiative(name, problem)` | Inicia nueva iniciativa spec-driven |
+| `plan_tasks(initiative)` | Deriva plan de tareas desde spec |
+| `implement_task(initiative, task_id)` | Implementa tarea especifica |
+| `review_against_spec(initiative)` | Revisa implementacion contra criterios |
+| `handoff(summary, next_steps)` | Genera traspaso estructurado para el siguiente agente |
+| `record_decision(title, ctx, dec, cons)` | Registra decision persistente |
+| `close_initiative(initiative)` | Cierra iniciativa y actualiza trazabilidad |
 
 ## Estados obligatorios
 
-- Toda spec debe declarar un estado:
-  `draft | active | blocked | done | superseded`
-- Toda tarea debe declarar un estado:
-  `todo | in_progress | blocked | done`
-- Toda decision debe declarar un estado:
-  `proposed | accepted | deprecated | replaced`
+- Toda spec debe declarar: `draft | active | blocked | done | superseded`
+- Toda tarea debe declarar: `todo | in_progress | blocked | done`
+- Toda decision debe declarar: `proposed | accepted | deprecated | replaced`
+- `SESSION.md` debe declarar: `idle | in_progress | blocked | waiting_handoff`

@@ -19,7 +19,7 @@ es una carpeta por iniciativa cuando hay mas de un documento.
 ### Opcion carpeta
 
 ```text
-agents/specs/
+spec-native/specs/
   mi-iniciativa/
     README.md
     SPEC.md
@@ -28,7 +28,7 @@ agents/specs/
 ### Opcion archivo unico
 
 ```text
-agents/specs/
+spec-native/specs/
   mi-iniciativa.md
 ```
 
@@ -38,4 +38,4 @@ agents/specs/
 - Si no existe `README.md`, abre su `SPEC.md`.
 - Mantener los nombres de carpetas en kebab-case.
 - Toda iniciativa relevante deberia tener tareas asociadas en
-  `../../tasks/<iniciativa>/`.
+  `../tasks/<iniciativa>/`.

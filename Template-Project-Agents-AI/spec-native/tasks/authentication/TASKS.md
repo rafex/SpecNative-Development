@@ -61,7 +61,7 @@ title = "Documentar setup operativo"
 state = "todo"
 owner = "platform"
 dependencies = ["TASK-AUTH-0002"]
-expected_files = ["agents/COMMANDS.md", "README.md"]
+expected_files = ["spec-native/COMMANDS.md", "README.md"]
 close_criteria = "El setup local y variables requeridas estan documentadas"
 validation = ["walkthrough manual de bootstrap"]
 ```

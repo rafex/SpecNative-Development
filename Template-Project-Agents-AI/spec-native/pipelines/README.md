@@ -28,7 +28,7 @@ de mergear y como se despliega el proyecto.
 
 ## Separacion importante
 
-- Los comandos para correr CI localmente van en `agents/COMMANDS.md`.
+- Los comandos para correr CI localmente van en `../COMMANDS.md`.
 - Los archivos de configuracion del pipeline (YAML, Jenkinsfile, etc.)
   viven en el repositorio del proyecto, no en esta carpeta.
 - Esta carpeta describe el pipeline; no lo implementa.

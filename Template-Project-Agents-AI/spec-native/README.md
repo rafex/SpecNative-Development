@@ -1,4 +1,4 @@
-# Agents Context
+# SpecNative Context
 
 Indice principal del contexto operativo del proyecto.
 
@@ -7,12 +7,13 @@ Indice principal del contexto operativo del proyecto.
 Si eres un agente o una persona entrando por primera vez:
 
 1. Lee este archivo.
-2. Abre solo el documento que corresponde a tu tarea.
-3. Si trabajas sobre una spec concreta, ve a `specs/README.md`.
-4. Si necesitas ejecutar trabajo, ve a `../tasks/README.md`.
-5. Si necesitas entender los gates de CI o el proceso de deploy,
-   ve a `../pipelines/README.md`.
-6. Si necesitas el contrato del framework o el CLI, ve a
+2. Si hay trabajo activo, revisa `SESSION.md` o llama `resume()` via MCP.
+3. Abre solo el documento que corresponde a tu tarea.
+4. Si trabajas sobre una spec concreta, ve a `specs/README.md`.
+5. Si necesitas ejecutar trabajo, ve a `tasks/README.md`.
+6. Si necesitas entender los gates de CI o el proceso de deploy,
+   ve a `pipelines/README.md`.
+7. Si necesitas el contrato del framework o el CLI, ve a
    `../.specnative/README.md`.
 
 ## Documentos base
@@ -33,19 +34,27 @@ Si eres un agente o una persona entrando por primera vez:
   decisiones relevantes ya tomadas y su racional.
 - [`TRACEABILITY.md`](./TRACEABILITY.md):
   enlaces entre iniciativas, tareas, decisiones y validacion.
-- [`SPEC.md`](./SPEC.md):
-  spec activa o spec general cuando aun no se separa por iniciativa.
+- [`SESSION.md`](./SESSION.md):
+  estado activo de trabajo — quien trabajo ultimo, que hizo,
+  que viene a continuacion.
 - [`specs/README.md`](./specs/README.md):
   indice de specs por iniciativa.
+- [`tasks/README.md`](./tasks/README.md):
+  indice del sistema de ejecucion y estado de tareas.
+- [`workflows/README.md`](./workflows/README.md):
+  procedimientos repetibles para planificar, implementar y validar.
+- [`pipelines/README.md`](./pipelines/README.md):
+  contexto de integracion continua y entrega continua.
 
 ## Ownership documental
 
 - Producto y direccion: `PRODUCT.md` y `ROADMAP.md`
 - Sistema y restricciones: `ARCHITECTURE.md`, `STACK.md`,
   `CONVENTIONS.md`, `COMMANDS.md`
-- Ejecucion: `SPEC.md` y `../tasks/`
+- Ejecucion: specs en `specs/` y tareas en `tasks/`
 - Memoria de decisiones: `DECISIONS.md`
 - Trazabilidad: `TRACEABILITY.md`
+- Estado de sesion activa: `SESSION.md`
 - Contrato del framework: `.specnative/SCHEMA.md`
 
 ## Separacion importante

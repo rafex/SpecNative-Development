@@ -15,19 +15,20 @@ ROOT = Path(__file__).resolve().parent.parent / "Template-Project-Agents-AI"
 REQUIRED_FILES = [
     "AGENTS.md",
     "README.md",
-    "agents/README.md",
-    "agents/PRODUCT.md",
-    "agents/ARCHITECTURE.md",
-    "agents/STACK.md",
-    "agents/CONVENTIONS.md",
-    "agents/COMMANDS.md",
-    "agents/DECISIONS.md",
-    "agents/ROADMAP.md",
-    "agents/TRACEABILITY.md",
+    "spec-native/README.md",
+    "spec-native/PRODUCT.md",
+    "spec-native/ARCHITECTURE.md",
+    "spec-native/STACK.md",
+    "spec-native/CONVENTIONS.md",
+    "spec-native/COMMANDS.md",
+    "spec-native/DECISIONS.md",
+    "spec-native/ROADMAP.md",
+    "spec-native/TRACEABILITY.md",
+    "spec-native/SESSION.md",
     ".specnative/SCHEMA.md",
-    "tasks/README.md",
-    "workflows/README.md",
-    "pipelines/README.md",
+    "spec-native/tasks/README.md",
+    "spec-native/workflows/README.md",
+    "spec-native/pipelines/README.md",
 ]
 SPEC_STATES = {"draft", "active", "blocked", "done", "superseded"}
 TASK_STATES = {"todo", "in_progress", "blocked", "done"}
@@ -35,36 +36,36 @@ INSTALL_BRANCH_PREFIX = "specnative/install"
 
 INSTALL_PATHS_MINIMAL = [
     "AGENTS.md",
-    "agents/README.md",
-    "agents/PRODUCT.md",
-    "agents/ARCHITECTURE.md",
-    "agents/STACK.md",
-    "agents/CONVENTIONS.md",
-    "agents/COMMANDS.md",
-    "agents/DECISIONS.md",
-    "agents/ROADMAP.md",
-    "agents/SPEC.md",
-    "agents/TRACEABILITY.md",
-    "agents/specs/README.md",
-    "tasks/README.md",
-    "tasks/TASKS.template.md",
-    "workflows/README.md",
-    "workflows/IMPLEMENTATION.md",
-    "workflows/PLANNING.md",
-    "workflows/REVIEW.md",
-    "pipelines/README.md",
-    "pipelines/CI.md",
-    "pipelines/CD.md",
+    "spec-native/README.md",
+    "spec-native/PRODUCT.md",
+    "spec-native/ARCHITECTURE.md",
+    "spec-native/STACK.md",
+    "spec-native/CONVENTIONS.md",
+    "spec-native/COMMANDS.md",
+    "spec-native/DECISIONS.md",
+    "spec-native/ROADMAP.md",
+    "spec-native/TRACEABILITY.md",
+    "spec-native/SESSION.md",
+    "spec-native/specs/README.md",
+    "spec-native/tasks/README.md",
+    "spec-native/tasks/TASKS.template.md",
+    "spec-native/workflows/README.md",
+    "spec-native/workflows/IMPLEMENTATION.md",
+    "spec-native/workflows/PLANNING.md",
+    "spec-native/workflows/REVIEW.md",
+    "spec-native/pipelines/README.md",
+    "spec-native/pipelines/CI.md",
+    "spec-native/pipelines/CD.md",
     ".specnative/README.md",
     ".specnative/CLI.md",
     ".specnative/SCHEMA.md",
 ]
 
 INSTALL_PATHS_EXAMPLES = [
-    "agents/specs/authentication/README.md",
-    "agents/specs/authentication/SPEC.md",
-    "tasks/authentication/README.md",
-    "tasks/authentication/TASKS.md",
+    "spec-native/specs/authentication/README.md",
+    "spec-native/specs/authentication/SPEC.md",
+    "spec-native/tasks/authentication/README.md",
+    "spec-native/tasks/authentication/TASKS.md",
 ]
 
 
@@ -144,11 +145,13 @@ def parse_tasks(path: Path) -> dict[str, Any]:
 
 
 def find_specs() -> list[Path]:
-    return sorted(ROOT.glob("agents/specs/**/SPEC.md")) + ([ROOT / "agents/SPEC.md"] if (ROOT / "agents/SPEC.md").exists() else [])
+    return sorted(ROOT.glob("spec-native/specs/**/SPEC.md")) + (
+        [ROOT / "spec-native/SPEC.md"] if (ROOT / "spec-native/SPEC.md").exists() else []
+    )
 
 
 def find_task_files() -> list[Path]:
-    return sorted(path for path in ROOT.glob("tasks/**/TASKS.md"))
+    return sorted(ROOT.glob("spec-native/tasks/**/TASKS.md"))
 
 
 def validate() -> int:
@@ -160,7 +163,7 @@ def validate() -> int:
 
     specs = find_specs()
     if not specs:
-        errors.append("missing required spec: agents/SPEC.md or agents/specs/**/SPEC.md")
+        errors.append("missing required spec: spec-native/SPEC.md or spec-native/specs/**/SPEC.md")
 
     for spec_path in specs:
         try:

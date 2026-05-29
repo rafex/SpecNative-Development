@@ -1,8 +1,13 @@
-# MCP.md — SpecNative MCP Server
+# MCP.md — SpecNative MCP Server v0.5
 
 El servidor MCP de SpecNative expone el repositorio como **recursos**, **herramientas**
 y **prompts** para que cualquier agente compatible con MCP pueda trabajar en modo
 spec-first sin navegar manualmente el árbol de archivos.
+
+La versión 0.5 agrega continuidad multi-agente: `checkpoint`, `resume`,
+`update_task`, `log_decision` y `context_snapshot` permiten que un agente
+continúe exactamente donde lo dejó otro — sin importar si fue Claude Code,
+Codex, Cursor, o cualquier otro.
 
 ## Instalación
 
@@ -14,17 +19,10 @@ aislado con todas sus dependencias automáticamente:
 .specnative/.venv/              ← entorno virtual con mcp instalado
 ```
 
-Si necesitas instalarlo manualmente o actualizar el servidor:
+Si necesitas reinstalar o actualizar el servidor:
 
 ```bash
-# Descargar servidor actualizado
-curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/specnative_mcp.py \
-  -o .specnative/specnative_mcp.py && chmod +x .specnative/specnative_mcp.py
-
-# Crear venv e instalar dependencias (si no existe)
-python3 -m venv .specnative/.venv
-.specnative/.venv/bin/python3 -m pip install -U pip
-.specnative/.venv/bin/python3 -m pip install mcp
+python3 install.py --reinstall --target /ruta/a/tu/repo
 ```
 
 ---
@@ -81,13 +79,13 @@ Agrega a `claude_desktop_config.json`
 
 ### OpenCode
 
-Agrega a `opencode.json` en la raíz del proyecto:
+Generado automáticamente en `opencode.json` durante la instalación:
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "specnative_mcp": {
+    "specnative": {
       "type": "local",
       "enabled": true,
       "command": [
@@ -113,16 +111,6 @@ args = [
 type = "stdio"
 ```
 
-Alternativa con variable de entorno:
-
-```toml
-[mcp_servers.specnative]
-command = "/ruta/a/tu/proyecto/.specnative/.venv/bin/python3"
-args = ["/ruta/a/tu/proyecto/.specnative/specnative_mcp.py"]
-type = "stdio"
-env = { SPECNATIVE_REPO = "/ruta/a/tu/proyecto" }
-```
-
 ### Variable de entorno (alternativa universal)
 
 ```bash
@@ -143,25 +131,27 @@ export SPECNATIVE_REPO=/ruta/a/tu/proyecto
 
 ## Recursos disponibles
 
-| URI                          | Documento                         |
-|------------------------------|-----------------------------------|
-| `spec://agents`              | `AGENTS.md` — contrato operativo  |
-| `spec://context/product`     | `agents/PRODUCT.md`               |
-| `spec://context/architecture`| `agents/ARCHITECTURE.md`          |
-| `spec://context/stack`       | `agents/STACK.md`                 |
-| `spec://context/conventions` | `agents/CONVENTIONS.md`           |
-| `spec://context/commands`    | `agents/COMMANDS.md`              |
-| `spec://context/decisions`   | `agents/DECISIONS.md`             |
-| `spec://context/roadmap`     | `agents/ROADMAP.md`               |
-| `spec://context/traceability`| `agents/TRACEABILITY.md`          |
-| `spec://context/spec`        | `agents/SPEC.md`                  |
-| `spec://pipelines/ci`        | `pipelines/CI.md`                 |
-| `spec://pipelines/cd`        | `pipelines/CD.md`                 |
-| `spec://schema`              | `.specnative/SCHEMA.md`           |
+| URI                          | Documento                              |
+|------------------------------|----------------------------------------|
+| `spec://agents`              | `AGENTS.md` — contrato operativo       |
+| `spec://session`             | `spec-native/SESSION.md` — estado activo |
+| `spec://context/product`     | `spec-native/PRODUCT.md`               |
+| `spec://context/architecture`| `spec-native/ARCHITECTURE.md`          |
+| `spec://context/stack`       | `spec-native/STACK.md`                 |
+| `spec://context/conventions` | `spec-native/CONVENTIONS.md`           |
+| `spec://context/commands`    | `spec-native/COMMANDS.md`              |
+| `spec://context/decisions`   | `spec-native/DECISIONS.md`             |
+| `spec://context/roadmap`     | `spec-native/ROADMAP.md`               |
+| `spec://context/traceability`| `spec-native/TRACEABILITY.md`          |
+| `spec://pipelines/ci`        | `spec-native/pipelines/CI.md`          |
+| `spec://pipelines/cd`        | `spec-native/pipelines/CD.md`          |
+| `spec://schema`              | `.specnative/SCHEMA.md`                |
 
 ---
 
 ## Herramientas disponibles
+
+### Consulta
 
 | Herramienta                  | Descripción                                                    |
 |------------------------------|----------------------------------------------------------------|
@@ -172,6 +162,16 @@ export SPECNATIVE_REPO=/ruta/a/tu/proyecto
 | `read_spec(initiative)`      | Lee el contenido de una spec                                   |
 | `read_context(document)`     | Lee un documento de contexto por nombre corto                  |
 | `export_index()`             | Exporta specs y task files con metadata TOML como JSON         |
+| `context_snapshot(initiative?)` | Dump completo de contexto para onboarding de nuevo agente  |
+
+### Continuidad multi-agente (v0.5)
+
+| Herramienta                               | Descripción                                                    |
+|-------------------------------------------|----------------------------------------------------------------|
+| `resume()`                                | Lee SESSION.md y genera resumen de continuidad                 |
+| `checkpoint(initiative, task_id, intent, next_steps, context_notes?, agent_name?)` | Guarda estado antes de pausar |
+| `update_task(initiative, task_id, state, notes?)` | Actualiza estado de tarea en TASKS.md              |
+| `log_decision(title, context, decision, consequences)` | Append rápido a DECISIONS.md              |
 
 ---
 
@@ -183,8 +183,34 @@ export SPECNATIVE_REPO=/ruta/a/tu/proyecto
 | `plan_tasks(initiative)`                  | Deriva el plan de tareas desde una spec                  |
 | `implement_task(initiative, task_id)`     | Implementa una tarea específica                          |
 | `review_against_spec(initiative)`         | Revisa implementación contra criterios de aceptación     |
+| `handoff(summary, next_steps, decisions?)` | Genera traspaso estructurado para el siguiente agente   |
 | `record_decision(title, ctx, dec, cons)`  | Registra una decisión persistente en DECISIONS.md        |
 | `close_initiative(initiative)`            | Cierra la iniciativa y actualiza trazabilidad            |
+
+---
+
+## Flujo multi-agente
+
+```
+Agente A (Claude Code) implementa TASK-AUTH-0002:
+  → update_task('authentication', 'TASK-AUTH-0002', 'in_progress')
+  → ... trabaja ...
+  → Se acaban los tokens. Llama checkpoint antes de cerrar:
+  → checkpoint(
+       initiative='authentication',
+       task_id='TASK-AUTH-0002',
+       intent='Implementando middleware JWT',
+       next_steps='1. Agregar endpoint /refresh\n2. Escribir tests de integración',
+       context_notes='JWT secret en env AUTH_SECRET. No hardcodear.'
+     )
+
+Agente B (Codex) entra al repo:
+  → Lee AGENTS.md
+  → resume()
+  ← "Task TASK-AUTH-0002 in_progress. Intent: Implementando middleware JWT.
+     Next: 1. Agregar endpoint /refresh..."
+  → Continúa sin fricción
+```
 
 ---
 
@@ -192,11 +218,9 @@ export SPECNATIVE_REPO=/ruta/a/tu/proyecto
 
 El servidor MCP es **infraestructura del framework**, no contenido del proyecto:
 
-- Los documentos del proyecto viven en `agents/`, `tasks/`, `pipelines/`, etc.
-- El servidor MCP lee esos documentos; no los reemplaza ni escribe en ellos.
+- Los documentos del proyecto viven en `spec-native/`.
+- El servidor MCP lee y escribe esos documentos mediante herramientas tipadas.
 - Las reglas de ownership siguen siendo las de `AGENTS.md` y `SCHEMA.md`.
-- El servidor no escribe en el repositorio — las escrituras las hace el agente
-  siguiendo los documentos fuente correctos.
 - `.specnative/specnative_mcp.py` y `.specnative/.venv/` pueden agregarse a
   `.gitignore` si prefieres no versionarlos; o commitearlos si quieres que el
   equipo use exactamente la misma versión.

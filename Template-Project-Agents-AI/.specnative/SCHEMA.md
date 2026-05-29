@@ -1,6 +1,6 @@
 # SCHEMA.md
 
-Contrato minimo del framework SpecNative Development v0.4.
+Contrato minimo del framework SpecNative Development v0.5.
 
 ## Objetivo
 
@@ -10,47 +10,48 @@ que estados o campos minimos deben existir para reducir ambiguedad.
 ## Documentos obligatorios
 
 - `AGENTS.md`
-- `README.md`
-- `agents/README.md`
-- `agents/PRODUCT.md`
-- `agents/ARCHITECTURE.md`
-- `agents/STACK.md`
-- `agents/CONVENTIONS.md`
-- `agents/COMMANDS.md`
-- `agents/DECISIONS.md`
-- `agents/ROADMAP.md`
-- `agents/SPEC.md` o al menos una spec en `agents/specs/`
-- `agents/TRACEABILITY.md`
-- `tasks/README.md`
-- `workflows/README.md`
-- `pipelines/README.md`
+- `spec-native/README.md`
+- `spec-native/PRODUCT.md`
+- `spec-native/ARCHITECTURE.md`
+- `spec-native/STACK.md`
+- `spec-native/CONVENTIONS.md`
+- `spec-native/COMMANDS.md`
+- `spec-native/DECISIONS.md`
+- `spec-native/ROADMAP.md`
+- `spec-native/TRACEABILITY.md`
+- `spec-native/SESSION.md`
+- `spec-native/specs/` (al menos una spec)
+- `spec-native/tasks/README.md`
+- `spec-native/workflows/README.md`
+- `spec-native/pipelines/README.md`
 
 ## Documentos opcionales
 
-- `tasks/<iniciativa>/TASKS.md`
-- `workflows/PLANNING.md`
-- `workflows/REVIEW.md`
-- specs separadas por iniciativa en `agents/specs/`
+- `spec-native/tasks/<iniciativa>/TASKS.md`
+- `spec-native/workflows/PLANNING.md`
+- `spec-native/workflows/REVIEW.md`
+- specs separadas por iniciativa en `spec-native/specs/`
 - `exports/*.json` generados por tooling externo
 
 ## Infraestructura del framework (`.specnative/`)
 
 - `SCHEMA.md` — este archivo; contrato del framework
 - `CLI.md` — referencia del CLI (`specnative.py`) y el servidor MCP
-- `MCP.md` — configuracion del servidor MCP por agente (v0.4+)
+- `MCP.md` — configuracion del servidor MCP por agente (v0.5+)
 
 ## Ownership documental
 
-- Problema y objetivos: `PRODUCT.md`
-- Direccion temporal: `ROADMAP.md`
-- Restricciones del sistema: `ARCHITECTURE.md`, `STACK.md`
-- Reglas operativas: `CONVENTIONS.md`, `COMMANDS.md`
+- Problema y objetivos: `spec-native/PRODUCT.md`
+- Direccion temporal: `spec-native/ROADMAP.md`
+- Restricciones del sistema: `spec-native/ARCHITECTURE.md`, `spec-native/STACK.md`
+- Reglas operativas: `spec-native/CONVENTIONS.md`, `spec-native/COMMANDS.md`
 - Contrato del framework: `.specnative/SCHEMA.md`
-- Cambio requerido: `SPEC.md` o `agents/specs/**/SPEC.md`
-- Descomposicion ejecutable: `tasks/**/TASKS.md`
-- Decisiones persistentes: `DECISIONS.md`
-- Relaciones entre artefactos: `TRACEABILITY.md`
-- Gates de CI y proceso de CD: `pipelines/CI.md`, `pipelines/CD.md`
+- Cambio requerido: `spec-native/specs/**/SPEC.md`
+- Descomposicion ejecutable: `spec-native/tasks/**/TASKS.md`
+- Decisiones persistentes: `spec-native/DECISIONS.md`
+- Relaciones entre artefactos: `spec-native/TRACEABILITY.md`
+- Gates de CI y proceso de CD: `spec-native/pipelines/CI.md`, `spec-native/pipelines/CD.md`
+- Estado activo de trabajo: `spec-native/SESSION.md`
 
 ## Estados obligatorios
 
@@ -106,6 +107,19 @@ Estados permitidos:
 - `accepted`
 - `deprecated`
 - `replaced`
+
+### SESSION.md
+
+El archivo `spec-native/SESSION.md` usa TOML front matter con `+++` delimitadores.
+
+Campos minimos:
+
+- `state`       — `idle | in_progress | blocked | waiting_handoff`
+- `agent`       — nombre o ID del agente que hizo el ultimo checkpoint
+- `initiative`  — iniciativa activa
+- `task`        — tarea activa
+- `intent`      — que estaba haciendo el agente (una frase)
+- `last_updated` — timestamp ISO 8601
 
 ## Reglas de trazabilidad
 
