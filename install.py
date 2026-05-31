@@ -29,27 +29,30 @@ Profiles (each layer is cumulative):
 
     context   AI context layer — just enough for an agent to understand the
               project. No spec lifecycle, no tasks, no pipelines.
-              Files: AGENTS.md, agents/{README,PRODUCT,ARCHITECTURE,STACK,
-                     CONVENTIONS,COMMANDS}.md, .specnative/{README,MCP}.md
+              Every profile also installs native agent commands:
+              .claude/commands/spec-{init,update,status,handoff}.md and codex.toml
+              Files: AGENTS.md, spec-native/{README,PRODUCT,ARCHITECTURE,STACK,
+                     CONVENTIONS,COMMANDS,SESSION}.md, .specnative/{README,MCP}.md
 
     spec      Adds the full initiative lifecycle on top of context: specs,
               tasks, workflows, decisions, roadmap, and traceability.
               Ideal for solo developers and startups building spec-first.
-              Adds: agents/{DECISIONS,ROADMAP,SPEC,TRACEABILITY}.md,
-                    agents/specs/README.md, tasks/{README,TASKS.template}.md,
-                    workflows/{README,IMPLEMENTATION,PLANNING,REVIEW}.md
+              Adds: spec-native/{DECISIONS,ROADMAP,TRACEABILITY}.md,
+                    spec-native/specs/README.md,
+                    spec-native/tasks/{README,TASKS.template}.md,
+                    spec-native/workflows/{README,IMPLEMENTATION,PLANNING,REVIEW}.md
 
     team      Adds CI/CD pipeline docs and schema governance on top of spec.
               Ideal for teams that run automated pipelines and code review.
-              Adds: pipelines/{README,CI,CD}.md,
+              Adds: spec-native/pipelines/{README,CI,CD}.md,
                     .specnative/{CLI,SCHEMA}.md
 
     platform  Everything in team plus README.md (if absent) and reference
               example initiatives. Ideal for open-source projects or
               organisations that need working examples to onboard contributors.
               Adds: README.md (if missing),
-                    agents/specs/authentication/{README,SPEC}.md,
-                    tasks/authentication/{README,TASKS}.md
+                    spec-native/specs/authentication/{README,SPEC}.md,
+                    spec-native/tasks/authentication/{README,TASKS}.md
 
 Options:
     --target PATH         Target repository path (default: current directory)

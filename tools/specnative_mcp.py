@@ -1311,7 +1311,367 @@ def refine_document(document: str, what_changed: str, new_content: str) -> str:
     return (
         f"spec-native/{path.name} updated.\n"
         f"Change: {what_changed}\n"
-        f"Next: call health_check() to verify, or refine_document() on another doc."
+        f"Next: call health_check() to verify, or update_section() to refine a single section."
+    )
+
+
+@mcp.tool()
+def read_template(document: str) -> str:
+    """
+    Return the expected empty structure (sections and guidance) for a
+    spec-native/ document. Use this before writing content so you know
+    exactly what sections to fill. Works for any agent — including those
+    that don't support MCP prompts (e.g. Copilot).
+
+    Args:
+        document: Short name: product, architecture, stack, conventions,
+                  commands, decisions, roadmap, traceability, spec, tasks, session
+    """
+    templates: dict[str, str] = {
+        "product": """\
+# PRODUCT.md
+
+Fuente de verdad del producto. Responde: qué problema, para quién, por qué importa.
+
+## Problema
+<!-- Describe la fricción concreta que existe hoy y para quién. -->
+
+## Usuarios
+<!-- Segmentos de usuarios, su necesidad principal y su contexto. -->
+
+## Objetivos
+<!-- Resultado observable y medible que define éxito. -->
+
+## No objetivos
+<!-- Qué queda explícitamente fuera del alcance del producto. -->
+
+## Valor diferencial
+<!-- Por qué esta solución merece existir sobre las alternativas. -->
+""",
+        "architecture": """\
+# ARCHITECTURE.md
+
+Estructura del sistema: módulos, límites y flujos de datos.
+No describe qué construir ni por qué se tomaron las decisiones.
+
+## Módulos principales
+<!-- Lista los componentes o capas del sistema con una línea de responsabilidad cada uno. -->
+
+## Límites y reglas
+<!-- Qué no debe cruzar las fronteras entre módulos. Contratos entre componentes. -->
+
+## Flujo de datos principal
+<!-- Cómo fluye una request o evento a través del sistema. -->
+
+## Restricciones arquitectónicas
+<!-- Decisiones de estructura que condicionan el trabajo futuro. -->
+""",
+        "stack": """\
+# STACK.md
+
+Tecnologías, versiones y restricciones técnicas.
+
+## Lenguajes y runtimes
+<!-- Lenguaje principal y versión exacta. Runtime(s) requeridos. -->
+
+## Frameworks y librerías clave
+<!-- Framework principal, ORM, cliente HTTP, etc. con versiones. -->
+
+## Infraestructura
+<!-- Base de datos, cache, message broker, cloud provider. -->
+
+## Restricciones
+<!-- Versiones mínimas, tecnologías prohibidas, dependencias no negociables. -->
+
+## Herramientas de desarrollo
+<!-- Linter, formatter, gestor de paquetes, herramientas de CI. -->
+""",
+        "conventions": """\
+# CONVENTIONS.md
+
+Reglas de código, naming, testing y organización.
+
+## Naming
+<!-- Convenciones de nombres para archivos, clases, funciones, variables, ramas. -->
+
+## Estructura de carpetas
+<!-- Cómo se organiza el código fuente. Dónde va cada tipo de archivo. -->
+
+## Estilo y formato
+<!-- Herramienta de formato, reglas de linting, longitud de línea. -->
+
+## Testing
+<!-- Tipos de tests requeridos (unit, integration, e2e). Cobertura esperada. -->
+
+## Commits y PRs
+<!-- Formato de mensaje de commit. Política de branches. Proceso de revisión. -->
+""",
+        "commands": """\
+# COMMANDS.md
+
+Comandos del proyecto. Solo comandos reales — nunca comandos del framework SpecNative.
+
+## Setup
+```bash
+# instalar dependencias
+```
+
+## Desarrollo
+```bash
+# correr en local
+```
+
+## Tests
+```bash
+# correr todos los tests
+# correr tests unitarios
+# correr tests de integración
+```
+
+## Lint y formato
+```bash
+# lint
+# format
+```
+
+## Build
+```bash
+# build
+# deploy
+```
+""",
+        "decisions": """\
+# DECISIONS.md
+
+Registro de decisiones persistentes que las iniciativas futuras deben respetar.
+Solo trade-offs con impacto a largo plazo. No registra lo que se va a construir.
+
+<!-- Formato por decisión:
+
+### DEC-0001 — Título de la decisión
+
+- Fecha: YYYY-MM-DD
+- Estado: `proposed | accepted | deprecated | replaced`
+- Relacionado con specs:
+- Contexto: qué problema o situación forzó la decisión
+- Decisión: qué se decidió exactamente
+- Consecuencias: costos, beneficios y límites para el futuro
+- Reemplaza: none | DEC-XXXX
+
+-->
+""",
+        "roadmap": """\
+# ROADMAP.md
+
+Dirección temporal del proyecto. Sin detalle de implementación ni contenido de spec.
+
+## Ahora
+<!-- Iniciativas activas. Qué se está construyendo en este momento. -->
+
+## Después
+<!-- Próximas prioridades. Qué viene cuando termine lo actual. -->
+
+## Más adelante
+<!-- Apuestas de mediano/largo plazo. Sin compromiso de fecha. -->
+
+## No por ahora
+<!-- Ideas descartadas temporalmente con razón explícita. -->
+""",
+        "traceability": """\
+# TRACEABILITY.md
+
+Vínculos entre specs, tareas, decisiones y evidencia de validación.
+Actualizar al cerrar cada iniciativa, no durante la ejecución.
+
+<!-- Formato por iniciativa:
+
+### NOMBRE-INICIATIVA — SPEC-XXXX
+
+- Spec:       spec-native/specs/<iniciativa>/SPEC.md
+- Tasks:      spec-native/tasks/<iniciativa>/TASKS.md
+- Decisions:  DEC-XXXX (decisiones tomadas durante esta iniciativa)
+- Artifacts:  archivos principales producidos
+- Validation: resultado de tests, review, link a CI
+
+-->
+""",
+        "spec": """\
+# SPEC.md
+
+```toml
+artifact_type = "spec"
+id            = "SPEC-XXXX"
+state         = "draft"
+owner         = ""
+created_at    = "YYYY-MM-DD"
+updated_at    = "YYYY-MM-DD"
+replaces      = "none"
+related_tasks = []
+related_decisions = []
+artifacts     = []
+validation    = []
+```
+
+## Resumen
+<!-- Una línea: qué construye esta iniciativa. -->
+
+## Problema
+<!-- Qué fricción existe hoy y para quién. -->
+
+## Objetivo
+<!-- Estado final observable. Qué debe ser verdad cuando termine. -->
+
+## Alcance
+<!-- Incluye: ...  -->
+<!-- Excluye: ... -->
+
+## Requisitos funcionales
+- RF-1:
+- RF-2:
+
+## Requisitos no funcionales
+- RNF-1:
+
+## Criterios de aceptación
+- Dado ... cuando ... entonces ...
+
+## Dependencias y riesgos
+<!-- Dependencias externas. Riesgos conocidos. -->
+
+## Plan de validación
+<!-- Cómo se verifica que los criterios de aceptación se cumplen. -->
+""",
+        "tasks": """\
+# TASKS.md
+
+```toml
+artifact_type = "task_file"
+initiative    = ""
+spec_id       = "SPEC-XXXX"
+owner         = ""
+state         = "todo"
+```
+
+## Tareas
+
+### TASK-0001 — Título
+
+```toml
+id             = "TASK-0001"
+title          = ""
+state          = "todo"
+owner          = ""
+dependencies   = []
+expected_files = []
+close_criteria = ""
+validation     = []
+```
+
+Descripción de la responsabilidad de esta tarea.
+""",
+        "session": """\
++++
+[session]
+state        = "idle"
+agent        = ""
+initiative   = ""
+task         = ""
+intent       = ""
+last_updated = ""
++++
+
+# Active Session
+
+## Current state
+<!-- Qué estaba haciendo el último agente. -->
+
+## Next steps
+<!-- Lista ordenada. El primer ítem es lo primero que debe hacer el siguiente agente. -->
+
+## Context for next agent
+<!-- Decisiones tomadas mid-session, gotchas, archivos tocados. -->
+""",
+    }
+
+    key = document.lower()
+    if key not in templates:
+        valid = ", ".join(sorted(templates))
+        return f"Unknown document '{document}'. Valid names: {valid}"
+
+    return (
+        f"Template for spec-native/{document.upper()}.md\n"
+        f"(for SESSION.md the filename is lowercase)\n\n"
+        f"─────────────────────────────────────────\n"
+        f"{templates[key]}"
+        f"─────────────────────────────────────────\n"
+        f"Use refine_document('{key}', '<what_changed>', '<content>') to write the file.\n"
+        f"Use update_section('{key}', '<section_heading>', '<content>') to fill one section."
+    )
+
+
+@mcp.tool()
+def update_section(document: str, section_heading: str, content: str) -> str:
+    """
+    Update or add a single section in a spec-native/ document without
+    touching the rest of the file. Safe to call multiple times on the
+    same document — each call only modifies the target section.
+
+    Args:
+        document:        Short name: product, architecture, stack, conventions,
+                         commands, decisions, roadmap, traceability
+        section_heading: Exact heading text without the ## prefix
+                         (e.g. 'Problema', 'Módulos principales', 'Setup')
+        content:         New content for the section (plain text or markdown)
+    """
+    writable = {
+        "product":      SN / "PRODUCT.md",
+        "architecture": SN / "ARCHITECTURE.md",
+        "stack":        SN / "STACK.md",
+        "conventions":  SN / "CONVENTIONS.md",
+        "commands":     SN / "COMMANDS.md",
+        "decisions":    SN / "DECISIONS.md",
+        "roadmap":      SN / "ROADMAP.md",
+        "traceability": SN / "TRACEABILITY.md",
+    }
+    path = writable.get(document.lower())
+    if not path:
+        valid = ", ".join(sorted(writable))
+        return f"Unknown document '{document}'. Valid names: {valid}"
+
+    # If file doesn't exist, start from template structure
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"# {path.stem}.md\n\n## {section_heading}\n\n{content.strip()}\n",
+                        encoding="utf-8")
+        return (
+            f"Created spec-native/{path.name} with section '## {section_heading}'.\n"
+            f"Next: call update_section() for other sections, or read_template('{document}') "
+            f"to see which sections are expected."
+        )
+
+    text = path.read_text(encoding="utf-8")
+
+    # Normalize heading variations: ## heading, ### heading
+    heading_pattern = re.compile(
+        r"(^#{1,3}\s+" + re.escape(section_heading) + r"\s*$)(.*?)(?=^#{1,3}\s|\Z)",
+        re.MULTILINE | re.DOTALL,
+    )
+
+    new_section = f"## {section_heading}\n\n{content.strip()}\n"
+
+    if heading_pattern.search(text):
+        # Replace existing section
+        updated = heading_pattern.sub(lambda m: new_section, text, count=1)
+        action = "updated"
+    else:
+        # Append new section at the end
+        updated = text.rstrip() + f"\n\n## {section_heading}\n\n{content.strip()}\n"
+        action = "added"
+
+    path.write_text(updated, encoding="utf-8")
+    return (
+        f"Section '## {section_heading}' {action} in spec-native/{path.name}.\n"
+        f"Call health_check() to see overall documentation status."
     )
 
 
