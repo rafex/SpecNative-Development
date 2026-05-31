@@ -379,45 +379,58 @@ def setup_venv(target: Path) -> tuple[Path, list[str]]:
 # ---------------------------------------------------------------------------
 
 def setup_mcp_configs(target: Path, created: list[str], errors: list[str]) -> None:
-    """Create MCP configuration files for OpenCode, Claude Desktop, and Codex."""
+    """Create MCP configuration files for OpenCode, Claude Desktop, and Codex.
+
+    opencode.json schema reference: https://opencode.ai/config.json
+    Custom commands live under the 'command' key (not 'prompts').
+    The 'instructions' key tells OpenCode to auto-load context files.
+    """
     venv_python = str(target / ".specnative" / (".venv/Scripts/python3" if sys.platform == "win32" else ".venv/bin/python3"))
 
-    # OpenCode — MCP server + built-in prompts
+    # OpenCode — MCP server + custom commands + auto-loaded instructions
+    # Schema: https://opencode.ai/config.json
+    # 'command' keys use 'template' (required) + 'description' (optional)
+    # 'instructions' auto-loads files as context in every session
     opencode_config = {
         "$schema": "https://opencode.ai/config.json",
+        "instructions": [
+            "AGENTS.md",
+            "spec-native/README.md",
+        ],
         "mcp": {
             "specnative": {
                 "type": "local",
                 "enabled": True,
                 "command": [
                     venv_python,
-                    "./.specnative/specnative_mcp.py"
-                ]
+                    "./.specnative/specnative_mcp.py",
+                ],
             }
         },
-        "prompts": {
+        "command": {
             "spec-init": {
                 "description": "Initialize SpecNative — guided project setup",
-                "prompt": (
+                "template": (
                     "Use the specnative MCP server. "
                     "Call health_check() to see which spec-native/ documents are empty. "
-                    "Then interview the developer and fill PRODUCT.md, STACK.md, "
-                    "ARCHITECTURE.md, CONVENTIONS.md and COMMANDS.md using refine_document(). "
+                    "Interview the developer and fill PRODUCT.md, STACK.md, "
+                    "ARCHITECTURE.md, CONVENTIONS.md and COMMANDS.md using "
+                    "update_section() or refine_document(). "
                     "Finish by suggesting start_initiative() for the first spec."
                 ),
             },
             "spec-update": {
                 "description": "Update SpecNative docs — detect gaps, refine iteratively",
-                "prompt": (
+                "template": (
                     "Use the specnative MCP server. "
                     "Call health_check() and suggest_next() to identify gaps. "
-                    "Ask the developer what to refine today, then use refine_document() "
-                    "to update the chosen documents."
+                    "Ask the developer what to refine today, then use "
+                    "update_section() or refine_document() to update the documents."
                 ),
             },
             "spec-status": {
                 "description": "Quick SpecNative project health check",
-                "prompt": (
+                "template": (
                     "Use the specnative MCP server. "
                     "Call resume(), status() and health_check(). "
                     "Summarize in 5 lines what is healthy and what needs attention."
@@ -425,7 +438,7 @@ def setup_mcp_configs(target: Path, created: list[str], errors: list[str]) -> No
             },
             "spec-handoff": {
                 "description": "Generate structured handoff for next agent",
-                "prompt": (
+                "template": (
                     "Use the specnative MCP server. "
                     "Ask the developer what they were doing and what the next step is. "
                     "Call checkpoint() with the gathered info, then log_decision() for "

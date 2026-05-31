@@ -121,11 +121,17 @@ Agrega a `claude_desktop_config.json`
 
 ### OpenCode
 
-Generado automáticamente en `opencode.json` durante la instalación:
+Generado automáticamente en `opencode.json` durante la instalación.
+Usa la clave `command` del schema de OpenCode (no `prompts` — esa clave no existe).
+La clave `instructions` hace que OpenCode cargue `AGENTS.md` automáticamente en cada sesión.
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "AGENTS.md",
+    "spec-native/README.md"
+  ],
   "mcp": {
     "specnative": {
       "type": "local",
@@ -135,9 +141,31 @@ Generado automáticamente en `opencode.json` durante la instalación:
         "./.specnative/specnative_mcp.py"
       ]
     }
+  },
+  "command": {
+    "spec-init": {
+      "description": "Initialize SpecNative — guided project setup",
+      "template": "Use the specnative MCP server. Call health_check() to see which spec-native/ documents are empty. Interview the developer and fill PRODUCT.md, STACK.md, ARCHITECTURE.md, CONVENTIONS.md and COMMANDS.md using update_section() or refine_document(). Finish by suggesting start_initiative() for the first spec."
+    },
+    "spec-update": {
+      "description": "Update SpecNative docs — detect gaps, refine iteratively",
+      "template": "Use the specnative MCP server. Call health_check() and suggest_next() to identify gaps. Ask the developer what to refine today, then use update_section() or refine_document() to update the documents."
+    },
+    "spec-status": {
+      "description": "Quick SpecNative project health check",
+      "template": "Use the specnative MCP server. Call resume(), status() and health_check(). Summarize in 5 lines what is healthy and what needs attention."
+    },
+    "spec-handoff": {
+      "description": "Generate structured handoff for next agent",
+      "template": "Use the specnative MCP server. Ask the developer what they were doing and what the next step is. Call checkpoint() with the gathered info, then log_decision() for any unrecorded decisions. Confirm with read_context('session')."
+    }
   }
 }
 ```
+
+> **Nota:** La clave `instructions` es exclusiva de OpenCode — le indica qué archivos
+> incluir como contexto en cada sesión. `AGENTS.md` se carga automáticamente sin
+> necesidad de pedírselo al agente.
 
 ### Codex CLI
 
