@@ -1797,6 +1797,1004 @@ Developer answers gathered:
 
 
 # ---------------------------------------------------------------------------
+# Built-in archetypes data (v0.7)
+# ---------------------------------------------------------------------------
+
+_BUILTIN_ARCHETYPES: dict[str, dict] = {
+    "java-hexagonal": {
+        "meta": {
+            "name":        "java-hexagonal",
+            "description": "Java 21 + Spring Boot 3 with Hexagonal Architecture (Ports & Adapters)",
+            "tags":        ["java", "spring-boot", "hexagonal", "ddd", "ports-adapters"],
+            "language":    "java",
+            "pattern":     "hexagonal",
+            "version":     "1.0.0",
+        },
+        "ARCHITECTURE.md": """\
+# ARCHITECTURE.md
+
+Sistema construido con Arquitectura Hexagonal (Ports & Adapters).
+El dominio está completamente aislado de la infraestructura.
+
+## Capas principales
+
+### domain/
+Núcleo del sistema. Sin dependencias externas.
+
+- `model/` — Entidades, Value Objects, Aggregates
+- `port/in/` — Puertos de entrada (interfaces de casos de uso)
+- `port/out/` — Puertos de salida (interfaces de repositorios y servicios externos)
+- `service/` — Servicios de dominio (lógica de negocio pura)
+- `exception/` — Excepciones de dominio
+
+### application/
+Orquesta los casos de uso. Coordina domain e infrastructure.
+
+- `usecase/` — Implementaciones de los puertos de entrada
+- `dto/` — Data Transfer Objects (entrada/salida de casos de uso)
+
+### infrastructure/
+Adaptadores que conectan el dominio con el mundo exterior.
+
+- `adapter/in/web/` — Controladores REST (Spring MVC)
+- `adapter/in/event/` — Consumidores de eventos (Kafka, RabbitMQ)
+- `adapter/out/persistence/` — Implementaciones JPA/JDBC de repositorios
+- `adapter/out/client/` — Clientes HTTP a servicios externos
+- `config/` — Configuración de Spring, beans, seguridad
+
+## Reglas de dependencia
+
+```
+infrastructure → application → domain
+```
+
+- `domain` no conoce `application` ni `infrastructure`
+- `application` no conoce `infrastructure`
+- Las dependencias solo van hacia adentro (hacia domain)
+- La inyección de dependencias invierte las dependencias de infraestructura
+
+## Paquete base
+
+```
+com.<empresa>.<servicio>/
+├── domain/
+├── application/
+└── infrastructure/
+```
+""",
+        "STACK.md": """\
+# STACK.md
+
+## Lenguaje y runtime
+
+- Java 21 (LTS) — records, sealed classes, pattern matching
+- JVM con Spring Boot runner
+
+## Framework principal
+
+- Spring Boot 3.x
+- Spring Web MVC para API REST
+- Spring Data JPA para persistencia
+- Spring Security para autenticación/autorización
+- Spring Validation (Jakarta Bean Validation)
+
+## Base de datos
+
+- PostgreSQL (producción)
+- H2 en memoria (tests unitarios)
+- Flyway para migraciones de schema
+
+## Testing
+
+- JUnit 5 + Mockito (tests unitarios de dominio y aplicación)
+- TestContainers (tests de integración con PostgreSQL real)
+- Spring Boot Test (tests de slice: @WebMvcTest, @DataJpaTest)
+- RestAssured o MockMvc para tests de API
+
+## Build y dependencias
+
+- Maven 3.x (o Gradle 8.x)
+- Spring Dependency Management BOM
+
+## Observabilidad
+
+- Spring Boot Actuator (health, metrics, info)
+- Micrometer + Prometheus (métricas)
+- SLF4J + Logback (logging estructurado JSON en producción)
+
+## Restricciones
+
+- Java 21+ requerido (no 17, no 11)
+- Spring Boot 3.x (Jakarta EE, no javax)
+- No dependencias de infraestructura en el módulo domain
+- No usar @Autowired en código de negocio — inyección por constructor
+""",
+        "CONVENTIONS.md": """\
+# CONVENTIONS.md
+
+## Estructura de paquetes
+
+Seguir la estructura hexagonal por módulo:
+
+```
+com.<empresa>.<servicio>.<capa>.<subdominio>
+```
+
+Ejemplos:
+- `com.empresa.orders.domain.model.Order`
+- `com.empresa.orders.domain.port.in.CreateOrderUseCase`
+- `com.empresa.orders.application.usecase.CreateOrderService`
+- `com.empresa.orders.infrastructure.adapter.in.web.OrderController`
+
+## Naming
+
+| Tipo | Convención | Ejemplo |
+|------|-----------|---------|
+| Puertos de entrada | `<Acción><Entidad>UseCase` | `CreateOrderUseCase` |
+| Puertos de salida | `<Entidad>Repository` / `<Entidad>Port` | `OrderRepository` |
+| Implementaciones de casos de uso | `<Acción><Entidad>Service` | `CreateOrderService` |
+| Controladores REST | `<Entidad>Controller` | `OrderController` |
+| Adaptadores de persistencia | `<Entidad>PersistenceAdapter` | `OrderPersistenceAdapter` |
+| DTOs de request | `<Acción><Entidad>Request` | `CreateOrderRequest` |
+| DTOs de response | `<Entidad>Response` | `OrderResponse` |
+| Entidades JPA | `<Entidad>JpaEntity` | `OrderJpaEntity` |
+
+## Testing
+
+- Un test por caso de uso, no por clase
+- Tests de dominio: puros, sin Spring context
+- Tests de aplicación: Mockito para puertos de salida
+- Tests de infraestructura: TestContainers + base de datos real
+- Cobertura mínima en domain y application: 80%
+
+## Commits
+
+Seguir Conventional Commits:
+- `feat(orders):` nueva funcionalidad
+- `fix(orders):` corrección de bug
+- `refactor(domain):` refactoring sin cambio de comportamiento
+- `test(orders):` añadir o corregir tests
+- `docs:` cambios en documentación
+
+## Branches
+
+- `main` — producción
+- `develop` — integración
+- `feat/<ticket>-<descripcion>` — features
+- `fix/<ticket>-<descripcion>` — bugs
+""",
+        "COMMANDS.md": """\
+# COMMANDS.md
+
+## Setup
+
+```bash
+# Clonar e instalar dependencias
+mvn clean install -DskipTests
+
+# Levantar dependencias locales (PostgreSQL, etc.)
+docker-compose up -d
+```
+
+## Desarrollo
+
+```bash
+# Correr la aplicación en local
+mvn spring-boot:run
+
+# Correr con perfil específico
+mvn spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+## Tests
+
+```bash
+# Todos los tests
+mvn test
+
+# Solo tests unitarios (sin TestContainers)
+mvn test -Dgroups=unit
+
+# Solo tests de integración
+mvn test -Dgroups=integration
+
+# Con cobertura (JaCoCo)
+mvn verify
+```
+
+## Build
+
+```bash
+# Build del JAR
+mvn clean package -DskipTests
+
+# Build y push de imagen Docker
+mvn spring-boot:build-image -Dspring-boot.build-image.imageName=app:latest
+```
+
+## Base de datos
+
+```bash
+# Correr migraciones Flyway (se ejecutan automáticamente en startup)
+mvn flyway:migrate
+
+# Ver estado de migraciones
+mvn flyway:info
+```
+
+## Calidad
+
+```bash
+# Checkstyle
+mvn checkstyle:check
+
+# SpotBugs
+mvn spotbugs:check
+```
+""",
+        "DECISIONS.md": """\
+# DECISIONS.md
+
+Decisiones arquitectónicas base del proyecto.
+
+### DEC-0001 — Arquitectura Hexagonal (Ports & Adapters)
+
+- Fecha: 2024-01-01
+- Estado: `accepted`
+- Contexto: Necesitamos un sistema donde la lógica de negocio sea
+  completamente independiente de frameworks, bases de datos y APIs externas.
+  Los cambios de infraestructura no deben impactar el dominio.
+- Decisión: Adoptar Arquitectura Hexagonal con separación explícita en
+  domain, application e infrastructure. El dominio define puertos (interfaces)
+  y la infraestructura provee adaptadores (implementaciones).
+- Consecuencias: Mayor verbosidad inicial (más interfaces, más clases).
+  A cambio: dominio completamente testeable sin Spring, fácil sustitución
+  de adaptadores (cambiar PostgreSQL por MongoDB sin tocar el dominio).
+- Reemplaza: none
+
+### DEC-0002 — Spring Boot como framework de infraestructura
+
+- Fecha: 2024-01-01
+- Estado: `accepted`
+- Contexto: Necesitamos un framework maduro para DI, REST, persistencia
+  y configuración. Spring Boot es el estándar de facto en el ecosistema Java.
+- Decisión: Usar Spring Boot 3.x como framework de infraestructura.
+  Spring SOLO vive en la capa infrastructure — nunca en domain ni application.
+  La inyección es por constructor, no por @Autowired.
+- Consecuencias: Acoplamiento al ecosistema Spring en infrastructure.
+  Domain y application son plain Java, sin anotaciones de Spring.
+- Reemplaza: none
+""",
+        "ROADMAP.md": """\
+# ROADMAP.md
+
+## Ahora
+- Setup inicial del proyecto (estructura hexagonal, CI/CD, Docker)
+- Definición del modelo de dominio base
+- Primer caso de uso end-to-end (domain → API REST → persistencia)
+
+## Después
+- API REST completa con documentación OpenAPI/Swagger
+- Autenticación y autorización (JWT o OAuth2)
+- Tests de integración con TestContainers
+- Observabilidad: métricas, health checks, logging estructurado
+
+## Más adelante
+- Mensajería asíncrona (Kafka o RabbitMQ)
+- Cache distribuido (Redis)
+- Separación en microservicios si la escala lo justifica
+
+## No por ahora
+- GraphQL (no hay requisito claro)
+- gRPC (overhead sin beneficio en este contexto)
+- Event Sourcing (complejidad no justificada en esta etapa)
+""",
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Built-in templates data (v0.7)
+# ---------------------------------------------------------------------------
+
+_BUILTIN_SPEC_TEMPLATES: dict[str, dict] = {
+    "feature-rest-endpoint": {
+        "meta": {
+            "name":        "feature-rest-endpoint",
+            "description": "Nueva ruta/endpoint REST",
+            "tags":        ["rest", "api", "feature", "http"],
+        },
+        "content": """\
++++
+[template]
+name        = "feature-rest-endpoint"
+description = "Nueva ruta/endpoint REST"
+tags        = ["rest", "api", "feature"]
++++
+
+```toml
+artifact_type = "spec"
+id            = "SPEC-XXXX"
+state         = "draft"
+owner         = ""
+created_at    = "{{date}}"
+updated_at    = "{{date}}"
+replaces      = "none"
+related_tasks = []
+related_decisions = []
+artifacts     = []
+validation    = []
+```
+
+## Metadata
+
+- ID: SPEC-XXXX
+- Estado: `draft`
+- Iniciativa: {{initiative_name}}
+
+## Resumen
+
+Agregar endpoint `{{method}} /{{path}}` para {{summary}}.
+
+## Problema
+
+{{problem}}
+
+## Objetivo
+
+Exponer un endpoint REST que permita {{goal}}.
+
+## Alcance
+
+**Incluye:**
+- Endpoint `{{method}} /{{path}}`
+- Validación de request
+- Respuesta con formato estándar
+- Tests unitarios del caso de uso
+- Test de integración del endpoint
+
+**Excluye:**
+- Cambios en otros endpoints
+- Modificaciones de autenticación global
+
+## Requisitos funcionales
+
+- RF-1: El endpoint debe aceptar y validar el request
+- RF-2: El endpoint debe retornar respuesta con status HTTP apropiado
+- RF-3: Los errores de validación deben retornar 400 con detalles
+
+## Requisitos no funcionales
+
+- RNF-1: Respuesta < 500ms en condiciones normales
+- RNF-2: El endpoint debe estar documentado en OpenAPI
+
+## Criterios de aceptación
+
+- Dado un request válido, cuando se llama `{{method}} /{{path}}`, entonces retorna 200/201 con el payload esperado
+- Dado un request inválido, cuando se llama el endpoint, entonces retorna 400 con descripción del error
+
+## Plan de validación
+
+- Test unitario del caso de uso con Mockito
+- Test de integración con @WebMvcTest o MockMvc
+- Verificación en Swagger UI
+""",
+    },
+    "db-migration": {
+        "meta": {
+            "name":        "db-migration",
+            "description": "Migración de base de datos con Flyway/Liquibase",
+            "tags":        ["database", "migration", "schema", "flyway"],
+        },
+        "content": """\
++++
+[template]
+name        = "db-migration"
+description = "Migración de base de datos"
+tags        = ["database", "migration", "schema"]
++++
+
+```toml
+artifact_type = "spec"
+id            = "SPEC-XXXX"
+state         = "draft"
+owner         = ""
+created_at    = "{{date}}"
+updated_at    = "{{date}}"
+replaces      = "none"
+related_tasks = []
+related_decisions = []
+artifacts     = ["db/migrations/*"]
+validation    = ["flyway migrate en staging", "smoke test post-migración"]
+```
+
+## Metadata
+
+- ID: SPEC-XXXX
+- Estado: `draft`
+- Iniciativa: {{initiative_name}}
+
+## Resumen
+
+Migración de base de datos para {{summary}}.
+
+## Problema
+
+{{problem}}
+
+## Objetivo
+
+{{goal}}
+
+## Alcance
+
+**Incluye:**
+- Script de migración (Flyway V{version}__)
+- Script de rollback si aplica
+- Datos de migración si aplica (seed)
+
+**Excluye:**
+- Cambios en lógica de negocio
+- Modificaciones a otras tablas no relacionadas
+
+## Requisitos
+
+- RF-1: La migración debe ser idempotente o versionada
+- RF-2: Debe existir un script de rollback documentado
+- RF-3: Tiempo de migración estimado documentado
+
+## Riesgos
+
+- Riesgo de bloqueos en tablas grandes durante la migración
+- Incompatibilidad entre schema nuevo y código antiguo durante el deploy
+
+## Plan de validación
+
+- Ejecutar en base de datos de staging con datos reales (anonimizados)
+- Verificar tiempo de ejecución
+- Smoke test post-migración
+- Validar rollback en ambiente de prueba
+""",
+    },
+    "module-refactor": {
+        "meta": {
+            "name":        "module-refactor",
+            "description": "Refactoring de módulo o capa del sistema",
+            "tags":        ["refactor", "architecture", "technical-debt"],
+        },
+        "content": """\
++++
+[template]
+name        = "module-refactor"
+description = "Refactoring de módulo o capa"
+tags        = ["refactor", "architecture", "technical-debt"]
++++
+
+```toml
+artifact_type = "spec"
+id            = "SPEC-XXXX"
+state         = "draft"
+owner         = ""
+created_at    = "{{date}}"
+updated_at    = "{{date}}"
+replaces      = "none"
+related_tasks = []
+related_decisions = []
+artifacts     = []
+validation    = ["todos los tests existentes pasan", "cobertura no disminuye"]
+```
+
+## Metadata
+
+- ID: SPEC-XXXX
+- Estado: `draft`
+- Iniciativa: {{initiative_name}}
+
+## Resumen
+
+Refactoring de {{module}} para {{summary}}.
+
+## Problema (deuda técnica)
+
+{{problem}}
+
+**Impacto actual:**
+- Dificultad para agregar funcionalidad nueva
+- Tests frágiles o acoplados a implementación
+- Violación de convenciones arquitectónicas
+
+## Objetivo
+
+Al terminar este refactoring, {{goal}}.
+El comportamiento observable del sistema no debe cambiar.
+
+## Alcance
+
+**Incluye:**
+- Módulo(s): {{modules}}
+- Reorganización de responsabilidades
+
+**Excluye:**
+- Nuevas funcionalidades (solo cambio estructural)
+- Cambios en API pública
+
+## Criterio de éxito
+
+- **Todos los tests existentes siguen pasando** (sin cambiar su semántica)
+- La cobertura de tests no disminuye
+- Las métricas de complejidad ciclomática mejoran o se mantienen
+- El código cumple las convenciones definidas en CONVENTIONS.md
+
+## Plan de validación
+
+- Ejecutar suite completa de tests antes y después
+- Revisión de código por par
+- Verificar que el comportamiento en producción no cambia (métricas/logs)
+""",
+    },
+}
+
+_BUILTIN_DECISION_SNIPPETS: dict[str, dict] = {
+    "jwt-authentication": {
+        "meta": {
+            "name":        "jwt-authentication",
+            "description": "JWT para autenticación stateless",
+            "tags":        ["auth", "jwt", "security", "stateless"],
+        },
+        "content": """\
+### DEC-XXXX — JWT para autenticación stateless
+
+- Fecha: {{date}}
+- Estado: `proposed`
+- Relacionado con specs:
+- Contexto: El sistema necesita autenticación sin estado de servidor
+  (stateless). Se evalúan sesiones en servidor vs tokens JWT.
+- Decisión: Usar JWT (JSON Web Tokens) firmados con clave asimétrica (RS256)
+  para autenticación. El token incluye claims estándar (sub, exp, iat) y
+  roles del usuario. El refresh token se almacena en base de datos con TTL.
+- Consecuencias:
+  - Sin estado en el servidor → escalado horizontal simple
+  - Los tokens no pueden invalidarse antes de expirar (usar tiempo de vida corto: 15 min)
+  - Refresh token en DB permite invalidación de sesiones
+  - Agregar lógica de validación de firma en cada servicio que consuma el token
+- Reemplaza: none
+""",
+    },
+    "hexagonal-ports": {
+        "meta": {
+            "name":        "hexagonal-ports",
+            "description": "Separación domain/infrastructure via puertos y adaptadores",
+            "tags":        ["architecture", "hexagonal", "ports-adapters", "ddd"],
+        },
+        "content": """\
+### DEC-XXXX — Separación domain/infrastructure via Ports & Adapters
+
+- Fecha: {{date}}
+- Estado: `proposed`
+- Relacionado con specs:
+- Contexto: El sistema crece en complejidad y los detalles de infraestructura
+  (frameworks, bases de datos, APIs externas) se mezclan con la lógica de negocio,
+  dificultando los tests y el mantenimiento.
+- Decisión: Adoptar el patrón Ports & Adapters. El dominio define interfaces
+  (puertos) y la infraestructura provee implementaciones (adaptadores).
+  La regla de dependencia es estricta: nada de la infraestructura entra al dominio.
+- Consecuencias:
+  - Mayor número de interfaces y clases
+  - Dominio completamente testeable sin levantar infraestructura
+  - Cambio de base de datos o framework no impacta el dominio
+  - Los adaptadores son intercambiables (PostgreSQL → MongoDB, REST → gRPC)
+- Reemplaza: none
+""",
+    },
+    "database-choice": {
+        "meta": {
+            "name":        "database-choice",
+            "description": "Elección y justificación de base de datos",
+            "tags":        ["database", "persistence", "infrastructure"],
+        },
+        "content": """\
+### DEC-XXXX — Elección de base de datos
+
+- Fecha: {{date}}
+- Estado: `proposed`
+- Relacionado con specs:
+- Contexto: El sistema necesita persistencia. Se evalúan opciones según
+  el modelo de datos, patrones de acceso, escala esperada y operaciones.
+- Decisión: Usar {{database}} como base de datos principal porque {{reason}}.
+  Alternativas consideradas: {{alternatives}}.
+- Consecuencias:
+  - El esquema de datos debe diseñarse para {{database}}
+  - Las migraciones se gestionan con {{migration_tool}}
+  - Para tests de integración usar {{test_strategy}} (TestContainers, H2, etc.)
+  - El equipo necesita conocimiento de {{database}} para operaciones
+- Reemplaza: none
+""",
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Tools — archetypes (v0.7)
+# ---------------------------------------------------------------------------
+
+def _load_user_archetypes() -> list[dict]:
+    """Discover archetypes in .specnative/archetypes/ — each must have archetype.toml."""
+    archetypes_dir = REPO / ".specnative" / "archetypes"
+    if not archetypes_dir.exists():
+        return []
+    results = []
+    for entry in archetypes_dir.iterdir():
+        toml_path = entry / "archetype.toml"
+        if entry.is_dir() and toml_path.exists():
+            meta = _toml_loads(toml_path.read_text(encoding="utf-8"))
+            archetype_meta = meta.get("archetype", meta)
+            archetype_meta.setdefault("name", entry.name)
+            archetype_meta["_path"] = str(entry.relative_to(REPO))
+            archetype_meta["_source"] = "local"
+            # Load doc files
+            docs: dict[str, str] = {}
+            for doc_name in ["ARCHITECTURE.md", "STACK.md", "CONVENTIONS.md",
+                             "COMMANDS.md", "DECISIONS.md", "ROADMAP.md"]:
+                doc_path = entry / doc_name
+                if doc_path.exists():
+                    docs[doc_name] = doc_path.read_text(encoding="utf-8")
+            archetype_meta["_docs"] = docs
+            results.append(archetype_meta)
+    return results
+
+
+def _get_archetype(name: str) -> dict | None:
+    """Return archetype data by name (built-in or local)."""
+    if name in _BUILTIN_ARCHETYPES:
+        data = dict(_BUILTIN_ARCHETYPES[name])
+        data["meta"]["_source"] = "built-in"
+        return data
+    for arch in _load_user_archetypes():
+        if arch.get("name") == name or arch.get("_path", "").endswith(name):
+            # Rebuild to match built-in structure
+            return {"meta": arch, **arch.get("_docs", {})}
+    return None
+
+
+@mcp.tool()
+def list_archetypes() -> str:
+    """
+    List all available archetypes: built-in (embedded in MCP) and
+    user-defined (discovered from .specnative/archetypes/).
+    Call this before apply_archetype() to see what is available.
+    """
+    lines: list[str] = [f"Available archetypes — {REPO.name}\n"]
+
+    # Built-ins
+    lines.append("── Built-in ──────────────────────────────────────")
+    for name, data in _BUILTIN_ARCHETYPES.items():
+        meta = data["meta"]
+        tags = ", ".join(meta.get("tags", []))
+        docs = [k for k in data if k not in ("meta",)]
+        lines.append(f"  {name}")
+        lines.append(f"    {meta.get('description', '')}")
+        lines.append(f"    language={meta.get('language','?')}  pattern={meta.get('pattern','?')}")
+        lines.append(f"    tags: {tags}")
+        lines.append(f"    documents: {', '.join(docs)}")
+        lines.append("")
+
+    # Local
+    user = _load_user_archetypes()
+    if user:
+        lines.append("── Local (.specnative/archetypes/) ───────────────")
+        for arch in user:
+            name = arch.get("name", "?")
+            desc = arch.get("description", "")
+            tags = ", ".join(arch.get("tags", []))
+            docs = list(arch.get("_docs", {}).keys())
+            lines.append(f"  {name}")
+            lines.append(f"    {desc}")
+            lines.append(f"    tags: {tags}")
+            lines.append(f"    documents: {', '.join(docs) or 'none'}")
+            lines.append("")
+    else:
+        lines.append("── Local (.specnative/archetypes/) ───────────────")
+        lines.append("  (none — add archetypes in .specnative/archetypes/)")
+        lines.append("")
+
+    lines.append("Usage: read_archetype('<name>') → preview content")
+    lines.append("       apply_archetype('<name>') → apply to spec-native/")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def read_archetype(name: str) -> str:
+    """
+    Read the full content of an archetype without applying it.
+    Use this to preview what would be written to spec-native/ before committing.
+
+    Args:
+        name: Archetype name (from list_archetypes())
+    """
+    data = _get_archetype(name)
+    if not data:
+        available = list(_BUILTIN_ARCHETYPES.keys()) + [
+            a.get("name", "?") for a in _load_user_archetypes()
+        ]
+        return (
+            f"Archetype '{name}' not found.\n"
+            f"Available: {', '.join(available)}\n"
+            f"Call list_archetypes() for details."
+        )
+
+    meta = data.get("meta", {})
+    lines = [
+        f"Archetype: {name}",
+        f"Source:    {meta.get('_source', 'built-in')}",
+        f"Language:  {meta.get('language', '?')}",
+        f"Pattern:   {meta.get('pattern', '?')}",
+        f"Tags:      {', '.join(meta.get('tags', []))}",
+        "",
+    ]
+    docs = {k: v for k, v in data.items() if k != "meta" and isinstance(v, str)}
+    for doc_name, content in docs.items():
+        lines.append(f"{'─'*60}")
+        lines.append(f"## {doc_name}")
+        lines.append(f"{'─'*60}")
+        lines.append(content[:600] + ("…\n[truncated]" if len(content) > 600 else ""))
+        lines.append("")
+
+    lines.append(f"Call apply_archetype('{name}') to write these to spec-native/")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def apply_archetype(name: str, force: bool = False) -> str:
+    """
+    Apply an archetype to the current project by writing its documents
+    to spec-native/. Empty or placeholder documents are filled; documents
+    with real content are skipped (use force=True to overwrite all).
+
+    Args:
+        name:  Archetype name (from list_archetypes())
+        force: If True, overwrite documents that already have content
+    """
+    data = _get_archetype(name)
+    if not data:
+        available = list(_BUILTIN_ARCHETYPES.keys()) + [
+            a.get("name", "?") for a in _load_user_archetypes()
+        ]
+        return (
+            f"Archetype '{name}' not found.\n"
+            f"Available: {', '.join(available)}"
+        )
+
+    docs = {k: v for k, v in data.items() if k != "meta" and isinstance(v, str)}
+    applied: list[str] = []
+    skipped: list[str] = []
+
+    for doc_name, content in docs.items():
+        dest = SN / doc_name
+        if dest.exists() and _doc_has_real_content(dest) and not force:
+            skipped.append(doc_name)
+            continue
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(content, encoding="utf-8")
+        applied.append(doc_name)
+
+    result_lines = [
+        f"Archetype '{name}' applied to spec-native/\n",
+    ]
+    if applied:
+        result_lines.append("Applied:")
+        for f in applied:
+            result_lines.append(f"  ✓ spec-native/{f}")
+    if skipped:
+        result_lines.append("\nSkipped (already have content):")
+        for f in skipped:
+            result_lines.append(f"  – spec-native/{f}  (use force=True to overwrite)")
+    result_lines.append(
+        "\nNext: call health_check() to verify, or use /spec-update to refine."
+    )
+    return "\n".join(result_lines)
+
+
+# ---------------------------------------------------------------------------
+# Tools — templates (v0.7)
+# ---------------------------------------------------------------------------
+
+def _load_user_spec_templates() -> list[dict]:
+    tdir = REPO / ".specnative" / "templates" / "specs"
+    if not tdir.exists():
+        return []
+    results = []
+    for f in tdir.glob("*.md"):
+        txt = f.read_text(encoding="utf-8")
+        meta_match = re.search(r"^\+\+\+\s*\n(.*?)\n\+\+\+", txt, re.DOTALL | re.MULTILINE)
+        meta: dict = {}
+        if meta_match:
+            raw = meta_match.group(1)
+            inner = _toml_loads(f"```toml\n{raw}\n```")
+            meta = inner.get("template", inner)
+        meta.setdefault("name", f.stem)
+        meta["_source"] = "local"
+        meta["_content"] = txt
+        results.append(meta)
+    return results
+
+
+def _load_user_decision_snippets() -> list[dict]:
+    ddir = REPO / ".specnative" / "templates" / "decisions"
+    if not ddir.exists():
+        return []
+    results = []
+    for f in ddir.glob("*.md"):
+        txt = f.read_text(encoding="utf-8")
+        meta_match = re.search(r"^\+\+\+\s*\n(.*?)\n\+\+\+", txt, re.DOTALL | re.MULTILINE)
+        meta: dict = {}
+        if meta_match:
+            raw = meta_match.group(1)
+            inner = _toml_loads(f"```toml\n{raw}\n```")
+            meta = inner.get("snippet", inner)
+        meta.setdefault("name", f.stem)
+        meta["_source"] = "local"
+        meta["_content"] = txt
+        results.append(meta)
+    return results
+
+
+@mcp.tool()
+def list_templates(template_type: str = "") -> str:
+    """
+    List available spec templates and decision snippets.
+
+    Args:
+        template_type: Filter by type: "spec" | "decision" | "" (both, default)
+    """
+    lines: list[str] = [f"Available templates — {REPO.name}\n"]
+    show_spec     = template_type.lower() in ("spec", "")
+    show_decision = template_type.lower() in ("decision", "")
+
+    if show_spec:
+        lines.append("── Spec templates ────────────────────────────────")
+        lines.append("   Built-in:")
+        for name, data in _BUILTIN_SPEC_TEMPLATES.items():
+            meta = data["meta"]
+            tags = ", ".join(meta.get("tags", []))
+            lines.append(f"     {name:<30} {meta.get('description','')}")
+            lines.append(f"       tags: {tags}")
+        user_specs = _load_user_spec_templates()
+        if user_specs:
+            lines.append("   Local (.specnative/templates/specs/):")
+            for t in user_specs:
+                lines.append(f"     {t.get('name','?'):<30} {t.get('description','')}")
+        lines.append("")
+        lines.append("   Usage: apply_spec_template('<name>', '<initiative>')")
+        lines.append("")
+
+    if show_decision:
+        lines.append("── Decision snippets ─────────────────────────────")
+        lines.append("   Built-in:")
+        for name, data in _BUILTIN_DECISION_SNIPPETS.items():
+            meta = data["meta"]
+            tags = ", ".join(meta.get("tags", []))
+            lines.append(f"     {name:<30} {meta.get('description','')}")
+            lines.append(f"       tags: {tags}")
+        user_decisions = _load_user_decision_snippets()
+        if user_decisions:
+            lines.append("   Local (.specnative/templates/decisions/):")
+            for t in user_decisions:
+                lines.append(f"     {t.get('name','?'):<30} {t.get('description','')}")
+        lines.append("")
+        lines.append("   Usage: apply_decision_snippet('<name>')")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def apply_spec_template(template_name: str, initiative: str) -> str:
+    """
+    Create spec-native/specs/{initiative}/SPEC.md from a spec template.
+    Replaces {{initiative_name}}, {{date}}, and other placeholders.
+    Call list_templates('spec') to see available templates.
+
+    Args:
+        template_name: Template name (from list_templates('spec'))
+        initiative:    Initiative folder name (e.g. 'user-auth')
+    """
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    # Find template (built-in first, then local)
+    content: str | None = None
+    if template_name in _BUILTIN_SPEC_TEMPLATES:
+        content = _BUILTIN_SPEC_TEMPLATES[template_name]["content"]
+    else:
+        for t in _load_user_spec_templates():
+            if t.get("name") == template_name:
+                raw = t["_content"]
+                # Strip front matter
+                content = re.sub(r"^\+\+\+.*?\+\+\+\s*", "", raw,
+                                 count=1, flags=re.DOTALL)
+                break
+
+    if content is None:
+        available = list(_BUILTIN_SPEC_TEMPLATES.keys()) + [
+            t.get("name", "?") for t in _load_user_spec_templates()
+        ]
+        return (
+            f"Template '{template_name}' not found.\n"
+            f"Available: {', '.join(available)}"
+        )
+
+    # Replace placeholders
+    content = content.replace("{{initiative_name}}", initiative)
+    content = content.replace("{{date}}", today)
+    # Leave other {{placeholders}} for the agent to fill
+
+    dest = SN / "specs" / initiative / "SPEC.md"
+    if dest.exists():
+        return (
+            f"spec-native/specs/{initiative}/SPEC.md already exists.\n"
+            f"Use refine_document() or update_section() to modify it."
+        )
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(content.lstrip(), encoding="utf-8")
+
+    return (
+        f"spec-native/specs/{initiative}/SPEC.md created from template '{template_name}'.\n"
+        f"Remaining placeholders to fill: {{{{method}}}}, {{{{path}}}}, {{{{summary}}}}, etc.\n"
+        f"Next: use update_section() to fill each section, then plan_tasks('{initiative}')."
+    )
+
+
+@mcp.tool()
+def apply_decision_snippet(snippet_name: str) -> str:
+    """
+    Append a decision snippet to spec-native/DECISIONS.md.
+    Auto-assigns the next DEC-XXXX number and replaces {{date}}.
+    Call list_templates('decision') to see available snippets.
+
+    Args:
+        snippet_name: Snippet name (from list_templates('decision'))
+    """
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    # Find snippet
+    content: str | None = None
+    if snippet_name in _BUILTIN_DECISION_SNIPPETS:
+        content = _BUILTIN_DECISION_SNIPPETS[snippet_name]["content"]
+    else:
+        for s in _load_user_decision_snippets():
+            if s.get("name") == snippet_name:
+                raw = s["_content"]
+                content = re.sub(r"^\+\+\+.*?\+\+\+\s*", "", raw,
+                                 count=1, flags=re.DOTALL)
+                break
+
+    if content is None:
+        available = list(_BUILTIN_DECISION_SNIPPETS.keys()) + [
+            s.get("name", "?") for s in _load_user_decision_snippets()
+        ]
+        return (
+            f"Snippet '{snippet_name}' not found.\n"
+            f"Available: {', '.join(available)}"
+        )
+
+    decisions_path = SN / "DECISIONS.md"
+    existing = decisions_path.read_text(encoding="utf-8") if decisions_path.exists() else ""
+
+    # Auto-assign DEC number
+    ids = re.findall(r"DEC-(\d+)", existing)
+    next_num = (max(int(i) for i in ids) + 1) if ids else 1
+    dec_id = f"DEC-{next_num:04d}"
+
+    content = content.replace("DEC-XXXX", dec_id)
+    content = content.replace("{{date}}", today)
+
+    decisions_path.parent.mkdir(parents=True, exist_ok=True)
+    decisions_path.write_text(existing.rstrip() + "\n" + content, encoding="utf-8")
+
+    return (
+        f"Decision snippet '{snippet_name}' appended to spec-native/DECISIONS.md as {dec_id}.\n"
+        f"Fill in the remaining {{{{placeholders}}}} with project-specific details."
+    )
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 

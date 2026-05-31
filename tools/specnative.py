@@ -59,6 +59,10 @@ INSTALL_PATHS_MINIMAL = [
     ".specnative/README.md",
     ".specnative/CLI.md",
     ".specnative/SCHEMA.md",
+    ".specnative/archetypes/README.md",
+    ".specnative/templates/README.md",
+    ".specnative/templates/specs/README.md",
+    ".specnative/templates/decisions/README.md",
 ]
 
 INSTALL_PATHS_EXAMPLES = [

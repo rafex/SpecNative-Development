@@ -42,10 +42,13 @@ Profiles (each layer is cumulative):
                     spec-native/tasks/{README,TASKS.template}.md,
                     spec-native/workflows/{README,IMPLEMENTATION,PLANNING,REVIEW}.md
 
-    team      Adds CI/CD pipeline docs and schema governance on top of spec.
-              Ideal for teams that run automated pipelines and code review.
+    team      Adds CI/CD pipeline docs, schema governance, archetypes and
+              templates on top of spec. Ideal for teams that run automated
+              pipelines and want reusable project starting points.
               Adds: spec-native/pipelines/{README,CI,CD}.md,
-                    .specnative/{CLI,SCHEMA}.md
+                    .specnative/{CLI,SCHEMA}.md,
+                    .specnative/archetypes/README.md,
+                    .specnative/templates/{README,specs/README,decisions/README}.md
 
     platform  Everything in team plus README.md (if absent) and reference
               example initiatives. Ideal for open-source projects or
@@ -123,13 +126,17 @@ PATHS_SPEC = [
     "spec-native/workflows/REVIEW.md",
 ]
 
-# team — adds CI/CD pipeline docs and schema governance on top of spec.
+# team — adds CI/CD pipeline docs, schema governance, archetypes and templates.
 PATHS_TEAM = [
     "spec-native/pipelines/README.md",
     "spec-native/pipelines/CI.md",
     "spec-native/pipelines/CD.md",
     ".specnative/CLI.md",
     ".specnative/SCHEMA.md",
+    ".specnative/archetypes/README.md",
+    ".specnative/templates/README.md",
+    ".specnative/templates/specs/README.md",
+    ".specnative/templates/decisions/README.md",
 ]
 
 # platform — adds README.md (if absent) and reference example initiatives.
