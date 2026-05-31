@@ -100,7 +100,7 @@
 
           <!-- MCP -->
           <section class="ref-section" id="mcp">
-            <h2>MCP server — v0.6</h2>
+            <h2>MCP server — v0.7</h2>
             <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
               <code>.specnative/specnative_mcp.py</code> exposes the repository as MCP
               <strong>resources</strong>, <strong>tools</strong>, and <strong>prompts</strong>
@@ -180,7 +180,29 @@ claude mcp add specnative \
               <tbody>
                 <tr><td><code>health_check()</code></td><td>Scan spec-native/ for empty docs, missing files, stale session, specs without tasks</td></tr>
                 <tr><td><code>suggest_next()</code></td><td>Top 3 recommended actions based on roadmap and current state</td></tr>
-                <tr><td><code>refine_document(document, what_changed, new_content)</code></td><td>Overwrite a context doc with new content from developer interview</td></tr>
+                <tr><td><code>refine_document(document, what_changed, new_content)</code></td><td>Overwrite a context doc with new content</td></tr>
+                <tr><td><code>read_template(document)</code></td><td>Return expected empty structure for any spec-native/ document (11 types)</td></tr>
+                <tr><td><code>update_section(document, section_heading, content)</code></td><td>Update or add a single section without touching the rest of the file</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Tools — archetypes (v0.7)</h3>
+            <table class="ref-table">
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><code>list_archetypes()</code></td><td>List all archetypes: built-in and user-defined in <code>.specnative/archetypes/</code></td></tr>
+                <tr><td><code>read_archetype(name)</code></td><td>Preview all documents of an archetype before applying</td></tr>
+                <tr><td><code>apply_archetype(name, force?)</code></td><td>Write archetype documents to spec-native/; skips already-filled docs unless force=True</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Tools — templates (v0.7)</h3>
+            <table class="ref-table">
+              <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><code>list_templates(type?)</code></td><td>List spec templates and/or decision snippets: built-in + local in <code>.specnative/templates/</code></td></tr>
+                <tr><td><code>apply_spec_template(template, initiative)</code></td><td>Create <code>spec-native/specs/{initiative}/SPEC.md</code> from a template</td></tr>
+                <tr><td><code>apply_decision_snippet(name)</code></td><td>Append a decision snippet to DECISIONS.md with auto DEC-XXXX numbering</td></tr>
               </tbody>
             </table>
 
@@ -234,11 +256,16 @@ claude mcp add specnative \
 │       └── CD.md          # Delivery process and environments
 ├── .claude/commands/      # Slash commands: /spec-init /spec-update /spec-status /spec-handoff
 ├── codex.toml             # Codex CLI prompt commands
-├── opencode.json          # OpenCode MCP + prompts
+├── opencode.json          # OpenCode MCP + commands + instructions
 └── .specnative/
     ├── SCHEMA.md           # Framework contract (not project content)
     ├── MCP.md              # MCP server configuration per agent
-    └── specnative_mcp.py   # MCP server (installed automatically)</code></pre>
+    ├── specnative_mcp.py   # MCP server (installed automatically)
+    ├── archetypes/         # Custom archetypes (user-defined)
+    │   └── README.md
+    └── templates/          # Reusable spec templates + decision snippets
+        ├── specs/          # Spec templates (.md with +++ front matter)
+        └── decisions/      # Decision snippets (.md with +++ front matter)</code></pre>
             </div>
             <p style="font-size: 0.9rem; color: #4a5568;">
               Files in uppercase are context for agents. <code>README.md</code> files are
@@ -637,6 +664,63 @@ python3 specnative.py validate
 # Export full index
 python3 specnative.py export-index --output exports/index.json</code></pre>
             </div>
+
+            <h3>Archetypes &amp; templates (via MCP tools)</h3>
+            <div class="code-card">
+              <pre><code># List available archetypes (built-in + local)
+list_archetypes()
+
+# Preview an archetype before applying
+read_archetype('java-hexagonal')
+
+# Apply to spec-native/ (skips filled docs)
+apply_archetype('java-hexagonal')
+apply_archetype('java-hexagonal', force=True)   # overwrite all
+
+# List templates
+list_templates()                  # both spec + decision
+list_templates('spec')
+list_templates('decision')
+
+# Create SPEC.md from template
+apply_spec_template('feature-rest-endpoint', 'user-auth')
+
+# Append decision to DECISIONS.md (auto DEC-XXXX)
+apply_decision_snippet('jwt-authentication')</code></pre>
+            </div>
+
+            <h3>Built-in archetypes</h3>
+            <table class="ref-table">
+              <thead><tr><th>Name</th><th>Stack</th><th>Pattern</th><th>Documents</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><code>java-hexagonal</code></td>
+                  <td>Java 21 + Spring Boot 3</td>
+                  <td>Hexagonal / Ports &amp; Adapters</td>
+                  <td>ARCHITECTURE, STACK, CONVENTIONS, COMMANDS, DECISIONS, ROADMAP</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3>Built-in spec templates</h3>
+            <table class="ref-table">
+              <thead><tr><th>Name</th><th>For</th></tr></thead>
+              <tbody>
+                <tr><td><code>feature-rest-endpoint</code></td><td>New REST endpoint initiative</td></tr>
+                <tr><td><code>db-migration</code></td><td>Database migration with Flyway/Liquibase</td></tr>
+                <tr><td><code>module-refactor</code></td><td>Module or layer refactoring</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Built-in decision snippets</h3>
+            <table class="ref-table">
+              <thead><tr><th>Name</th><th>For</th></tr></thead>
+              <tbody>
+                <tr><td><code>jwt-authentication</code></td><td>JWT for stateless authentication</td></tr>
+                <tr><td><code>hexagonal-ports</code></td><td>Domain/infrastructure separation via ports</td></tr>
+                <tr><td><code>database-choice</code></td><td>Database technology selection</td></tr>
+              </tbody>
+            </table>
 
             <h3>Standalone installer</h3>
             <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 0.75rem;">

@@ -308,7 +308,9 @@ Less useful for very small, short-lived prototypes where maintaining structured 
 | v0.4.7–v0.4.9 | `--reinstall` flag · Auto-generate `opencode.json` · Profile documentation improved |
 | v0.5.0 | `agents/` → `spec-native/` · tasks/workflows/pipelines consolidated · `SESSION.md` · Multi-agent continuity tools |
 | v0.6.0 | Native agent commands (`/spec-init`, `/spec-update`, `/spec-status`, `/spec-handoff`) · `codex.toml` · `opencode.json` prompts · `specnative init/update` CLI |
-| **v0.6.1** | **`read_template()` · `update_section()` — safe incremental doc updates, Copilot compatible** |
+| v0.6.1 | `read_template()` · `update_section()` — safe incremental doc updates, Copilot compatible |
+| v0.6.2 | Fix `opencode.json` schema compliance (`command` key, `instructions` for AGENTS.md auto-load) |
+| **v0.7.0** | **Archetypes (`java-hexagonal` built-in) · Spec templates · Decision snippets · `.specnative/archetypes/` + `.specnative/templates/`** |
 <!-- END_VERSIONS -->
 
 ---

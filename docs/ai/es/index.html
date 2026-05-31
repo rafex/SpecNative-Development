@@ -101,7 +101,7 @@
 
           <!-- MCP -->
           <section class="ref-section" id="mcp">
-            <h2>Servidor MCP — v0.6</h2>
+            <h2>Servidor MCP — v0.7</h2>
             <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
               <code>.specnative/specnative_mcp.py</code> expone el repositorio como
               <strong>recursos</strong>, <strong>herramientas</strong> y <strong>prompts</strong>
@@ -170,6 +170,28 @@ claude mcp add specnative \
                 <tr><td><code>health_check()</code></td><td>Escanea spec-native/ — docs vacíos, faltantes, sesión obsoleta, specs sin tareas</td></tr>
                 <tr><td><code>suggest_next()</code></td><td>Top 3 acciones recomendadas basadas en roadmap y estado actual</td></tr>
                 <tr><td><code>refine_document(document, what_changed, new_content)</code></td><td>Actualiza un documento de contexto con nuevo contenido</td></tr>
+                <tr><td><code>read_template(document)</code></td><td>Retorna la estructura vacía esperada para cualquier documento (11 tipos)</td></tr>
+                <tr><td><code>update_section(document, section_heading, content)</code></td><td>Actualiza una sola sección sin tocar el resto del archivo</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Herramientas — archetypes (v0.7)</h3>
+            <table class="ref-table">
+              <thead><tr><th>Herramienta</th><th>Descripción</th></tr></thead>
+              <tbody>
+                <tr><td><code>list_archetypes()</code></td><td>Lista archetypes disponibles: built-in y definidos en <code>.specnative/archetypes/</code></td></tr>
+                <tr><td><code>read_archetype(name)</code></td><td>Previsualiza todos los documentos de un archetype antes de aplicarlo</td></tr>
+                <tr><td><code>apply_archetype(name, force?)</code></td><td>Escribe los documentos del archetype en spec-native/; respeta docs con contenido real</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Herramientas — templates (v0.7)</h3>
+            <table class="ref-table">
+              <thead><tr><th>Herramienta</th><th>Descripción</th></tr></thead>
+              <tbody>
+                <tr><td><code>list_templates(type?)</code></td><td>Lista spec templates y/o decision snippets: built-in + locales en <code>.specnative/templates/</code></td></tr>
+                <tr><td><code>apply_spec_template(template, initiative)</code></td><td>Crea <code>spec-native/specs/{initiative}/SPEC.md</code> desde un template</td></tr>
+                <tr><td><code>apply_decision_snippet(name)</code></td><td>Appenda un snippet de decisión a DECISIONS.md con auto-numeración DEC-XXXX</td></tr>
               </tbody>
             </table>
 
@@ -227,7 +249,12 @@ claude mcp add specnative \
 └── .specnative/
     ├── SCHEMA.md           # Contrato del framework (no contenido del proyecto)
     ├── MCP.md              # Configuración del servidor MCP por agente
-    └── specnative_mcp.py   # Servidor MCP (instalado automáticamente)</code></pre>
+    ├── specnative_mcp.py   # Servidor MCP (instalado automáticamente)
+    ├── archetypes/         # Archetypes propios del equipo
+    │   └── README.md
+    └── templates/          # Spec templates + decision snippets
+        ├── specs/          # Plantillas de spec (.md con front matter +++)
+        └── decisions/      # Snippets de decisiones (.md con front matter +++)</code></pre>
             </div>
             <p style="font-size: 0.9rem; color: #4a5568;">
               Los archivos en MAYÚSCULAS son contexto para agentes. Los <code>README.md</code>

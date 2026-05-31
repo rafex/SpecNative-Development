@@ -197,15 +197,33 @@
 
         <section class="section">
           <div class="section-heading">
-            <p class="eyebrow">v0.6</p>
+            <p class="eyebrow">v0.7</p>
             <h2>Qué provee el framework</h2>
             <p>
               La plantilla consolida todo el contexto del proyecto bajo <code>spec-native/</code>,
-              expone el repositorio como servidor MCP e instala comandos nativos listos
-              para usar en Claude Code, OpenCode y Codex desde el primer día.
+              expone el repositorio como servidor MCP, instala comandos nativos por agente
+              y ahora incluye archetypes y templates para que los proyectos arranquen con
+              contenido real en lugar de placeholders.
             </p>
           </div>
           <div class="adoption-grid">
+            <article class="card">
+              <h3>Archetypes</h3>
+              <p>
+                <code>spec-native/</code> pre-relleno para stacks y patrones comunes.
+                <code>apply_archetype('java-hexagonal')</code> escribe ARCHITECTURE, STACK,
+                CONVENTIONS, COMMANDS, DECISIONS y ROADMAP en una llamada.
+                Agrega los tuyos en <code>.specnative/archetypes/</code>.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Spec templates &amp; decision snippets</h3>
+              <p>
+                <code>apply_spec_template('feature-rest-endpoint', 'user-auth')</code> crea
+                un SPEC.md listo para rellenar. <code>apply_decision_snippet('jwt-authentication')</code>
+                appenda DEC-XXXX a DECISIONS.md. Reutilizables entre proyectos.
+              </p>
+            </article>
             <article class="card">
               <h3>Servidor MCP</h3>
               <p>
@@ -246,21 +264,6 @@
                 Todo vive en <code>spec-native/</code>: producto, specs, tareas, workflows,
                 pipelines y estado de sesión. Un punto de entrada, cero fricción de navegación
                 para cualquier agente.
-              </p>
-            </article>
-            <article class="card">
-              <h3>Contrato explícito del framework</h3>
-              <p>
-                <code>.specnative/SCHEMA.md</code> define documentos obligatorios, límites
-                de ownership y modelos de estado — separado del contenido del proyecto.
-              </p>
-            </article>
-            <article class="card">
-              <h3>CLI en Python</h3>
-              <p>
-                <code>tools/specnative.py</code> valida el repositorio, muestra el estado
-                de specs y tareas, exporta índices en JSON y ejecuta el wizard
-                interactivo init/update sin necesidad de agente.
               </p>
             </article>
             <article class="card">
