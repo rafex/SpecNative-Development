@@ -99,25 +99,66 @@ El servidor MCP expone el repositorio como herramientas tipadas.
 
 ### Herramientas disponibles
 
+**Consulta**
+
 | Herramienta | Descripcion |
 |---|---|
 | `status()` | Estado de specs y tareas |
 | `validate()` | Verifica estructura del repositorio |
 | `context_snapshot(initiative?)` | Dump completo de contexto para onboarding |
-| `resume()` | Lee SESSION.md y resume el trabajo activo |
-| `checkpoint(...)` | Guarda estado actual antes de pausar |
-| `update_task(initiative, task_id, state)` | Actualiza estado de tarea |
-| `log_decision(title, ctx, decision, cons)` | Registra decision persistente |
 | `list_specs()` | Lista specs con estado y owner |
 | `list_tasks(initiative)` | Lista tareas de una iniciativa |
 | `read_spec(initiative)` | Lee contenido de spec |
-| `read_context(document)` | Lee documento de contexto |
+| `read_context(document)` | Lee documento de contexto (incluye `session`) |
 | `export_index()` | Exporta specs y tareas como JSON |
+
+**Continuidad multi-agente**
+
+| Herramienta | Descripcion |
+|---|---|
+| `resume()` | Lee SESSION.md y retorna resumen de continuidad |
+| `checkpoint(initiative, task_id, intent, next_steps, ...)` | Guarda estado antes de pausar |
+| `update_task(initiative, task_id, state)` | Actualiza estado de tarea en TASKS.md |
+| `log_decision(title, ctx, decision, cons)` | Registra decision persistente en DECISIONS.md |
+
+**Definicion del proyecto**
+
+| Herramienta | Descripcion |
+|---|---|
+| `health_check()` | Detecta docs vacios, faltantes, sesion obsoleta, specs sin tareas |
+| `suggest_next()` | Top 3 acciones recomendadas segun estado y roadmap |
+| `refine_document(doc, what_changed, content)` | Actualiza documento completo |
+| `read_template(document)` | Retorna estructura vacia esperada (11 tipos de doc) |
+| `update_section(doc, section, content)` | Actualiza una seccion sin tocar el resto |
+
+**Archetypes — punto de partida por tipo de proyecto**
+
+| Herramienta | Descripcion |
+|---|---|
+| `list_archetypes()` | Lista archetypes built-in y locales (`.specnative/archetypes/`) |
+| `read_archetype(name)` | Previsualiza documentos de un archetype |
+| `apply_archetype(name, force?)` | Aplica archetype a spec-native/ (respeta docs llenos) |
+
+Built-in: `java-hexagonal` (Java 21 + Spring Boot 3 + Hexagonal Architecture)
+Propios: crea `.specnative/archetypes/<nombre>/archetype.toml` + docs
+
+**Templates reutilizables**
+
+| Herramienta | Descripcion |
+|---|---|
+| `list_templates(type?)` | Lista spec templates y decision snippets |
+| `apply_spec_template(template, initiative)` | Crea SPEC.md desde template |
+| `apply_decision_snippet(name)` | Appenda decision a DECISIONS.md con auto DEC-XXXX |
+
+Spec templates built-in: `feature-rest-endpoint`, `db-migration`, `module-refactor`
+Decision snippets built-in: `jwt-authentication`, `hexagonal-ports`, `database-choice`
+Propios: `.specnative/templates/specs/*.md` y `.specnative/templates/decisions/*.md`
 
 ### Prompts disponibles
 
 | Prompt | Descripcion |
 |---|---|
+| `init_project_guided(name, problem, users, goals, ...)` | Llena docs core desde respuestas del developer |
 | `start_initiative(name, problem)` | Inicia nueva iniciativa spec-driven |
 | `plan_tasks(initiative)` | Deriva plan de tareas desde spec |
 | `implement_task(initiative, task_id)` | Implementa tarea especifica |

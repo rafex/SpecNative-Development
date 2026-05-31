@@ -250,6 +250,37 @@ export SPECNATIVE_REPO=/ruta/a/tu/proyecto
 | `health_check()`                          | Escanea spec-native/ y reporta vacíos, docs faltantes, sesión obsoleta |
 | `suggest_next()`                          | Sugiere las 3 acciones más impactantes basado en estado actual |
 | `refine_document(document, what_changed, new_content)` | Actualiza un documento con nuevo contenido     |
+| `read_template(document)`                 | Retorna la estructura vacía esperada de cualquier doc (11 tipos) |
+| `update_section(document, section, content)` | Actualiza una sola sección sin tocar el resto del archivo  |
+
+### Archetypes (v0.7)
+
+| Herramienta                               | Descripción                                                    |
+|-------------------------------------------|----------------------------------------------------------------|
+| `list_archetypes()`                       | Lista archetypes disponibles: built-in + locales en `.specnative/archetypes/` |
+| `read_archetype(name)`                    | Previsualiza todos los documentos de un archetype antes de aplicarlo |
+| `apply_archetype(name, force?)`           | Escribe docs del archetype en spec-native/ (respeta docs con contenido) |
+
+**Built-in:** `java-hexagonal` — Java 21 + Spring Boot 3 + Hexagonal Architecture
+Incluye: ARCHITECTURE, STACK, CONVENTIONS, COMMANDS, DECISIONS, ROADMAP
+
+**Archetype propio:** crea `.specnative/archetypes/<nombre>/archetype.toml` + docs.
+Ver `.specnative/archetypes/README.md` para el formato.
+
+### Templates (v0.7)
+
+| Herramienta                               | Descripción                                                    |
+|-------------------------------------------|----------------------------------------------------------------|
+| `list_templates(type?)`                   | Lista spec templates y decision snippets (`spec` \| `decision` \| vacío=ambos) |
+| `apply_spec_template(template, initiative)` | Crea `spec-native/specs/{initiative}/SPEC.md` desde un template |
+| `apply_decision_snippet(name)`            | Appenda snippet a DECISIONS.md con auto DEC-XXXX y fecha      |
+
+**Spec templates built-in:** `feature-rest-endpoint`, `db-migration`, `module-refactor`
+
+**Decision snippets built-in:** `jwt-authentication`, `hexagonal-ports`, `database-choice`
+
+**Templates propios:** crea archivos `.md` en `.specnative/templates/specs/` o
+`.specnative/templates/decisions/`. Ver los `README.md` de cada carpeta para el formato.
 
 ---
 
