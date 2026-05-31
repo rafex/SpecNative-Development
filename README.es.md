@@ -226,6 +226,7 @@ Menos útil para prototipos muy pequeños y de corta duración donde mantener el
 | v0.5.0 | `agents/` → `spec-native/` · carpetas consolidadas · `SESSION.md` · continuidad multi-agente |
 | v0.6.0 | Comandos nativos por agente · `codex.toml` · prompts en `opencode.json` · CLI `init/update` |
 | **v0.6.1** | **`read_template()` · `update_section()` — actualizaciones incrementales, compatible con Copilot** |
+| **v0.6.2** | [Notas de la versión](https://github.com/rafex/SpecNative-Development/releases/tag/v0.6.2) |
 <!-- END_VERSIONS -->
 
 ---

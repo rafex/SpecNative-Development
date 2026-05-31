@@ -24,7 +24,7 @@ Instead of rebuilding project context in every session, the repository encodes i
 
 ## Quick Start
 
-**Current Release:** [v0.6.1](https://github.com/rafex/SpecNative-Development/releases/tag/v0.6.1) <!-- CURRENT_RELEASE -->
+**Current Release:** [v0.6.2](https://github.com/rafex/SpecNative-Development/releases/tag/v0.6.2) <!-- CURRENT_RELEASE -->
 
 ### Install into an existing repository
 
