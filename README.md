@@ -24,7 +24,7 @@ Instead of rebuilding project context in every session, the repository encodes i
 
 ## Quick Start
 
-**Current Release:** [v0.5.0](https://github.com/rafex/SpecNative-Development/releases/tag/v0.5.0)
+**Current Release:** [v0.6.1](https://github.com/rafex/SpecNative-Development/releases/tag/v0.6.1) <!-- CURRENT_RELEASE -->
 
 ### Install into an existing repository
 
@@ -165,7 +165,7 @@ python3 specnative.py export-index        # Export specs/tasks as JSON
 python3 specnative.py export-traceability # Export traceability matrix as JSON
 ```
 
-### MCP server — `tools/specnative_mcp.py` (v0.5)
+### MCP server — `tools/specnative_mcp.py` (v0.6) <!-- MCP_VERSION -->
 
 Exposes the repository as MCP resources, tools, and prompts so any MCP-compatible
 agent works spec-first without manually navigating the file tree.
@@ -306,7 +306,10 @@ Less useful for very small, short-lived prototypes where maintaining structured 
 | v0.3 | Framework contract (`.specnative/`), `pipelines/`, `install.py`, TOML optional, `status` command |
 | v0.4 | MCP server — resources, tools, and prompts for Claude Code, Claude Desktop, OpenCode, Codex |
 | v0.4.7–v0.4.9 | `--reinstall` flag · Auto-generate `opencode.json` · Profile documentation improved |
-| **v0.5.0** | **`agents/` → `spec-native/` · tasks/workflows/pipelines consolidated · `SESSION.md` · Multi-agent continuity tools: `checkpoint`, `resume`, `update_task`, `log_decision`, `context_snapshot`** |
+| v0.5.0 | `agents/` → `spec-native/` · tasks/workflows/pipelines consolidated · `SESSION.md` · Multi-agent continuity tools |
+| v0.6.0 | Native agent commands (`/spec-init`, `/spec-update`, `/spec-status`, `/spec-handoff`) · `codex.toml` · `opencode.json` prompts · `specnative init/update` CLI |
+| **v0.6.1** | **`read_template()` · `update_section()` — safe incremental doc updates, Copilot compatible** |
+<!-- END_VERSIONS -->
 
 ---
 
