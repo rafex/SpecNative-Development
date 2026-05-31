@@ -24,7 +24,7 @@ Instead of rebuilding project context in every session, the repository encodes i
 
 ## Quick Start
 
-**Current Release:** [v0.6.2](https://github.com/rafex/SpecNative-Development/releases/tag/v0.6.2) <!-- CURRENT_RELEASE -->
+**Current Release:** [v0.7.0](https://github.com/rafex/SpecNative-Development/releases/tag/v0.7.0) <!-- CURRENT_RELEASE -->
 
 ### Install into an existing repository
 
@@ -165,7 +165,7 @@ python3 specnative.py export-index        # Export specs/tasks as JSON
 python3 specnative.py export-traceability # Export traceability matrix as JSON
 ```
 
-### MCP server — `tools/specnative_mcp.py` (v0.6) <!-- MCP_VERSION -->
+### MCP server — `tools/specnative_mcp.py` (v0.7) <!-- MCP_VERSION -->
 
 Exposes the repository as MCP resources, tools, and prompts so any MCP-compatible
 agent works spec-first without manually navigating the file tree.

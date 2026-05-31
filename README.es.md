@@ -108,7 +108,7 @@ python3 specnative.py export-traceability # Exportar matriz de trazabilidad
 python3 specnative.py install --target /ruta/al/repo --profile minimal
 ```
 
-### Servidor MCP — `tools/specnative_mcp.py` (v0.6) <!-- MCP_VERSION -->
+### Servidor MCP — `tools/specnative_mcp.py` (v0.7) <!-- MCP_VERSION -->
 
 Expone el repositorio como recursos, herramientas y prompts MCP para que
 cualquier agente compatible trabaje en modo spec-first sin navegar
@@ -227,6 +227,7 @@ Menos útil para prototipos muy pequeños y de corta duración donde mantener el
 | v0.6.0 | Comandos nativos por agente · `codex.toml` · prompts en `opencode.json` · CLI `init/update` |
 | **v0.6.1** | **`read_template()` · `update_section()` — actualizaciones incrementales, compatible con Copilot** |
 | **v0.6.2** | [Notas de la versión](https://github.com/rafex/SpecNative-Development/releases/tag/v0.6.2) |
+| **v0.7.0** | [Notas de la versión](https://github.com/rafex/SpecNative-Development/releases/tag/v0.7.0) |
 <!-- END_VERSIONS -->
 
 ---
