@@ -1,6 +1,6 @@
 # SCHEMA.md
 
-Contrato minimo del framework SpecNative Development v0.5.
+Contrato minimo del framework SpecNative Development v0.7.
 
 ## Objetivo
 
@@ -17,6 +17,7 @@ que estados o campos minimos deben existir para reducir ambiguedad.
 - `spec-native/CONVENTIONS.md`
 - `spec-native/COMMANDS.md`
 - `spec-native/DECISIONS.md`
+- `spec-native/decisions/` (índice y artefactos de decisión)
 - `spec-native/ROADMAP.md`
 - `spec-native/TRACEABILITY.md`
 - `spec-native/SESSION.md`
@@ -28,6 +29,8 @@ que estados o campos minimos deben existir para reducir ambiguedad.
 ## Documentos opcionales
 
 - `spec-native/tasks/<iniciativa>/TASKS.md`
+- `spec-native/intake/IDEAS.md`
+- `spec-native/backlog/README.md`
 - `spec-native/workflows/PLANNING.md`
 - `spec-native/workflows/REVIEW.md`
 - specs separadas por iniciativa en `spec-native/specs/`
@@ -47,11 +50,14 @@ que estados o campos minimos deben existir para reducir ambiguedad.
 - Reglas operativas: `spec-native/CONVENTIONS.md`, `spec-native/COMMANDS.md`
 - Contrato del framework: `.specnative/SCHEMA.md`
 - Cambio requerido: `spec-native/specs/**/SPEC.md`
+- Idea no especificada: `spec-native/intake/IDEAS.md`
 - Descomposicion ejecutable: `spec-native/tasks/**/TASKS.md`
-- Decisiones persistentes: `spec-native/DECISIONS.md`
+- Índice de decisiones persistentes: `spec-native/DECISIONS.md`
+- Decisiones canónicas: `spec-native/decisions/DEC-XXXX-<slug>.md`
 - Relaciones entre artefactos: `spec-native/TRACEABILITY.md`
 - Gates de CI y proceso de CD: `spec-native/pipelines/CI.md`, `spec-native/pipelines/CD.md`
 - Estado activo de trabajo: `spec-native/SESSION.md`
+- Backlog y kanban derivados: `spec-native/backlog/` (no son fuente de verdad)
 
 ## Estados obligatorios
 
@@ -82,6 +88,7 @@ Toda tarea debe declarar:
 - `State`
 - `Owner`
 - `Criterio de cierre`
+- `Priority` (`p0 | p1 | p2 | p3`; por defecto `p2`)
 
 Estados permitidos:
 
@@ -89,6 +96,10 @@ Estados permitidos:
 - `in_progress`
 - `blocked`
 - `done`
+
+Una tarea con estado `done` debe declarar `completion_evidence` no vacio.
+`validation` describe la comprobacion prevista; `completion_evidence` registra
+la prueba o resultado realmente obtenido.
 
 ### Decisiones
 
@@ -149,6 +160,14 @@ Cuando se usa el CLI, los bloques `toml` deben aparecer cerca del
 inicio del archivo y contener al menos los campos requeridos por el
 comando `validate`. Ver `.specnative/CLI.md` para referencia completa de
 campos y comandos disponibles.
+
+### Gestion de trabajo derivada
+
+El backlog y el kanban se calculan desde `spec-native/tasks/**/TASKS.md`.
+No deben introducir un segundo estado editable. El tooling clasifica cada
+tarea como `ready`, `in_progress`, `blocked`, `waiting` o `done` a partir de
+su estado y dependencias. Una integracion externa, como GitHub Projects, es
+una proyeccion y no puede sustituir la fuente de verdad del repositorio.
 
 El TOML no es un requisito del contrato base. Los documentos son
 validos sin el y pueden adoptarlo de forma incremental.

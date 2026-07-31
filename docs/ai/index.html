@@ -142,8 +142,8 @@ claude mcp add specnative \
                 <tr><td><code>spec://context/decisions</code></td><td>spec-native/DECISIONS.md</td></tr>
                 <tr><td><code>spec://context/roadmap</code></td><td>spec-native/ROADMAP.md</td></tr>
                 <tr><td><code>spec://context/traceability</code></td><td>spec-native/TRACEABILITY.md</td></tr>
-                <tr><td><code>spec://pipelines/ci</code></td><td>spec-native/pipelines/CI.md</td></tr>
-                <tr><td><code>spec://pipelines/cd</code></td><td>spec-native/pipelines/CD.md</td></tr>
+                <tr><td><code>spec://spec-native/pipelines/ci</code></td><td>spec-native/pipelines/CI.md</td></tr>
+                <tr><td><code>spec://spec-native/pipelines/cd</code></td><td>spec-native/pipelines/CD.md</td></tr>
                 <tr><td><code>spec://schema</code></td><td>.specnative/SCHEMA.md</td></tr>
               </tbody>
             </table>
@@ -156,6 +156,8 @@ claude mcp add specnative \
                 <tr><td><code>validate()</code></td><td>Check all required files exist</td></tr>
                 <tr><td><code>list_specs()</code></td><td>All specs with ID, state, owner</td></tr>
                 <tr><td><code>list_tasks(initiative)</code></td><td>Tasks for an initiative</td></tr>
+                <tr><td><code>board(format?)</code></td><td>Read-only delivery board derived from task state and dependencies</td></tr>
+                <tr><td><code>capture_backlog_item(...)</code></td><td>Creates a valid task or a triaged intake idea without editing the board</td></tr>
                 <tr><td><code>read_spec(initiative)</code></td><td>Read a spec file</td></tr>
                 <tr><td><code>read_context(document)</code></td><td>Read any context doc by name (includes <code>session</code>)</td></tr>
                 <tr><td><code>export_index()</code></td><td>Export all metadata as JSON</td></tr>
@@ -169,7 +171,7 @@ claude mcp add specnative \
               <tbody>
                 <tr><td><code>resume()</code></td><td>Read SESSION.md and return structured continuity summary</td></tr>
                 <tr><td><code>checkpoint(initiative, task_id, intent, next_steps, …)</code></td><td>Save active work state before pausing or switching agents</td></tr>
-                <tr><td><code>update_task(initiative, task_id, state, notes?)</code></td><td>Update task state in TASKS.md directly from MCP</td></tr>
+                <tr><td><code>update_task(initiative, task_id, state, notes?, completion_evidence?)</code></td><td>Update task state; closing requires validation evidence</td></tr>
                 <tr><td><code>log_decision(title, context, decision, consequences)</code></td><td>Append a new decision to DECISIONS.md</td></tr>
               </tbody>
             </table>
@@ -245,13 +247,14 @@ claude mcp add specnative \
 │   ├── SESSION.md         # Active work state (multi-agent continuity)
 │   ├── specs/
 │   │   └── &lt;initiative&gt;/SPEC.md
-│   ├── tasks/
+│   ├── spec-native/tasks/
 │   │   └── &lt;initiative&gt;/TASKS.md
-│   ├── workflows/
+│   ├── backlog/           # Derived delivery views; never edit task state here
+│   ├── spec-native/workflows/
 │   │   ├── PLANNING.md
 │   │   ├── IMPLEMENTATION.md
 │   │   └── REVIEW.md
-│   └── pipelines/
+│   └── spec-native/pipelines/
 │       ├── CI.md          # Automated validation gates
 │       └── CD.md          # Delivery process and environments
 ├── .claude/commands/      # Slash commands: /spec-init /spec-update /spec-status /spec-handoff
@@ -365,8 +368,8 @@ claude mcp add specnative \
               <p>If it <strong>explains the product</strong> → <code>PRODUCT.md</code></p>
               <p>If it <strong>sets temporal priority</strong> → <code>ROADMAP.md</code></p>
               <p>If it <strong>describes system structure</strong> → <code>ARCHITECTURE.md</code></p>
-              <p>If it <strong>defines automated validation gates</strong> → <code>pipelines/CI.md</code></p>
-              <p>If it <strong>describes how code reaches production</strong> → <code>pipelines/CD.md</code></p>
+              <p>If it <strong>defines automated validation gates</strong> → <code>spec-native/pipelines/CI.md</code></p>
+              <p>If it <strong>describes how code reaches production</strong> → <code>spec-native/pipelines/CD.md</code></p>
               <p>If it <strong>is the active work state right now</strong> → <code>SESSION.md</code></p>
             </div>
           </section>
@@ -391,7 +394,7 @@ claude mcp add specnative \
                 <div>
                   <strong>Initialize project context — guided</strong>
                   <p>Use <code>/spec-init</code> (Claude Code), <code>spec-init</code> prompt (OpenCode/Codex),
-                  or <code>python3 specnative.py init</code> (CLI without agent).
+                  or <code>python3 tools/specnative.py init</code> (CLI without agent).
                   The wizard interviews the developer and fills all five core documents.</p>
                 </div>
               </li>
@@ -465,7 +468,7 @@ claude mcp add specnative \
               </li>
               <li>
                 <div>
-                  <strong>Fill <code>spec-native/pipelines/CI.md</code> and <code>pipelines/CD.md</code></strong>
+                  <strong>Fill <code>spec-native/pipelines/CI.md</code> and <code>spec-native/pipelines/CD.md</code></strong>
                   <p>CI: platform, triggers, mandatory and optional gates, failure policy.
                   CD: environments, release process, promotion gates, rollback process.</p>
                 </div>
@@ -599,11 +602,14 @@ state         = "todo"
 id             = "TASK-0001"
 title          = "Task title"
 state          = "todo"
+priority       = "p2"
 owner          = "team-name"
+labels         = []
 dependencies   = []
 expected_files = ["src/example.py"]
 close_criteria = "Observable closure condition"
 validation     = ["pytest tests/example_test.py"]
+completion_evidence = []  # required and non-empty when state = "done"
 ```</code></pre>
             </div>
           </section>
@@ -644,25 +650,39 @@ validation     = ["pytest tests/example_test.py"]
                   <td><code>export-traceability</code></td>
                   <td>Exports traceability matrix linking each spec to its task file, decisions, artifacts, and validation.</td>
                 </tr>
+                <tr>
+                  <td><code>board [--format markdown|mermaid|json]</code></td>
+                  <td>Generates a deterministic, read-only delivery view. Todo tasks with unfinished dependencies appear as waiting.</td>
+                </tr>
+                <tr>
+                  <td><code>github-project plan</code></td>
+                  <td>Generates a no-side-effect GitHub Projects export plan from task metadata.</td>
+                </tr>
               </tbody>
             </table>
 
             <div class="code-card" style="margin-top: 1rem;">
               <pre><code># Interactive project setup (no agent needed)
-python3 specnative.py init
+python3 tools/specnative.py init
 
 # Detect gaps and refine iteratively
-python3 specnative.py update
-python3 specnative.py update --doc stack
+python3 tools/specnative.py update
+python3 tools/specnative.py update --doc stack
 
 # Show spec and task state overview
-python3 specnative.py status
+python3 tools/specnative.py status
 
 # Validate required files and TOML consistency
-python3 specnative.py validate
+python3 tools/specnative.py validate
 
 # Export full index
-python3 specnative.py export-index --output exports/index.json</code></pre>
+python3 tools/specnative.py export-index --output exports/index.json
+
+# Generate the derived delivery board
+python3 tools/specnative.py board --format markdown
+
+# Inspect a GitHub Projects export plan; no network request is made
+python3 tools/specnative.py github-project plan</code></pre>
             </div>
 
             <h3>Archetypes &amp; templates (via MCP tools)</h3>

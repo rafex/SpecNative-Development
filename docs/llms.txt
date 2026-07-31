@@ -25,7 +25,7 @@
 repo/
 ├── AGENTS.md              # Agent operating contract — read first
 ├── README.md              # Navigation index
-├── agents/
+├── spec-native/
 │   ├── README.md          # Context index
 │   ├── PRODUCT.md         # Problem, users, goals (permanent)
 │   ├── ARCHITECTURE.md    # System structure and boundaries
@@ -87,43 +87,43 @@ Each document owns one semantic domain. Never duplicate information across files
 1. Bootstrap: `python3 install.py --target /path/to/repo --profile minimal`
    or copy Template-Project-Agents-AI into the target repository.
 
-2. Fill agents/PRODUCT.md
+2. Fill spec-native/PRODUCT.md
    - Problem: what friction exists and for whom
    - Users: segments, needs, context
    - Goals: measurable outcomes
    - Non-goals: explicit exclusions
    - Differential value: why this solution deserves to exist
 
-3. Fill agents/ARCHITECTURE.md
+3. Fill spec-native/ARCHITECTURE.md
    - System modules and their responsibilities
    - Module boundaries and data flow
    - Key architectural constraints
 
-4. Fill agents/STACK.md
+4. Fill spec-native/STACK.md
    - Languages and runtimes with versions
    - Frameworks and libraries
    - Infrastructure and tooling
    - Constraints and prohibited tech
 
-5. Fill agents/CONVENTIONS.md
+5. Fill spec-native/CONVENTIONS.md
    - Naming conventions (files, classes, variables)
    - Code style and formatting rules
    - Testing approach (unit, integration, e2e)
    - Commit and PR conventions
 
-6. Fill agents/COMMANDS.md
+6. Fill spec-native/COMMANDS.md
    - Build command
    - Test command
    - Lint command
    - Run/start command
    - Any project-specific operational commands
 
-7. Fill agents/ROADMAP.md
+7. Fill spec-native/ROADMAP.md
    - Current priorities in order
    - Rationale for ordering
    - Rough horizon (do not add implementation detail)
 
-8. Create agents/SPEC.md or agents/specs/<initiative>/SPEC.md
+8. Create spec-native/SPEC.md or spec-native/specs/<initiative>/SPEC.md
    - ID, state, owner, dates
    - Summary, problem, objective
    - Scope (includes / excludes)
@@ -137,11 +137,11 @@ Each document owns one semantic domain. Never duplicate information across files
    - One task per implementable unit
    - Each task: ID, state, owner, dependencies, expected files, close criteria, validation
 
-10. Fill agents/DECISIONS.md as decisions emerge
+10. Fill spec-native/DECISIONS.md as decisions emerge
     - Record only persistent trade-offs that future initiatives must respect
     - Format: DEC-XXXX, date, state, context, decision, consequences
 
-11. Update agents/TRACEABILITY.md when the initiative closes
+11. Update spec-native/TRACEABILITY.md when the initiative closes
     - Link spec → tasks → decisions → artifacts → validation evidence
 
 ## States
@@ -194,11 +194,12 @@ validation = ["pytest tests/example_test.py"]
 ## CLI (tools/specnative.py — lives in SpecNative Development repo)
 
 ```bash
-python3 specnative.py status                           # Spec and task state overview
-python3 specnative.py validate                         # Check required files and TOML
-python3 specnative.py export-index --output out.json   # Export specs and tasks as JSON
-python3 specnative.py export-traceability --output t.json
-python3 specnative.py install --target /path/to/repo --profile minimal --include-examples
+python3 tools/specnative.py status --target /path/to/project                           # Spec and task state overview
+python3 tools/specnative.py validate --target /path/to/project                         # Check required files and TOML
+python3 tools/specnative.py export-index --target /path/to/project --output out.json   # Export specs and tasks as JSON
+python3 tools/specnative.py export-traceability --target /path/to/project --output t.json
+curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
+  | python3 - --target /path/to/repo --profile team
 ```
 
 ## MCP server (tools/specnative_mcp.py — lives in SpecNative Development repo)
@@ -219,15 +220,15 @@ Configure in your agent (stdio transport):
 
 Resources (read by URI):
   spec://agents                  → AGENTS.md
-  spec://context/product         → agents/PRODUCT.md
-  spec://context/architecture    → agents/ARCHITECTURE.md
-  spec://context/stack           → agents/STACK.md
-  spec://context/conventions     → agents/CONVENTIONS.md
-  spec://context/commands        → agents/COMMANDS.md
-  spec://context/decisions       → agents/DECISIONS.md
-  spec://context/roadmap         → agents/ROADMAP.md
-  spec://context/traceability    → agents/TRACEABILITY.md
-  spec://context/spec            → agents/SPEC.md
+  spec://context/product         → spec-native/PRODUCT.md
+  spec://context/architecture    → spec-native/ARCHITECTURE.md
+  spec://context/stack           → spec-native/STACK.md
+  spec://context/conventions     → spec-native/CONVENTIONS.md
+  spec://context/commands        → spec-native/COMMANDS.md
+  spec://context/decisions       → spec-native/DECISIONS.md
+  spec://context/roadmap         → spec-native/ROADMAP.md
+  spec://context/traceability    → spec-native/TRACEABILITY.md
+  spec://context/spec            → spec-native/SPEC.md
   spec://pipelines/ci            → pipelines/CI.md
   spec://pipelines/cd            → pipelines/CD.md
   spec://schema                  → .specnative/SCHEMA.md
@@ -252,12 +253,12 @@ Prompts (structured workflow starters):
 ## Agent workflow (from AGENTS.md)
 
 1. Read the README.md of the current folder.
-2. Check agents/ROADMAP.md — confirm the initiative aligns with current direction.
-3. Read agents/PRODUCT.md and relevant technical context.
-4. Read agents/DECISIONS.md — respect persistent trade-offs.
+2. Check spec-native/ROADMAP.md — confirm the initiative aligns with current direction.
+3. Read spec-native/PRODUCT.md and relevant technical context.
+4. Read spec-native/DECISIONS.md — respect persistent trade-offs.
 5. Review or create a SPEC.md.
 6. Derive or read tasks in tasks/.
 7. Implement and validate following workflows/IMPLEMENTATION.md.
-8. Record in agents/DECISIONS.md if persistent trade-offs emerged.
-9. Update agents/TRACEABILITY.md when the initiative closes.
+8. Record in spec-native/DECISIONS.md if persistent trade-offs emerged.
+9. Update spec-native/TRACEABILITY.md when the initiative closes.
 10. Keep TOML metadata consistent if the project uses the CLI.

@@ -27,11 +27,14 @@ state = "in_progress"
 id = "TASK-AUTH-0001"
 title = "Definir modelo de sesion"
 state = "done"
+priority = "p1"
 owner = "team-auth"
+labels = ["domain", "authentication"]
 dependencies = []
 expected_files = ["src/auth/session.*"]
 close_criteria = "Existe contrato de sesion y validacion unitaria"
 validation = ["tests unitarios de creacion y expiracion"]
+completion_evidence = ["Pruebas unitarias de sesion ejecutadas en CI"]
 ```
 
 Implementa el contrato base de sesion sobre el que dependen las
@@ -43,7 +46,9 @@ rutas protegidas.
 id = "TASK-AUTH-0002"
 title = "Implementar middleware de autorizacion"
 state = "in_progress"
+priority = "p0"
 owner = "team-auth"
+labels = ["security", "authentication"]
 dependencies = ["TASK-AUTH-0001"]
 expected_files = ["src/auth/middleware.*"]
 close_criteria = "Rutas protegidas rechazan requests no autenticadas"
@@ -59,7 +64,9 @@ privados.
 id = "TASK-AUTH-0003"
 title = "Documentar setup operativo"
 state = "todo"
+priority = "p2"
 owner = "platform"
+labels = ["documentation"]
 dependencies = ["TASK-AUTH-0002"]
 expected_files = ["spec-native/COMMANDS.md", "README.md"]
 close_criteria = "El setup local y variables requeridas estan documentadas"

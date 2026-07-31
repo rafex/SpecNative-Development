@@ -1,72 +1,117 @@
 # Template Project Agents AI
 
-Framework de spec-driven development para operar repos AI-native.
-La navegacion empieza por carpeta, no por un unico documento global.
+Plantilla de SpecNative Development v0.7 para repositorios cuyo contexto
+operativo debe poder ser leído y actualizado por agentes de IA.
 
-Esta version `v0.3` agrega:
+El punto de entrada es `AGENTS.md`. Todo el contexto persistente del proyecto
+vive en `spec-native/`; la infraestructura y documentación del framework vive
+en `.specnative/`.
 
-- contrato documental explicito en `.specnative/SCHEMA.md`
-- estados obligatorios para specs, tareas y decisiones
-- trazabilidad entre artefactos
-- capa de ejecucion con `tasks/`
-- workflows operativos repetibles
-- ejemplo end-to-end por iniciativa
-- soporte opcional para metadata parseable en TOML
-- CLI externo para validacion y exportacion (ver `.specnative/CLI.md`)
+## Qué incluye
 
-## Principios
-
-- Los `README.md` de cada carpeta son el punto de entrada y el indice
-  de navegacion.
-- Los archivos en MAYUSCULAS son contexto operativo para agentes.
-- Cada verdad vive en un solo documento. No duplicar entre archivos.
-- Leer el minimo contexto suficiente para ejecutar bien la tarea.
-- Toda iniciativa relevante debe poder trazarse desde spec hasta
-  validacion.
-
-## Documentos del proyecto
-
-- `PRODUCT.md`: problema, usuarios, objetivos y alcance.
-- `SPEC.md`: capacidad o cambio que debe implementarse.
-- `DECISIONS.md`: decisiones relevantes y sus tradeoffs.
-- `ARCHITECTURE.md`, `STACK.md`, `CONVENTIONS.md`, `COMMANDS.md`:
-  restricciones operativas del sistema.
-- `ROADMAP.md`: direccion temporal, sin detalle de implementacion.
-- `TRACEABILITY.md`: relaciones entre specs, tareas, decisiones y
-  validacion.
-
-Todos estos documentos viven dentro de `agents/`.
+- contrato de operación para agentes en `AGENTS.md`
+- contexto de producto, arquitectura, stack, convenciones y comandos en
+  `spec-native/`
+- specs y tareas organizadas por iniciativa
+- workflows de planificación, implementación y revisión
+- pipelines documentados para CI/CD
+- `SESSION.md` para continuidad entre agentes
+- servidor MCP con herramientas de lectura, escritura y prompts de workflow
+- comandos nativos para Claude Code, OpenCode y Codex
+- archetypes y templates reutilizables desde MCP
 
 ## Estructura
 
-- [`AGENTS.md`](./AGENTS.md):
-  contrato operativo para agentes — flujo de trabajo, politicas y
-  criterios de actualizacion.
-- [`agents/README.md`](./agents/README.md):
-  indice principal del sistema de contexto.
-- [`tasks/README.md`](./tasks/README.md):
-  indice del sistema de ejecucion y estado de tareas.
-- [`workflows/README.md`](./workflows/README.md):
-  procedimientos repetibles para planificar, implementar y validar.
-- [`pipelines/README.md`](./pipelines/README.md):
-  contexto de integracion continua y entrega continua.
-- [`.specnative/README.md`](./.specnative/README.md):
-  documentacion del framework y referencias al CLI.
+```text
+.
+├── AGENTS.md
+├── README.md
+├── spec-native/
+│   ├── README.md
+│   ├── PRODUCT.md
+│   ├── ARCHITECTURE.md
+│   ├── STACK.md
+│   ├── CONVENTIONS.md
+│   ├── COMMANDS.md
+│   ├── DECISIONS.md
+│   ├── ROADMAP.md
+│   ├── TRACEABILITY.md
+│   ├── SESSION.md
+│   ├── specs/
+│   ├── tasks/
+│   ├── backlog/
+│   ├── workflows/
+│   └── pipelines/
+├── .specnative/
+│   ├── README.md
+│   ├── MCP.md
+│   ├── CLI.md
+│   ├── SCHEMA.md
+│   ├── archetypes/
+│   ├── integrations/
+│   └── templates/
+├── .claude/commands/
+├── .claude/skills/         # Carga automática del flujo SpecNative en Claude/OpenCode
+├── .codex/skills/          # Skill de proyecto para entornos Codex compatibles
+├── codex.toml
+└── opencode.json
+```
 
-## Como usar este template
+## Gestion del trabajo
 
-1. Copiar este template a un repo nuevo.
-2. Leer `AGENTS.md` para entender el contrato operativo.
-3. Completar los documentos base dentro de `agents/`.
-4. Crear specs en `agents/specs/` o en `agents/SPEC.md`.
-5. Derivar tareas ejecutables en `tasks/`.
-6. Consultar [`.specnative/README.md`](./.specnative/README.md) para
-   usar el CLI del framework opcionalmente.
+Las tareas en `spec-native/tasks/**/TASKS.md` son la fuente de verdad de
+ejecucion. El CLI genera una vista de entrega a partir de su estado,
+prioridad y dependencias:
 
-## Regla de separacion
+```bash
+python3 /path/to/SpecNative-Development/tools/specnative.py board --target .
+```
 
-- `agents/`: contexto del proyecto adoptante.
-- `tasks/`: plan ejecutable derivado de specs.
-- `workflows/`: procedimientos operativos repetibles.
-- `pipelines/`: contexto de CI/CD del proyecto.
-- `.specnative/`: documentacion del framework (no del proyecto).
+No edites la salida del tablero para mover una tarjeta. Actualiza la tarea
+canonica y registra `completion_evidence` al cambiarla a `done`. Consulta
+`spec-native/backlog/README.md` para los formatos Markdown, Mermaid y JSON,
+y para el plan de exportacion de solo lectura a GitHub Projects.
+
+## Ownership documental
+
+- `spec-native/PRODUCT.md`: problema, usuarios, objetivos y no objetivos.
+- `spec-native/ARCHITECTURE.md`: módulos, límites y dependencias permitidas.
+- `spec-native/STACK.md`: tecnologías y restricciones de versión.
+- `spec-native/CONVENTIONS.md`: reglas de código, testing y commits.
+- `spec-native/COMMANDS.md`: comandos reales del proyecto adoptante; nunca
+  comandos del framework.
+- `spec-native/specs/`: comportamiento y criterios de aceptación por iniciativa.
+- `spec-native/tasks/`: descomposición ejecutable y estados de tareas.
+- `spec-native/DECISIONS.md`: trade-offs persistentes.
+- `spec-native/SESSION.md`: estado activo para continuidad entre agentes.
+- `spec-native/TRACEABILITY.md`: relación entre spec, tareas, decisiones,
+  artefactos y validación.
+- `.specnative/`: contrato y tooling del framework.
+
+## Flujo recomendado
+
+1. Leer `AGENTS.md` y `spec-native/README.md`.
+2. Ejecutar `health_check()` vía MCP o revisar manualmente los documentos base.
+3. Completar el contexto del proyecto antes de iniciar una implementación.
+4. Crear una spec en `spec-native/specs/<iniciativa>/SPEC.md`.
+5. Derivar tareas en `spec-native/tasks/<iniciativa>/TASKS.md`.
+6. Implementar siguiendo `spec-native/workflows/IMPLEMENTATION.md`.
+7. Actualizar tareas, decisiones y `SESSION.md` durante el trabajo.
+8. Cerrar la iniciativa actualizando `TRACEABILITY.md` y ejecutando las
+   validaciones del proyecto.
+
+## Documentación del framework
+
+- [`.specnative/README.md`](./.specnative/README.md): separación entre
+  contexto del proyecto y tooling del framework.
+- [`.specnative/MCP.md`](./.specnative/MCP.md): configuración y herramientas
+  del servidor MCP.
+- [`.specnative/CLI.md`](./.specnative/CLI.md): CLI externa y exportaciones.
+- [`.specnative/SCHEMA.md`](./.specnative/SCHEMA.md): contrato documental.
+
+## Adopción
+
+Para instalar esta estructura en un repositorio existente, descarga el
+`install.py` desde un release de GitHub. El instalador valida que el worktree
+esté limpio, crea una rama dedicada, preserva la configuración existente y deja
+el cambio listo para revisión y merge.

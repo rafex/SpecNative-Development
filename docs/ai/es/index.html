@@ -131,8 +131,8 @@ claude mcp add specnative \
                 <tr><td><code>spec://context/decisions</code></td><td>spec-native/DECISIONS.md</td></tr>
                 <tr><td><code>spec://context/roadmap</code></td><td>spec-native/ROADMAP.md</td></tr>
                 <tr><td><code>spec://context/traceability</code></td><td>spec-native/TRACEABILITY.md</td></tr>
-                <tr><td><code>spec://pipelines/ci</code></td><td>spec-native/pipelines/CI.md</td></tr>
-                <tr><td><code>spec://pipelines/cd</code></td><td>spec-native/pipelines/CD.md</td></tr>
+                <tr><td><code>spec://spec-native/pipelines/ci</code></td><td>spec-native/pipelines/CI.md</td></tr>
+                <tr><td><code>spec://spec-native/pipelines/cd</code></td><td>spec-native/pipelines/CD.md</td></tr>
                 <tr><td><code>spec://schema</code></td><td>.specnative/SCHEMA.md</td></tr>
               </tbody>
             </table>
@@ -145,6 +145,8 @@ claude mcp add specnative \
                 <tr><td><code>validate()</code></td><td>Verifica que existan los archivos obligatorios</td></tr>
                 <tr><td><code>list_specs()</code></td><td>Todas las specs con ID, estado y owner</td></tr>
                 <tr><td><code>list_tasks(initiative)</code></td><td>Tareas de una iniciativa</td></tr>
+                <tr><td><code>board(format?)</code></td><td>Tablero de entrega de solo lectura derivado de estado y dependencias</td></tr>
+                <tr><td><code>capture_backlog_item(...)</code></td><td>Crea una tarea válida o una idea triada sin editar el tablero</td></tr>
                 <tr><td><code>read_spec(initiative)</code></td><td>Leer una spec</td></tr>
                 <tr><td><code>read_context(document)</code></td><td>Leer cualquier documento de contexto (incluye <code>session</code>)</td></tr>
                 <tr><td><code>export_index()</code></td><td>Exportar toda la metadata como JSON</td></tr>
@@ -158,7 +160,7 @@ claude mcp add specnative \
               <tbody>
                 <tr><td><code>resume()</code></td><td>Lee SESSION.md y retorna resumen estructurado de continuidad</td></tr>
                 <tr><td><code>checkpoint(initiative, task_id, intent, next_steps, …)</code></td><td>Guarda estado activo antes de pausar o cambiar de agente</td></tr>
-                <tr><td><code>update_task(initiative, task_id, state, notes?)</code></td><td>Actualiza estado de tarea en TASKS.md directamente desde MCP</td></tr>
+                <tr><td><code>update_task(initiative, task_id, state, notes?, completion_evidence?)</code></td><td>Actualiza estado; cerrar exige evidencia de validación</td></tr>
                 <tr><td><code>log_decision(title, context, decision, consequences)</code></td><td>Append rápido a DECISIONS.md</td></tr>
               </tbody>
             </table>
@@ -234,13 +236,14 @@ claude mcp add specnative \
 │   ├── SESSION.md         # Estado activo de trabajo (continuidad multi-agente)
 │   ├── specs/
 │   │   └── &lt;iniciativa&gt;/SPEC.md
-│   ├── tasks/
+│   ├── spec-native/tasks/
 │   │   └── &lt;iniciativa&gt;/TASKS.md
-│   ├── workflows/
+│   ├── backlog/           # Vistas derivadas de entrega; nunca editar el estado aquí
+│   ├── spec-native/workflows/
 │   │   ├── PLANNING.md
 │   │   ├── IMPLEMENTATION.md
 │   │   └── REVIEW.md
-│   └── pipelines/
+│   └── spec-native/pipelines/
 │       ├── CI.md          # Gates de validación automatizados
 │       └── CD.md          # Proceso de entrega y ambientes
 ├── .claude/commands/      # Slash commands: /spec-init /spec-update /spec-status /spec-handoff
@@ -320,7 +323,7 @@ claude mcp add specnative \
                   <td>Comandos del CLI del framework (specnative.py), scripts de deploy</td>
                 </tr>
                 <tr>
-                  <td><code>tasks/**/TASKS.md</code></td>
+                  <td><code>spec-native/tasks/**/TASKS.md</code></td>
                   <td>Plan ejecutable: tareas con estado, owner, dependencias, criterio de cierre</td>
                   <td>Requisitos (→ SPEC), decisiones persistentes (→ DECISIONS)</td>
                 </tr>
@@ -330,12 +333,12 @@ claude mcp add specnative \
                   <td>Contenido de los documentos enlazados</td>
                 </tr>
                 <tr>
-                  <td><code>pipelines/CI.md</code></td>
+                  <td><code>spec-native/pipelines/CI.md</code></td>
                   <td>Definición de gates automatizados, triggers, checks obligatorios</td>
                   <td>Comandos de desarrollo local, lógica de implementación</td>
                 </tr>
                 <tr>
-                  <td><code>pipelines/CD.md</code></td>
+                  <td><code>spec-native/pipelines/CD.md</code></td>
                   <td>Proceso de entrega, ambientes, gates de promoción, rollback</td>
                   <td>Scripts de deploy, credenciales</td>
                 </tr>
@@ -349,8 +352,8 @@ claude mcp add specnative \
               <p>Si <strong>explica el producto</strong> → <code>PRODUCT.md</code></p>
               <p>Si <strong>orienta prioridad temporal</strong> → <code>ROADMAP.md</code></p>
               <p>Si <strong>describe la estructura del sistema</strong> → <code>ARCHITECTURE.md</code></p>
-              <p>Si <strong>define gates automatizados de validación</strong> → <code>pipelines/CI.md</code></p>
-              <p>Si <strong>describe cómo el código llega a producción</strong> → <code>pipelines/CD.md</code></p>
+              <p>Si <strong>define gates automatizados de validación</strong> → <code>spec-native/pipelines/CI.md</code></p>
+              <p>Si <strong>describe cómo el código llega a producción</strong> → <code>spec-native/pipelines/CD.md</code></p>
             </div>
           </section>
 
@@ -365,14 +368,14 @@ claude mcp add specnative \
               <li>
                 <div>
                   <strong>Inicializar la estructura</strong>
-                  <p>Ejecuta <code>python3 install.py --target /ruta/al/repo --profile minimal</code>
+                  <p>Ejecuta <code>python3 install.py --target /ruta/al/repo --profile context</code>
                   o copia Template-Project-Agents-AI al repositorio destino.
                   Esto crea todas las carpetas obligatorias y los archivos placeholder.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Completar <code>agents/PRODUCT.md</code></strong>
+                  <strong>Completar <code>spec-native/PRODUCT.md</code></strong>
                   <p>Problema (qué fricción existe y para quién), Usuarios (segmentos, necesidades,
                   contexto), Objetivos (resultados medibles), No-objetivos (exclusiones explícitas),
                   Valor diferencial (por qué esta solución merece existir).</p>
@@ -380,21 +383,21 @@ claude mcp add specnative \
               </li>
               <li>
                 <div>
-                  <strong>Completar <code>agents/ARCHITECTURE.md</code></strong>
+                  <strong>Completar <code>spec-native/ARCHITECTURE.md</code></strong>
                   <p>Módulos del sistema y sus responsabilidades, límites entre módulos y flujos
                   de datos, restricciones arquitectónicas clave. Sin detalle de implementación.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Completar <code>agents/STACK.md</code></strong>
+                  <strong>Completar <code>spec-native/STACK.md</code></strong>
                   <p>Lenguajes y runtimes con versiones exactas, frameworks y librerías,
                   infraestructura y tooling, restricciones y tecnologías prohibidas.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Completar <code>agents/CONVENTIONS.md</code></strong>
+                  <strong>Completar <code>spec-native/CONVENTIONS.md</code></strong>
                   <p>Convenciones de naming (archivos, clases, variables), reglas de estilo y
                   formato, enfoque de testing (unit / integración / e2e), convenciones de
                   commits y PRs.</p>
@@ -402,7 +405,7 @@ claude mcp add specnative \
               </li>
               <li>
                 <div>
-                  <strong>Completar <code>agents/COMMANDS.md</code></strong>
+                  <strong>Completar <code>spec-native/COMMANDS.md</code></strong>
                   <p>Solo comandos reales del proyecto: build, test, lint, run/start, migraciones
                   y cualquier comando operativo específico del proyecto.
                   Nunca incluir comandos del CLI del framework aquí.</p>
@@ -410,14 +413,14 @@ claude mcp add specnative \
               </li>
               <li>
                 <div>
-                  <strong>Completar <code>agents/ROADMAP.md</code></strong>
+                  <strong>Completar <code>spec-native/ROADMAP.md</code></strong>
                   <p>Prioridades actuales en orden con justificación del ordenamiento.
                   Horizonte temporal aproximado. Sin detalle de implementación ni contenido de spec.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Crear <code>agents/SPEC.md</code> (o <code>agents/specs/&lt;iniciativa&gt;/SPEC.md</code>)</strong>
+                  <strong>Crear <code>spec-native/specs/&lt;iniciativa&gt;/SPEC.md</code></strong>
                   <p>ID, estado, owner, fechas de creación y actualización. Resumen, problema,
                   objetivo. Alcance (incluye / excluye). Requisitos funcionales y no funcionales.
                   Criterios de aceptación (Dado / Cuando / Entonces). Dependencias y riesgos.
@@ -426,7 +429,7 @@ claude mcp add specnative \
               </li>
               <li>
                 <div>
-                  <strong>Derivar <code>tasks/&lt;iniciativa&gt;/TASKS.md</code></strong>
+                  <strong>Derivar <code>spec-native/tasks/&lt;iniciativa&gt;/TASKS.md</code></strong>
                   <p>Una tarea por unidad implementable. Cada tarea: ID, estado, owner,
                   dependencias, archivos esperados, criterio observable de cierre,
                   comando de validación.</p>
@@ -434,21 +437,21 @@ claude mcp add specnative \
               </li>
               <li>
                 <div>
-                  <strong>Registrar decisiones en <code>agents/DECISIONS.md</code></strong>
+                  <strong>Registrar decisiones en <code>spec-native/DECISIONS.md</code></strong>
                   <p>Solo tradeoffs persistentes que las próximas iniciativas deben respetar.
                   Formato: DEC-XXXX, fecha, estado, contexto, decisión, consecuencias, reemplaza.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Completar <code>pipelines/CI.md</code> y <code>pipelines/CD.md</code></strong>
+                  <strong>Completar <code>spec-native/pipelines/CI.md</code> y <code>spec-native/pipelines/CD.md</code></strong>
                   <p>CI: plataforma, triggers, gates obligatorios y opcionales, política de fallo.
                   CD: ambientes, proceso de release, gates de promoción, proceso de rollback.</p>
                 </div>
               </li>
               <li>
                 <div>
-                  <strong>Actualizar <code>agents/TRACEABILITY.md</code> al cerrar la iniciativa</strong>
+                  <strong>Actualizar <code>spec-native/TRACEABILITY.md</code> al cerrar la iniciativa</strong>
                   <p>Vincular spec → tareas → decisiones → artefactos principales → evidencia de
                   validación. Actualizar al cierre, no durante la ejecución.</p>
                 </div>
@@ -458,12 +461,12 @@ claude mcp add specnative \
             <h3>Flujo de trabajo del agente (de AGENTS.md)</h3>
             <ol class="step-list">
               <li><div><strong>Leer el README.md de la carpeta actual</strong><p>Punto de entrada de navegación en cualquier directorio.</p></div></li>
-              <li><div><strong>Revisar agents/ROADMAP.md</strong><p>Confirmar que la iniciativa es coherente con la dirección actual del proyecto antes de crear una spec.</p></div></li>
-              <li><div><strong>Leer agents/PRODUCT.md y contexto técnico relevante</strong><p>Cargar el mínimo contexto: ARCHITECTURE.md, STACK.md, CONVENTIONS.md según sea necesario.</p></div></li>
-              <li><div><strong>Leer agents/DECISIONS.md</strong><p>Respetar los tradeoffs persistentes que condicionan el diseño actual.</p></div></li>
-              <li><div><strong>Revisar o crear un SPEC.md</strong><p>Usar agents/SPEC.md para specs únicas activas; agents/specs/&lt;iniciativa&gt;/SPEC.md para proyectos más grandes.</p></div></li>
-              <li><div><strong>Derivar o leer tareas en tasks/</strong><p>Seguir workflows/PLANNING.md para convertir la spec en lista ejecutable de tareas.</p></div></li>
-              <li><div><strong>Implementar siguiendo workflows/IMPLEMENTATION.md</strong><p>Verificar los gates de CI de pipelines/CI.md antes de considerar el trabajo completo.</p></div></li>
+              <li><div><strong>Revisar spec-native/ROADMAP.md</strong><p>Confirmar que la iniciativa es coherente con la dirección actual del proyecto antes de crear una spec.</p></div></li>
+              <li><div><strong>Leer spec-native/PRODUCT.md y contexto técnico relevante</strong><p>Cargar el mínimo contexto: ARCHITECTURE.md, STACK.md, CONVENTIONS.md según sea necesario.</p></div></li>
+              <li><div><strong>Leer spec-native/DECISIONS.md</strong><p>Respetar los tradeoffs persistentes que condicionan el diseño actual.</p></div></li>
+              <li><div><strong>Revisar o crear un SPEC.md</strong><p>Usar spec-native/SPEC.md para specs únicas activas; spec-native/specs/&lt;iniciativa&gt;/SPEC.md para proyectos más grandes.</p></div></li>
+              <li><div><strong>Derivar o leer tareas en spec-native/tasks/</strong><p>Seguir spec-native/workflows/PLANNING.md para convertir la spec en lista ejecutable de tareas.</p></div></li>
+              <li><div><strong>Implementar siguiendo spec-native/workflows/IMPLEMENTATION.md</strong><p>Verificar los gates de CI de spec-native/pipelines/CI.md antes de considerar el trabajo completo.</p></div></li>
               <li><div><strong>Registrar tradeoffs persistentes en DECISIONS.md</strong><p>Solo si la decisión debe sobrevivir más allá de la iniciativa actual.</p></div></li>
               <li><div><strong>Actualizar TRACEABILITY.md al cerrar la iniciativa</strong><p>Vincular todos los artefactos relacionados. No durante la ejecución — solo al cierre.</p></div></li>
             </ol>
@@ -519,7 +522,7 @@ claude mcp add specnative \
               funcionen automáticamente. Coloca el bloque cerca del inicio del archivo.
             </p>
 
-            <h3>Cabecera de spec (<code>agents/SPEC.md</code> o <code>agents/specs/**/SPEC.md</code>)</h3>
+            <h3>Cabecera de spec (<code>spec-native/SPEC.md</code> o <code>spec-native/specs/**/SPEC.md</code>)</h3>
             <div class="code-card">
               <pre><code>```toml
 artifact_type = "spec"
@@ -536,7 +539,7 @@ validation          = ["pytest", "revisión manual"]
 ```</code></pre>
             </div>
 
-            <h3>Cabecera de archivo de tareas (<code>tasks/**/TASKS.md</code>)</h3>
+            <h3>Cabecera de archivo de tareas (<code>spec-native/tasks/**/TASKS.md</code>)</h3>
             <div class="code-card">
               <pre><code>```toml
 artifact_type = "task_file"
@@ -553,11 +556,14 @@ state         = "todo"
 id             = "TASK-0001"
 title          = "Título de la tarea"
 state          = "todo"
+priority       = "p2"
 owner          = "nombre-equipo"
+labels         = []
 dependencies   = []
 expected_files = ["src/ejemplo.py"]
 close_criteria = "Condición observable de cierre"
 validation     = ["pytest tests/ejemplo_test.py"]
+completion_evidence = []  # obligatorio y no vacío cuando state = "done"
 ```</code></pre>
             </div>
           </section>
@@ -591,31 +597,36 @@ validation     = ["pytest tests/ejemplo_test.py"]
                   <td>Exporta la matriz de trazabilidad que enlaza cada spec con su archivo de tareas, decisiones, artefactos y validación. Usa <code>--output archivo.json</code>.</td>
                 </tr>
                 <tr>
+                  <td><code>board [--format markdown|mermaid|json]</code></td>
+                  <td>Genera una vista de entrega determinista y de solo lectura. Las tareas con dependencias sin cerrar aparecen en waiting.</td>
+                </tr>
+                <tr>
+                  <td><code>github-project plan</code></td>
+                  <td>Genera un plan de exportación a GitHub Projects sin efectos externos desde la metadata de tareas.</td>
+                </tr>
+                <tr>
                   <td><code>install</code></td>
-                  <td>Copia la estructura del template en un repositorio git existente. Requiere worktree limpio y crea una rama dedicada. Opciones: <code>--target</code>, <code>--profile minimal|full</code>, <code>--include-examples</code>, <code>--branch</code>, <code>--force</code>.</td>
+                  <td>Copia la estructura del template en un repositorio git existente. Requiere worktree limpio y crea una rama dedicada. Opciones: <code>--target</code>, <code>--profile context|spec|team|platform</code>, <code>--include-examples</code>, <code>--branch</code>, <code>--force</code>.</td>
                 </tr>
               </tbody>
             </table>
 
             <div class="code-card" style="margin-top: 1rem;">
               <pre><code># Ver estado de specs y tareas
-python3 specnative.py status
+python3 tools/specnative.py status
 
 # Validar archivos obligatorios y consistencia TOML
-python3 specnative.py validate
+python3 tools/specnative.py validate
 
 # Exportar índice completo
-python3 specnative.py export-index --output exports/index.json
+python3 tools/specnative.py export-index --output exports/index.json
 
 # Exportar matriz de trazabilidad
-python3 specnative.py export-traceability --output exports/trazabilidad.json
+python3 tools/specnative.py export-traceability --output exports/trazabilidad.json
 
 # Instalar en repositorio existente
-python3 specnative.py install \
-  --target /ruta/al/repo \
-  --profile minimal \
-  --include-examples \
-  --branch specnative/install-v0.3.1</code></pre>
+curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
+  | python3 - --target /ruta/al/repo --profile team</code></pre>
             </div>
 
             <h3>Instalador standalone</h3>
@@ -629,7 +640,7 @@ curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/downlo
   | python3 - --target /ruta/al/repo
 
 # O descargar primero y luego ejecutar
-python3 install.py --target /ruta/al/repo --profile minimal --include-examples</code></pre>
+python3 install.py --target /ruta/al/repo --profile platform --include-examples</code></pre>
             </div>
           </section>
 

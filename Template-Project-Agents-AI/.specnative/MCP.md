@@ -1,4 +1,4 @@
-# MCP.md — SpecNative MCP Server v0.6
+# MCP.md — SpecNative MCP Server v0.7
 
 El servidor MCP de SpecNative expone el repositorio como **recursos**, **herramientas**
 y **prompts** para que cualquier agente compatible con MCP pueda trabajar en modo
@@ -20,8 +20,14 @@ Instalados automáticamente en tu repositorio. Disponibles desde el primer día.
 | `/spec-update` | Detecta vacíos, sugiere refinamientos, actualiza iterativamente |
 | `/spec-status` | Vista rápida: sesión activa, specs, tareas, alertas |
 | `/spec-handoff` | Genera traspaso estructurado para el siguiente agente |
+| `/spec-backlog-add` | Clasifica una solicitud como tarea ejecutable o idea triada |
 
 Archivos en `.claude/commands/spec-*.md`.
+
+La skill `specnative-workflow` se instala en `.claude/skills/` y es detectada
+por Claude Code y OpenCode. También se incluye en `.codex/skills/` para los
+entornos Codex que cargan skills de proyecto; `codex.toml` conserva los prompts
+como mecanismo de respaldo.
 
 ### OpenCode — prompts integrados
 
@@ -33,6 +39,7 @@ Disponibles en el menú de prompts de OpenCode (configurados en `opencode.json`)
 | `spec-update` | Update SpecNative docs — detect gaps, refine |
 | `spec-status` | Quick SpecNative health check |
 | `spec-handoff` | Generate handoff for next agent |
+| `spec-backlog-add` | Capture a task or triaged intake idea |
 
 ### Codex CLI — prompts en codex.toml
 
@@ -41,6 +48,7 @@ codex --prompt spec-init     # guided project setup
 codex --prompt spec-update   # detect gaps and refine
 codex --prompt spec-status   # health check
 codex --prompt spec-handoff  # generate handoff
+codex --prompt spec-backlog-add # capture backlog item
 ```
 
 ### CLI sin agente
@@ -158,6 +166,10 @@ La clave `instructions` hace que OpenCode cargue `AGENTS.md` automáticamente en
     "spec-handoff": {
       "description": "Generate structured handoff for next agent",
       "template": "Use the specnative MCP server. Ask the developer what they were doing and what the next step is. Call checkpoint() with the gathered info, then log_decision() for any unrecorded decisions. Confirm with read_context('session')."
+    },
+    "spec-backlog-add": {
+      "description": "Capture a backlog request as a task or triaged intake idea",
+      "template": "Use list_specs() and board() first. Call capture_backlog_item() with initiative only when an existing spec, close criteria and validation are known; otherwise call it without initiative to record triaged intake. Never edit a generated board."
     }
   }
 }
@@ -229,6 +241,8 @@ export SPECNATIVE_REPO=/ruta/a/tu/proyecto
 | `validate()`                 | Verifica que existan todos los archivos obligatorios           |
 | `list_specs()`               | Lista specs con ID, estado y owner                             |
 | `list_tasks(initiative)`     | Lista tareas de una iniciativa con estados                     |
+| `board(format?)`             | Tablero de entrega de solo lectura derivado de tareas           |
+| `capture_backlog_item(...)`  | Crea tarea válida o idea triada según la información disponible |
 | `read_spec(initiative)`      | Lee el contenido de una spec                                   |
 | `read_context(document)`     | Lee un documento de contexto por nombre corto                  |
 | `export_index()`             | Exporta specs y task files con metadata TOML como JSON         |
@@ -240,7 +254,7 @@ export SPECNATIVE_REPO=/ruta/a/tu/proyecto
 |-------------------------------------------|----------------------------------------------------------------|
 | `resume()`                                | Lee SESSION.md y genera resumen de continuidad                 |
 | `checkpoint(initiative, task_id, intent, next_steps, context_notes?, agent_name?)` | Guarda estado antes de pausar |
-| `update_task(initiative, task_id, state, notes?)` | Actualiza estado de tarea en TASKS.md              |
+| `update_task(initiative, task_id, state, notes?, completion_evidence?)` | Actualiza estado; cerrar exige evidencia |
 | `log_decision(title, context, decision, consequences)` | Append rápido a DECISIONS.md              |
 
 ### Definición y salud del proyecto (v0.6)
@@ -303,6 +317,7 @@ Ver `.specnative/archetypes/README.md` para el formato.
 | `handoff(summary, next_steps, decisions?)` | Genera traspaso estructurado para el siguiente agente   |
 | `record_decision(title, ctx, dec, cons)`  | Registra una decisión persistente en DECISIONS.md        |
 | `close_initiative(initiative)`            | Cierra la iniciativa y actualiza trazabilidad            |
+| `capture_backlog(title, description, initiative?, priority?)` | Clasifica y registra una solicitud de backlog |
 
 ---
 

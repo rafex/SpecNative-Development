@@ -1,6 +1,7 @@
 # CONVENTIONS.md
 
-Reglas operativas y de implementacion del proyecto.
+Índice de reglas operativas y de implementación. Las convenciones canónicas
+viven en `conventions/CONV-XXXX-<slug>.md`.
 
 ## Debe cubrir
 
@@ -10,28 +11,9 @@ Reglas operativas y de implementacion del proyecto.
 - Convenciones de estructura por feature o capa.
 - Reglas de documentacion y actualizacion de contexto.
 
-## Template
+## Reglas
 
-### Codigo
+El CLI o MCP pueden generar esta sección desde `conventions/`.
 
-- Preferir cambios pequenos y locales.
-- Evitar duplicacion accidental.
-- Seguir la estructura definida en `ARCHITECTURE.md`.
-
-### Tests
-
-- Cada cambio relevante debe definir su estrategia de validacion.
-- Los tests deben vivir cerca del codigo o donde el proyecto lo defina.
-
-### Documentacion
-
-- Los `README.md` indexan.
-- Los archivos en MAYUSCULAS contienen contexto fuente.
-- No duplicar hechos entre documentos sin una razon fuerte.
-
-### Agentes
-
-- Antes de editar, leer el `README.md` de la carpeta.
-- Actualizar el documento fuente si cambia una verdad compartida.
-- No cerrar una tarea sin estado final y evidencia de validacion.
-- No ejecutar una iniciativa sin referencia explicita a una spec.
+| ID | Estado | Regla | Tags |
+| --- | --- | --- | --- |

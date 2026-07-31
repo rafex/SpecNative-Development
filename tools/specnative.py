@@ -8,6 +8,13 @@ import re
 import shutil
 import subprocess
 import sys
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10 compatibility when tomli is installed.
+    try:
+        import tomli as tomllib
+    except ModuleNotFoundError as exc:
+        raise RuntimeError("TOML parsing requires Python 3.11+ or the 'tomli' package") from exc
 from pathlib import Path
 from typing import Any
 
@@ -18,10 +25,13 @@ REQUIRED_FILES = [
     "spec-native/README.md",
     "spec-native/PRODUCT.md",
     "spec-native/ARCHITECTURE.md",
+    "spec-native/architecture/README.md",
     "spec-native/STACK.md",
     "spec-native/CONVENTIONS.md",
+    "spec-native/conventions/README.md",
     "spec-native/COMMANDS.md",
     "spec-native/DECISIONS.md",
+    "spec-native/decisions/README.md",
     "spec-native/ROADMAP.md",
     "spec-native/TRACEABILITY.md",
     "spec-native/SESSION.md",
@@ -32,6 +42,9 @@ REQUIRED_FILES = [
 ]
 SPEC_STATES = {"draft", "active", "blocked", "done", "superseded"}
 TASK_STATES = {"todo", "in_progress", "blocked", "done"}
+TASK_PRIORITIES = {"p0", "p1", "p2", "p3"}
+BOARD_COLUMNS = ("ready", "in_progress", "blocked", "waiting", "done")
+DEFAULT_GITHUB_PROJECT_CONFIG = ".specnative/integrations/github-project.toml"
 INSTALL_BRANCH_PREFIX = "specnative/install"
 
 INSTALL_PATHS_MINIMAL = [
@@ -39,15 +52,19 @@ INSTALL_PATHS_MINIMAL = [
     "spec-native/README.md",
     "spec-native/PRODUCT.md",
     "spec-native/ARCHITECTURE.md",
+    "spec-native/architecture/README.md",
     "spec-native/STACK.md",
     "spec-native/CONVENTIONS.md",
+    "spec-native/conventions/README.md",
     "spec-native/COMMANDS.md",
     "spec-native/DECISIONS.md",
+    "spec-native/decisions/README.md",
     "spec-native/ROADMAP.md",
     "spec-native/TRACEABILITY.md",
     "spec-native/SESSION.md",
     "spec-native/specs/README.md",
     "spec-native/tasks/README.md",
+    "spec-native/backlog/README.md",
     "spec-native/tasks/TASKS.template.md",
     "spec-native/workflows/README.md",
     "spec-native/workflows/IMPLEMENTATION.md",
@@ -63,6 +80,9 @@ INSTALL_PATHS_MINIMAL = [
     ".specnative/templates/README.md",
     ".specnative/templates/specs/README.md",
     ".specnative/templates/decisions/README.md",
+    ".claude/commands/spec-backlog-add.md",
+    ".claude/skills/specnative-workflow/SKILL.md",
+    ".codex/skills/specnative-workflow/SKILL.md",
 ]
 
 INSTALL_PATHS_EXAMPLES = [
@@ -80,35 +100,24 @@ def load_text(path: Path) -> str:
 def extract_toml_block(text: str) -> dict[str, Any]:
     match = re.search(r"```toml\n(.*?)\n```", text, flags=re.DOTALL)
     if not match:
+        match = re.search(r"^\+\+\+\n(.*?)\n\+\+\+", text, flags=re.DOTALL | re.MULTILINE)
+    if not match:
         return {}
     return parse_simple_toml(match.group(1))
 
 
 def parse_simple_toml(raw: str) -> dict[str, Any]:
-    data: dict[str, Any] = {}
-    for raw_line in raw.splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if "=" not in line:
-            raise ValueError(f"invalid TOML line: {line}")
-        key, value = [part.strip() for part in line.split("=", 1)]
-        data[key] = parse_toml_value(value)
-    return data
+    try:
+        parsed = tomllib.loads(raw)
+    except Exception as exc:
+        raise ValueError(f"invalid TOML: {exc}") from exc
+    if not isinstance(parsed, dict):
+        raise ValueError("TOML metadata must be an object")
+    return parsed
 
 
 def parse_toml_value(raw: str) -> Any:
-    if raw.startswith('"') and raw.endswith('"'):
-        return raw[1:-1]
-    if raw.startswith("[") and raw.endswith("]"):
-        inner = raw[1:-1].strip()
-        if not inner:
-            return []
-        parts = [part.strip() for part in inner.split(",")]
-        return [parse_toml_value(part) for part in parts]
-    if raw in {"true", "false"}:
-        return raw == "true"
-    return raw
+    return parse_simple_toml(f"value = {raw}")["value"]
 
 
 def extract_all_toml_blocks(text: str) -> list[dict[str, Any]]:
@@ -158,6 +167,201 @@ def find_task_files() -> list[Path]:
     return sorted(ROOT.glob("spec-native/tasks/**/TASKS.md"))
 
 
+def find_decision_files() -> list[Path]:
+    return sorted(ROOT.glob("spec-native/decisions/DEC-*.md"))
+
+
+def find_context_artifacts(directory: str, prefix: str) -> list[Path]:
+    return sorted(ROOT.glob(f"spec-native/{directory}/{prefix}-*.md"))
+
+
+def collect_tasks() -> list[dict[str, Any]]:
+    """Return normalized task records used by every derived work-management view."""
+    tasks: list[dict[str, Any]] = []
+    for task_path in find_task_files():
+        task_file = parse_tasks(task_path)
+        initiative = task_file.get("initiative") or task_path.parent.name
+        for task in task_file.get("tasks", []):
+            if not task.get("id"):
+                continue
+            record = dict(task)
+            record.update(
+                {
+                    "initiative": initiative,
+                    "spec_id": task_file.get("spec_id"),
+                    "task_file": task_file.get("path"),
+                    "priority": task.get("priority", "p2"),
+                    "labels": task.get("labels", []),
+                }
+            )
+            tasks.append(record)
+    return tasks
+
+
+def build_board() -> dict[str, Any]:
+    """Build a deterministic delivery-board projection from canonical task files."""
+    tasks = collect_tasks()
+    tasks_by_id = {task["id"]: task for task in tasks}
+    columns: dict[str, list[dict[str, Any]]] = {column: [] for column in BOARD_COLUMNS}
+
+    for task in tasks:
+        state = task.get("state", "todo")
+        dependencies = task.get("dependencies", [])
+        dependencies_done = all(
+            tasks_by_id.get(dependency, {}).get("state") == "done"
+            for dependency in dependencies
+        )
+
+        if state == "todo":
+            column = "ready" if dependencies_done else "waiting"
+        elif state in {"in_progress", "blocked", "done"}:
+            column = state
+        else:
+            column = "waiting"
+
+        completion_evidence = task.get("completion_evidence", [])
+        columns[column].append(
+            {
+                "id": task["id"],
+                "title": task.get("title", ""),
+                "initiative": task["initiative"],
+                "spec_id": task.get("spec_id"),
+                "state": state,
+                "board_column": column,
+                "priority": task["priority"],
+                "owner": task.get("owner", ""),
+                "labels": task["labels"],
+                "dependencies": dependencies,
+                "expected_files": task.get("expected_files", []),
+                "close_criteria": task.get("close_criteria", ""),
+                "validation": task.get("validation", []),
+                "completion_evidence": completion_evidence,
+                "completion_evidence_missing": state == "done" and not completion_evidence,
+                "task_file": task["task_file"],
+            }
+        )
+
+    priority_order = {priority: index for index, priority in enumerate(sorted(TASK_PRIORITIES))}
+    for tasks_in_column in columns.values():
+        tasks_in_column.sort(key=lambda task: (priority_order.get(task["priority"], 99), task["id"]))
+
+    return {
+        "schema_version": "1.0",
+        "source_of_truth": "spec-native/tasks/**/TASKS.md",
+        "columns": columns,
+    }
+
+
+def render_board_markdown(board: dict[str, Any]) -> str:
+    labels = {
+        "ready": "Ready",
+        "in_progress": "In progress",
+        "blocked": "Blocked",
+        "waiting": "Waiting for dependencies",
+        "done": "Done",
+    }
+    lines = [
+        "# SpecNative Delivery Board",
+        "",
+        "> Generated projection. Update task TOML metadata, never this view.",
+    ]
+    for column in BOARD_COLUMNS:
+        tasks = board["columns"][column]
+        lines.extend(["", f"## {labels[column]} ({len(tasks)})", ""])
+        if not tasks:
+            lines.append("No tasks.")
+            continue
+        lines.extend([
+            "| Priority | Task | Initiative | Owner | Dependencies |",
+            "|---|---|---|---|---|",
+        ])
+        for task in tasks:
+            dependencies = ", ".join(task["dependencies"]) or "-"
+            lines.append(
+                f"| {task['priority']} | {task['id']} - {task['title']} | "
+                f"{task['initiative']} | {task['owner'] or '-'} | {dependencies} |"
+            )
+    return "\n".join(lines) + "\n"
+
+
+def render_board_mermaid(board: dict[str, Any]) -> str:
+    """Render a stable overview; Mermaid is intentionally not an editable board."""
+    labels = {
+        "ready": "Ready",
+        "in_progress": "In progress",
+        "blocked": "Blocked",
+        "waiting": "Waiting",
+        "done": "Done",
+    }
+    lines = ["flowchart LR"]
+    for index, column in enumerate(BOARD_COLUMNS):
+        node = f"C{index}"
+        lines.append(f'    {node}["{labels[column]} ({len(board["columns"][column])})"]')
+        if index:
+            lines.append(f"    C{index - 1} --> {node}")
+    return "\n".join(lines) + "\n"
+
+
+def load_github_project_config(config_path: Path) -> dict[str, Any]:
+    if not config_path.is_file():
+        raise ValueError(
+            f"GitHub Project configuration not found: {config_path}. "
+            "Copy .specnative/integrations/github-project.toml.example first."
+        )
+    config = parse_simple_toml(load_text(config_path))
+    project = config.get("github_project", {})
+    status_map = config.get("status_map", {})
+    if not isinstance(project, dict) or not project.get("project_id"):
+        raise ValueError("github_project.project_id is required")
+    if not isinstance(status_map, dict):
+        raise ValueError("status_map must be a TOML table")
+    missing = [column for column in BOARD_COLUMNS if not status_map.get(column)]
+    if missing:
+        raise ValueError(f"status_map is missing board columns: {', '.join(missing)}")
+    return config
+
+
+def github_project_plan(config_path: Path) -> dict[str, Any]:
+    """Create a no-side-effect plan for a future GitHub Projects export."""
+    config = load_github_project_config(config_path)
+    project = config["github_project"]
+    status_map = config["status_map"]
+    board = build_board()
+    items: list[dict[str, Any]] = []
+    for column in BOARD_COLUMNS:
+        for task in board["columns"][column]:
+            items.append(
+                {
+                    "operation": "upsert_draft_item",
+                    "external_key": task["id"],
+                    "title": f"{task['id']} - {task['title']}",
+                    "status": status_map[column],
+                    "fields": {
+                        "SpecNative ID": task["id"],
+                        "Initiative": task["initiative"],
+                        "Priority": task["priority"],
+                        "Owner": task["owner"],
+                    },
+                    "source": task["task_file"],
+                }
+            )
+    return {
+        "schema_version": "1.0",
+        "mode": "dry_run",
+        "project": {
+            "project_id": project["project_id"],
+            "owner": project.get("owner"),
+            "status_field": project.get("status_field", "Status"),
+        },
+        "items": items,
+        "notes": [
+            "This command does not call GitHub.",
+            "SpecNative task files remain the source of truth.",
+            "An apply command requires an explicit future integration release.",
+        ],
+    }
+
+
 def validate() -> int:
     errors: list[str] = []
 
@@ -169,6 +373,7 @@ def validate() -> int:
     if not specs:
         errors.append("missing required spec: spec-native/SPEC.md or spec-native/specs/**/SPEC.md")
 
+    parsed_specs: list[dict[str, Any]] = []
     for spec_path in specs:
         try:
             spec = parse_spec(spec_path)
@@ -183,6 +388,45 @@ def validate() -> int:
                     errors.append(f"{spec_path.relative_to(ROOT)}: missing metadata field '{field}'")
             if spec.get("state") not in SPEC_STATES:
                 errors.append(f"{spec_path.relative_to(ROOT)}: invalid state '{spec.get('state')}'")
+        parsed_specs.append(spec)
+
+    spec_ids = {spec.get("id") for spec in parsed_specs if spec.get("id")}
+    all_task_ids: set[str] = set()
+    all_tasks: list[tuple[Path, dict[str, Any]]] = []
+    decision_ids: set[str] = set()
+    for decision_path in find_decision_files():
+        try:
+            decision_meta = extract_toml_block(load_text(decision_path))
+        except Exception as exc:
+            errors.append(f"{decision_path.relative_to(ROOT)}: {exc}")
+            continue
+        for field in ("doctype", "id", "title", "status", "created_at", "tags"):
+            if field not in decision_meta:
+                errors.append(f"{decision_path.relative_to(ROOT)}: missing metadata field '{field}'")
+        if decision_meta.get("doctype") != "decision":
+            errors.append(f"{decision_path.relative_to(ROOT)}: doctype must be 'decision'")
+        if decision_meta.get("id") in decision_ids:
+            errors.append(f"{decision_path.relative_to(ROOT)}: duplicate decision id '{decision_meta.get('id')}'")
+        decision_ids.add(decision_meta.get("id"))
+        if not isinstance(decision_meta.get("tags", []), list):
+            errors.append(f"{decision_path.relative_to(ROOT)}: tags must be a list")
+
+    for directory, prefix, doctype in (("architecture", "ARCH", "architecture"), ("conventions", "CONV", "convention")):
+        artifact_ids: set[str] = set()
+        for artifact_path in find_context_artifacts(directory, prefix):
+            try:
+                meta = extract_toml_block(load_text(artifact_path))
+            except Exception as exc:
+                errors.append(f"{artifact_path.relative_to(ROOT)}: {exc}")
+                continue
+            for field in ("doctype", "id", "title", "status", "tags"):
+                if field not in meta:
+                    errors.append(f"{artifact_path.relative_to(ROOT)}: missing metadata field '{field}'")
+            if meta.get("doctype") != doctype:
+                errors.append(f"{artifact_path.relative_to(ROOT)}: doctype must be '{doctype}'")
+            if meta.get("id") in artifact_ids:
+                errors.append(f"{artifact_path.relative_to(ROOT)}: duplicate id '{meta.get('id')}'")
+            artifact_ids.add(meta.get("id"))
 
     for task_path in find_task_files():
         try:
@@ -197,10 +441,64 @@ def validate() -> int:
                     errors.append(f"{task_path.relative_to(ROOT)}: missing metadata field '{field}'")
             if task_file.get("state") not in TASK_STATES:
                 errors.append(f"{task_path.relative_to(ROOT)}: invalid state '{task_file.get('state')}'")
+            if task_file.get("spec_id") not in spec_ids:
+                errors.append(
+                    f"{task_path.relative_to(ROOT)}: spec_id '{task_file.get('spec_id')}' does not reference an existing spec"
+                )
 
+        task_ids: set[str] = set()
         for task in task_file["tasks"]:
+            task_id = task.get("id")
+            if task_id in task_ids:
+                errors.append(f"{task_path.relative_to(ROOT)}: duplicate task id '{task_id}'")
+            if task_id:
+                task_ids.add(task_id)
+                if task_id in all_task_ids:
+                    errors.append(f"{task_path.relative_to(ROOT)}: task id '{task_id}' is not globally unique")
+                all_task_ids.add(task_id)
+                all_tasks.append((task_path, task))
+            if task_file.get("artifact_type") == "task_file":
+                for field in ("id", "title", "state", "owner", "close_criteria", "validation"):
+                    if field not in task:
+                        errors.append(
+                            f"{task_path.relative_to(ROOT)}: task {task_id or '<unknown>'} missing field '{field}'"
+                        )
             if task.get("state") and task["state"] not in TASK_STATES:
                 errors.append(f"{task_path.relative_to(ROOT)}: task {task.get('id')} has invalid state '{task['state']}'")
+            priority = task.get("priority", "p2")
+            if priority not in TASK_PRIORITIES:
+                errors.append(f"{task_path.relative_to(ROOT)}: task {task_id} has invalid priority '{priority}'")
+            labels = task.get("labels", [])
+            if not isinstance(labels, list) or not all(isinstance(label, str) for label in labels):
+                errors.append(f"{task_path.relative_to(ROOT)}: task {task_id} labels must be a list of strings")
+            if task.get("state") == "done" and not task.get("completion_evidence"):
+                errors.append(
+                    f"{task_path.relative_to(ROOT)}: task {task_id} is done but has no completion_evidence"
+                )
+
+        if task_file.get("state") == "done" and any(
+            task.get("state") != "done" for task in task_file["tasks"]
+        ):
+            errors.append(f"{task_path.relative_to(ROOT)}: task file is done but not all tasks are done")
+
+    for task_path, task in all_tasks:
+        for dependency in task.get("dependencies", []):
+            if dependency not in all_task_ids:
+                errors.append(
+                    f"{task_path.relative_to(ROOT)}: task {task.get('id')} depends on missing task '{dependency}'"
+                )
+            if dependency == task.get("id"):
+                errors.append(f"{task_path.relative_to(ROOT)}: task {task.get('id')} cannot depend on itself")
+
+    for spec in parsed_specs:
+        if spec.get("state") == "done":
+            linked = [task_file for task_file in find_task_files() if parse_tasks(task_file).get("spec_id") == spec.get("id")]
+            if linked and any(
+                task.get("state") != "done"
+                for task_file in linked
+                for task in task_file.get("tasks", [])
+            ):
+                errors.append(f"spec {spec.get('id')}: state is done but linked tasks are not all done")
 
     if errors:
         print("SpecNative validation failed")
@@ -480,7 +778,7 @@ def init_interactive(target: Path, force: bool) -> int:
     print(
         "\nPróximos pasos:"
         "\n  1. Conecta el MCP: ver .specnative/MCP.md"
-        "\n  2. Refina con:  python3 specnative.py update --target ."
+        "\n  2. Refina con:  python3 /path/to/SpecNative-Development/tools/specnative.py update --target ."
         "\n  3. Crea tu primera spec con el prompt start_initiative() del MCP"
     )
     return 0
@@ -686,14 +984,35 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="SpecNative tooling")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    subparsers.add_parser("validate", help="Validate the repository structure")
-    subparsers.add_parser("status", help="Show current state of specs and tasks")
+    validate_parser = subparsers.add_parser("validate", help="Validate the repository structure")
+    validate_parser.add_argument("--target", help="Repository to validate")
+
+    status_parser = subparsers.add_parser("status", help="Show current state of specs and tasks")
+    status_parser.add_argument("--target", help="Repository to inspect")
 
     export_index_parser = subparsers.add_parser("export-index", help="Export a machine-readable project index")
     export_index_parser.add_argument("--output", help="Write JSON to a file")
+    export_index_parser.add_argument("--target", help="Repository to export")
 
     export_trace_parser = subparsers.add_parser("export-traceability", help="Export traceability data")
     export_trace_parser.add_argument("--output", help="Write JSON to a file")
+    export_trace_parser.add_argument("--target", help="Repository to export")
+
+    board_parser = subparsers.add_parser("board", help="Generate a derived delivery-board view")
+    board_parser.add_argument("--target", help="Repository to inspect")
+    board_parser.add_argument("--output", help="Write output to a file")
+    board_parser.add_argument(
+        "--format", choices=("json", "markdown", "mermaid"), default="markdown", help="Output format"
+    )
+
+    github_parser = subparsers.add_parser(
+        "github-project", help="Create safe GitHub Projects export plans"
+    )
+    github_subparsers = github_parser.add_subparsers(dest="github_command", required=True)
+    github_plan_parser = github_subparsers.add_parser("plan", help="Create a no-side-effect export plan")
+    github_plan_parser.add_argument("--target", default=".", help="Repository to inspect")
+    github_plan_parser.add_argument("--config", help="GitHub Project TOML configuration path")
+    github_plan_parser.add_argument("--output", help="Write JSON to a file")
 
     install_parser = subparsers.add_parser("install", help="Install SpecNative into an existing repository")
     install_parser.add_argument("--target", required=True, help="Target repository path")
@@ -735,8 +1054,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    global ROOT
+
     parser = build_parser()
     args = parser.parse_args()
+
+    if args.command in {"validate", "status", "export-index", "export-traceability", "board"} and args.target:
+        ROOT = Path(args.target).resolve()
 
     if args.command == "validate":
         return validate()
@@ -746,6 +1070,29 @@ def main() -> int:
         return write_output(export_index(), args.output)
     if args.command == "export-traceability":
         return write_output(export_traceability(), args.output)
+    if args.command == "board":
+        board = build_board()
+        if args.format == "markdown":
+            payload = render_board_markdown(board)
+        elif args.format == "mermaid":
+            payload = render_board_mermaid(board)
+        else:
+            payload = json.dumps(board, indent=2, ensure_ascii=False) + "\n"
+        if args.output:
+            output_path = Path(args.output)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(payload, encoding="utf-8")
+        else:
+            print(payload, end="")
+        return 0
+    if args.command == "github-project":
+        ROOT = Path(args.target).resolve()
+        config_path = Path(args.config).resolve() if args.config else ROOT / DEFAULT_GITHUB_PROJECT_CONFIG
+        try:
+            return write_output(github_project_plan(config_path), args.output)
+        except ValueError as exc:
+            print(f"GitHub Project plan failed: {exc}", file=sys.stderr)
+            return 1
     if args.command == "install":
         try:
             return install_template(

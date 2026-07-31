@@ -1,6 +1,7 @@
 # ARCHITECTURE.md
 
-Describe la arquitectura actual del proyecto.
+Índice de arquitectura. Los componentes, límites y flujos canónicos viven en
+`architecture/ARCH-XXXX-<slug>.md`.
 
 ## Debe responder
 
@@ -10,29 +11,9 @@ Describe la arquitectura actual del proyecto.
 - Que dependencias estan permitidas o prohibidas.
 - Cuales son los puntos de integracion externos.
 
-## Template
+## Componentes
 
-### Vision general
+El CLI o MCP pueden generar esta sección desde `architecture/`.
 
-Explica la forma general del sistema en 5 a 10 lineas.
-
-### Modulos principales
-
-- Modulo:
-  responsabilidad, inputs, outputs y limites.
-
-### Flujo principal
-
-Describe el flujo critico del sistema extremo a extremo.
-
-### Restricciones
-
-- Dependencias prohibidas
-- Acoplamientos a evitar
-- Limites de infraestructura
-
-### Riesgos
-
-- Riesgo actual
-- Impacto
-- Mitigacion
+| ID | Estado | Componente | Tags |
+| --- | --- | --- | --- |

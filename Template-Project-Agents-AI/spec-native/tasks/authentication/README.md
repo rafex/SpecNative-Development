@@ -5,6 +5,6 @@ tareas ejecutables.
 
 ## Documentos
 
-- `agents/specs/authentication/SPEC.md`
+- `../../specs/authentication/SPEC.md`
 - `TASKS.md`
-- `agents/TRACEABILITY.md`
+- `../../TRACEABILITY.md`

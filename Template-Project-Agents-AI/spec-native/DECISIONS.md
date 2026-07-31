@@ -1,6 +1,7 @@
 # DECISIONS.md
 
-Registro de decisiones persistentes del proyecto.
+Índice de decisiones persistentes del proyecto. Las decisiones canónicas viven
+en `decisions/DEC-XXXX-<slug>.md`; no agregues contenido de decisión aquí.
 
 ## Cuando registrar aqui
 
@@ -20,15 +21,9 @@ archivo y `SPEC.md`.
 Antes de iniciar una nueva iniciativa, revisar si alguna decision
 registrada condiciona el diseno o la implementacion.
 
-## Formato sugerido
+## Decisiones
 
-### DEC-0001 - Titulo de la decision
+El CLI o MCP regeneran esta sección desde el front matter de `decisions/`.
 
-- Fecha: YYYY-MM-DD
-- Estado: `proposed | accepted | deprecated | replaced`
-- Relacionado con specs:
-- Relacionado con tareas:
-- Contexto: que problema obligo la decision
-- Decision: que se decidio exactamente
-- Consecuencias: costos, beneficios y limites
-- Reemplaza: DEC-XXXX o `none`
+| ID | Estado | Título | Tags |
+| --- | --- | --- | --- |

@@ -20,7 +20,7 @@ raiz de tu proyecto.
 ### Estado del proyecto
 
 ```bash
-python3 specnative.py status
+python3 /path/to/SpecNative-Development/tools/specnative.py status --target /ruta/a/tu/proyecto
 ```
 
 Muestra el estado actual de todas las specs y sus tareas asociadas.
@@ -31,7 +31,7 @@ quedan pendientes en cada una.
 ### Validacion
 
 ```bash
-python3 specnative.py validate
+python3 /path/to/SpecNative-Development/tools/specnative.py validate --target /ruta/a/tu/proyecto
 ```
 
 Verifica que los archivos obligatorios existan y que los bloques TOML
@@ -42,7 +42,7 @@ Si un archivo no tiene bloque TOML, no falla: el TOML es opcional.
 ### Exportar indice
 
 ```bash
-python3 specnative.py export-index --output exports/index.json
+python3 /path/to/SpecNative-Development/tools/specnative.py export-index --target /ruta/a/tu/proyecto --output exports/index.json
 ```
 
 Genera un JSON con todas las specs y archivos de tareas encontrados.
@@ -51,20 +51,41 @@ Solo incluye artefactos que tengan bloque TOML.
 ### Exportar trazabilidad
 
 ```bash
-python3 specnative.py export-traceability --output exports/traceability.json
+python3 /path/to/SpecNative-Development/tools/specnative.py export-traceability --target /ruta/a/tu/proyecto --output exports/traceability.json
 ```
 
 Genera un JSON de relaciones entre specs y tareas.
 Los archivos de salida no deben commitearse como parte de la plantilla.
 
+### Backlog y kanban derivados
+
+```bash
+python3 /path/to/SpecNative-Development/tools/specnative.py board --target /ruta/a/tu/proyecto
+python3 /path/to/SpecNative-Development/tools/specnative.py board --target /ruta/a/tu/proyecto --format mermaid
+python3 /path/to/SpecNative-Development/tools/specnative.py board --target /ruta/a/tu/proyecto --format json
+```
+
+Genera una vista de entrega desde las tareas canónicas. Las columnas son
+`ready`, `in_progress`, `blocked`, `waiting` y `done`. La salida es de solo
+lectura: cambia el estado en `TASKS.md` o mediante el MCP, nunca en el tablero.
+
+### Plan de exportacion a GitHub Projects
+
+```bash
+cp .specnative/integrations/github-project.toml.example \
+  .specnative/integrations/github-project.toml
+python3 /path/to/SpecNative-Development/tools/specnative.py \
+  github-project plan --target /ruta/a/tu/proyecto
+```
+
+El comando valida el mapeo de estados y emite JSON con operaciones de exportación
+propuestas. Es un `dry run`: no realiza llamadas de red ni modifica GitHub.
+
 ### Instalar en otro repositorio
 
 ```bash
-python3 specnative.py install \
-  --target /ruta/al/repo \
-  --profile minimal \
-  --include-examples \
-  --branch specnative/install-v0.3
+curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
+  | python3 - --target /ruta/al/repo --profile team
 ```
 
 Copia la estructura de la plantilla en un repositorio existente de
@@ -81,8 +102,10 @@ Antes de copiar archivos, el CLI:
 
 ## Perfiles
 
-- `minimal`: instala el framework sin tocar el `README.md` existente
-- `full`: intenta instalar tambien el `README.md` de la plantilla
+- `context`: contexto base, índices de navegación, sesión y configuración MCP.
+- `spec`: `context` más templates de tareas y workflows completos.
+- `team`: `spec` más documentación de CI/CD, schema, archetypes y templates.
+- `platform`: `team` más README de referencia y ejemplo de autenticación.
 
 Si un archivo ya existe y no se usa `--force`, el CLI lo omite.
 
@@ -144,4 +167,5 @@ dependencies = []
 expected_files = ["src/example/*"]
 close_criteria = "Condicion observable de cierre"
 validation = ["pytest tests/example_test.py"]
+completion_evidence = [] # obligatorio y no vacio cuando state = "done"
 ```

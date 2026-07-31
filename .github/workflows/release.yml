@@ -8,109 +8,126 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  release-assets:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout released tag
+        uses: actions/checkout@v4
         with:
-          # Full history so we can push the README commit back to main
           fetch-depth: 0
-          ref: main
+          ref: ${{ github.event.release.tag_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Validate template
-        run: python3 tools/specnative.py validate
+      - name: Validate template and run tests
+        run: |
+          python3 tools/specnative.py validate --target Template-Project-Agents-AI
+          python3 -m py_compile install.py tools/specnative.py tools/specnative_mcp.py
+          python3 -m unittest discover -s tests -v
 
       - name: Prepare release assets
         env:
           VERSION: ${{ github.event.release.tag_name }}
         run: |
-          sed "s/VERSION = \"dev\"/VERSION = \"${VERSION}\"/" install.py \
-            > /tmp/install.py
-          sed "s/VERSION = \"dev\"/VERSION = \"${VERSION}\"/" tools/specnative_mcp.py \
-            > /tmp/specnative_mcp.py
+          mkdir -p dist
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
 
-      - name: Upload assets to release
+          version = os.environ["VERSION"]
+          replacements = {
+              "install.py": "dist/install.py",
+              "tools/specnative_mcp.py": "dist/specnative_mcp.py",
+          }
+          for source, destination in replacements.items():
+              content = Path(source).read_text(encoding="utf-8")
+              content = content.replace('VERSION = "dev"', f'VERSION = "{version}"', 1)
+              Path(destination).write_text(content, encoding="utf-8")
+          PY
+
+      - name: Smoke test release assets
+        run: |
+          python3 -m pip install mcp
+          python3 dist/install.py --help
+          python3 -m py_compile dist/install.py dist/specnative_mcp.py
+          python3 dist/specnative_mcp.py --help
+
+      - name: Upload release assets
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ github.event.release.tag_name }}
         run: |
-          gh release upload "${VERSION}" /tmp/install.py --clobber
-          gh release upload "${VERSION}" /tmp/specnative_mcp.py --clobber
+          gh release upload "${VERSION}" \
+            dist/install.py \
+            dist/specnative_mcp.py \
+            --clobber
+
+  update-readme:
+    needs: release-assets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
 
       - name: Update README version references
         env:
           VERSION: ${{ github.event.release.tag_name }}
           RELEASE_URL: https://github.com/rafex/SpecNative-Development/releases/tag/${{ github.event.release.tag_name }}
         run: |
-          python3 - <<'PYEOF'
-          import re, os
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
 
-          version     = os.environ["VERSION"]          # e.g. v0.7.0
+          version = os.environ["VERSION"]
           release_url = os.environ["RELEASE_URL"]
-          repo_url    = "https://github.com/rafex/SpecNative-Development"
-
-          # Derive major.minor (v0.7.0 → 0.7)
           minor = ".".join(version.lstrip("v").split(".")[:2])
 
-          new_row_en = (
-              f"| **{version}** | "
-              f"[Release notes]({release_url}) |"
-          )
-          new_row_es = (
-              f"| **{version}** | "
-              f"[Notas de la versión]({release_url}) |"
-          )
-
-          def update_readme(path, new_row, lang="en"):
-              with open(path, encoding="utf-8") as f:
-                  text = f.read()
-
-              # 1. Current Release badge (EN only)
-              if lang == "en":
+          def update_readme(path: str, row: str, language: str) -> None:
+              file = Path(path)
+              text = file.read_text(encoding="utf-8")
+              if language == "en":
                   text = re.sub(
                       r"\*\*Current Release:\*\* \[v[\d.]+\]\([^)]+\)(\s*<!--[^>]*-->)?",
                       f"**Current Release:** [{version}]({release_url}) <!-- CURRENT_RELEASE -->",
                       text,
                   )
-
-              # 2. MCP server version mention (EN: "MCP server", ES: "Servidor MCP")
               text = re.sub(
                   r"((?:MCP server|Servidor MCP)[^`]*`[^`]+`[^(]*\(v)[\d.]+(\)\s*<!--[^>]*-->)",
                   rf"\g<1>{minor}\2",
                   text,
               )
-
-              # 3. Add new row before END_VERSIONS marker (only if version not already present)
               if version not in text:
-                  text = text.replace(
-                      "<!-- END_VERSIONS -->",
-                      f"{new_row}\n<!-- END_VERSIONS -->",
-                  )
+                  text = text.replace("<!-- END_VERSIONS -->", f"{row}\n<!-- END_VERSIONS -->")
+              file.write_text(text, encoding="utf-8")
 
-              with open(path, "w", encoding="utf-8") as f:
-                  f.write(text)
-
-              print(f"✓ {path} updated to {version}")
-
-          update_readme("README.md",    new_row_en, lang="en")
-          update_readme("README.es.md", new_row_es, lang="es")
-          PYEOF
+          update_readme(
+              "README.md",
+              f"| **{version}** | [Release notes]({release_url}) |",
+              "en",
+          )
+          update_readme(
+              "README.es.md",
+              f"| **{version}** | [Notas de la versión]({release_url}) |",
+              "es",
+          )
+          PY
 
       - name: Commit and push README updates
         env:
           VERSION: ${{ github.event.release.tag_name }}
         run: |
-          git config user.name  "github-actions[bot]"
+          git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
           git add README.md README.es.md
-          # Only commit if there are actual changes
           if git diff --staged --quiet; then
             echo "No README changes to commit."
           else

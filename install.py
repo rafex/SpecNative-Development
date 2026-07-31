@@ -27,10 +27,11 @@ The installer:
 
 Profiles (each layer is cumulative):
 
-    context   AI context layer — just enough for an agent to understand the
-              project. No spec lifecycle, no tasks, no pipelines.
+    context   AI context layer — enough for an agent to understand and
+              navigate the project. It installs the required document indexes
+              but no task/example content.
               Every profile also installs native agent commands:
-              .claude/commands/spec-{init,update,status,handoff}.md and codex.toml
+              .claude/commands/spec{,-init,-update,-status,-handoff,-backlog-add}.md and codex.toml
               Files: AGENTS.md, spec-native/{README,PRODUCT,ARCHITECTURE,STACK,
                      CONVENTIONS,COMMANDS,SESSION}.md, .specnative/{README,MCP}.md
 
@@ -39,7 +40,9 @@ Profiles (each layer is cumulative):
               Ideal for solo developers and startups building spec-first.
               Adds: spec-native/{DECISIONS,ROADMAP,TRACEABILITY}.md,
                     spec-native/specs/README.md,
+                    spec-native/intake/{README,IDEAS}.md,
                     spec-native/tasks/{README,TASKS.template}.md,
+                    spec-native/backlog/README.md,
                     spec-native/workflows/{README,IMPLEMENTATION,PLANNING,REVIEW}.md
 
     team      Adds CI/CD pipeline docs, schema governance, archetypes and
@@ -47,6 +50,7 @@ Profiles (each layer is cumulative):
               pipelines and want reusable project starting points.
               Adds: spec-native/pipelines/{README,CI,CD}.md,
                     .specnative/{CLI,SCHEMA}.md,
+                    .specnative/integrations/github-project.toml.example,
                     .specnative/archetypes/README.md,
                     .specnative/templates/{README,specs/README,decisions/README}.md
 
@@ -89,30 +93,49 @@ INSTALL_BRANCH_PREFIX = "specnative/install"
 # Profile file lists (each layer is cumulative)
 # ---------------------------------------------------------------------------
 
-# context — AI context layer. Just enough for an agent to understand the project.
-# No spec lifecycle, no tasks, no pipelines. Includes SESSION.md for continuity.
+# context — AI context layer. Includes all navigation and core context files so
+# the installed MCP can validate the repository. It does not include task
+# templates, pipeline details, archetypes, or example initiatives.
 # Includes native commands for Claude Code, OpenCode and Codex out of the box.
 PATHS_CONTEXT = [
     "AGENTS.md",
     "spec-native/README.md",
     "spec-native/PRODUCT.md",
     "spec-native/ARCHITECTURE.md",
+    "spec-native/architecture/README.md",
     "spec-native/STACK.md",
     "spec-native/CONVENTIONS.md",
+    "spec-native/conventions/README.md",
     "spec-native/COMMANDS.md",
+    "spec-native/DECISIONS.md",
+    "spec-native/decisions/README.md",
+    "spec-native/ROADMAP.md",
+    "spec-native/TRACEABILITY.md",
     "spec-native/SESSION.md",
+    "spec-native/specs/README.md",
+    "spec-native/intake/README.md",
+    "spec-native/intake/IDEAS.md",
+    "spec-native/tasks/README.md",
+    "spec-native/workflows/README.md",
+    "spec-native/workflows/IMPLEMENTATION.md",
+    "spec-native/pipelines/README.md",
     ".specnative/README.md",
     ".specnative/MCP.md",
+    ".specnative/SCHEMA.md",
     # Native agent commands — installed in every profile
     ".claude/commands/spec-init.md",
+    ".claude/commands/spec.md",
     ".claude/commands/spec-update.md",
     ".claude/commands/spec-status.md",
     ".claude/commands/spec-handoff.md",
+    ".claude/commands/spec-backlog-add.md",
+    ".claude/skills/specnative-workflow/SKILL.md",
+    ".codex/skills/specnative-workflow/SKILL.md",
     "codex.toml",
 ]
 
-# spec — adds full initiative lifecycle on top of context.
-# Specs, tasks, workflows, decisions, roadmap, and traceability.
+# spec — adds executable task templates and complete planning/review workflows
+# on top of the context skeleton.
 PATHS_SPEC = [
     "spec-native/DECISIONS.md",
     "spec-native/ROADMAP.md",
@@ -120,6 +143,7 @@ PATHS_SPEC = [
     "spec-native/specs/README.md",
     "spec-native/tasks/README.md",
     "spec-native/tasks/TASKS.template.md",
+    "spec-native/backlog/README.md",
     "spec-native/workflows/README.md",
     "spec-native/workflows/IMPLEMENTATION.md",
     "spec-native/workflows/PLANNING.md",
@@ -137,6 +161,7 @@ PATHS_TEAM = [
     ".specnative/templates/README.md",
     ".specnative/templates/specs/README.md",
     ".specnative/templates/decisions/README.md",
+    ".specnative/integrations/github-project.toml.example",
 ]
 
 # platform — adds README.md (if absent) and reference example initiatives.
@@ -385,7 +410,12 @@ def setup_venv(target: Path) -> tuple[Path, list[str]]:
 # MCP client configuration
 # ---------------------------------------------------------------------------
 
-def setup_mcp_configs(target: Path, created: list[str], errors: list[str]) -> None:
+def setup_mcp_configs(
+    target: Path,
+    created: list[str],
+    errors: list[str],
+    force: bool = False,
+) -> None:
     """Create MCP configuration files for OpenCode, Claude Desktop, and Codex.
 
     opencode.json schema reference: https://opencode.ai/config.json
@@ -415,6 +445,10 @@ def setup_mcp_configs(target: Path, created: list[str], errors: list[str]) -> No
             }
         },
         "command": {
+            "spec": {
+                "description": "Route a request through the SpecNative MCP workflow",
+                "template": "Use the SpecNative MCP. Call resume() and status(), then route the request to the minimum appropriate SpecNative prompt or tool. Never edit generated indexes or boards.",
+            },
             "spec-init": {
                 "description": "Initialize SpecNative — guided project setup",
                 "template": (
@@ -452,24 +486,66 @@ def setup_mcp_configs(target: Path, created: list[str], errors: list[str]) -> No
                     "any unrecorded decisions. Confirm with read_context('session')."
                 ),
             },
+            "spec-backlog-add": {
+                "description": "Capture a backlog request as a task or triaged intake idea",
+                "template": (
+                    "Use the specnative MCP server. First call list_specs() and board() to find "
+                    "the relevant initiative and avoid duplicates. If the request has an existing "
+                    "spec plus explicit close criteria and validation, call capture_backlog_item() "
+                    "with initiative. Otherwise call capture_backlog_item() without initiative to "
+                    "record a triaged idea in spec-native/intake/IDEAS.md. Never edit a generated "
+                    "Markdown or Mermaid board. Do not invent acceptance criteria or validation."
+                ),
+            },
         },
     }
 
     opencode_file = target / "opencode.json"
+    existed_before = opencode_file.exists()
     try:
+        if not existed_before or force:
+            merged_config = opencode_config
+        else:
+            with open(opencode_file, encoding="utf-8") as f:
+                existing = json.load(f)
+            if not isinstance(existing, dict):
+                raise ValueError("root value must be a JSON object")
+
+            merged_config = dict(existing)
+            instructions = merged_config.get("instructions", [])
+            if not isinstance(instructions, list):
+                raise ValueError("'instructions' must be a JSON array")
+            merged_config["instructions"] = list(instructions)
+            for instruction in opencode_config["instructions"]:
+                if instruction not in merged_config["instructions"]:
+                    merged_config["instructions"].append(instruction)
+
+            mcp = merged_config.get("mcp", {})
+            if not isinstance(mcp, dict):
+                raise ValueError("'mcp' must be a JSON object")
+            merged_config["mcp"] = dict(mcp)
+            merged_config["mcp"].setdefault("specnative", opencode_config["mcp"]["specnative"])
+
+            commands = merged_config.get("command", {})
+            if not isinstance(commands, dict):
+                raise ValueError("'command' must be a JSON object")
+            merged_config["command"] = dict(commands)
+            for name, command in opencode_config["command"].items():
+                merged_config["command"].setdefault(name, command)
+
         with open(opencode_file, "w", encoding="utf-8") as f:
-            json.dump(opencode_config, f, indent=2, ensure_ascii=False)
+            json.dump(merged_config, f, indent=2, ensure_ascii=False)
             f.write("\n")
-        created.append("opencode.json")
-    except Exception as exc:
-        errors.append(f"Failed to create opencode.json: {exc}")
+        created.append("opencode.json" if not existed_before else "opencode.json (merged)")
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(f"Failed to update opencode.json safely: {exc}")
 
 
 # ---------------------------------------------------------------------------
 # Reinstall MCP only
 # ---------------------------------------------------------------------------
 
-def reinstall_mcp(target: Path, version: str) -> None:
+def reinstall_mcp(target: Path, version: str, force: bool = False) -> None:
     """Repair MCP server and venv without touching other files.
 
     Does not require a clean worktree or create a git branch.
@@ -504,7 +580,7 @@ def reinstall_mcp(target: Path, version: str) -> None:
         venv_python = str(venv_dir / "bin" / "python3")
 
     created: list[str] = []
-    setup_mcp_configs(target, created, errors)
+    setup_mcp_configs(target, created, errors, force=force)
 
     print(json.dumps({
         "version": version,
@@ -598,7 +674,7 @@ def install(
     errors.extend(venv_errors)
 
     # Create MCP configuration files for OpenCode and other clients
-    setup_mcp_configs(target, created, errors)
+    setup_mcp_configs(target, created, errors, force=force)
 
     print(json.dumps({
         "version": version,
@@ -688,7 +764,7 @@ def main() -> int:
     target = Path(args.target).resolve()
 
     if args.reinstall:
-        reinstall_mcp(target=target, version=version)
+        reinstall_mcp(target=target, version=version, force=args.force)
     else:
         branch = args.branch or f"{INSTALL_BRANCH_PREFIX}-{version}"
         install(

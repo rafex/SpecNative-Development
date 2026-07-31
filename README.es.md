@@ -28,13 +28,13 @@ En lugar de reconstruir el contexto en cada sesión, el repositorio lo codifica 
 
 ```bash
 curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
-  | python3 - --target /ruta/a/tu/repo --profile minimal
+  | python3 - --target /ruta/a/tu/repo --profile context
 ```
 
 O descarga una vez y ejecuta localmente:
 
 ```bash
-python3 install.py --target /ruta/a/tu/repo --profile minimal --include-examples
+python3 install.py --target /ruta/a/tu/repo --profile platform --include-examples
 ```
 
 ### Conectar via MCP (Claude Code, Claude Desktop, OpenCode, Codex)
@@ -58,24 +58,22 @@ Consulta [`.specnative/MCP.md`](./Template-Project-Agents-AI/.specnative/MCP.md)
 Template-Project-Agents-AI/
 ├── AGENTS.md              # Contrato operativo para agentes — leer primero
 ├── README.md              # Índice de navegación
-├── agents/
-│   ├── PRODUCT.md         # Problema, usuarios, objetivos (permanente)
+├── spec-native/
+│   ├── PRODUCT.md         # Problema, usuarios y objetivos
 │   ├── ARCHITECTURE.md    # Estructura del sistema y límites
-│   ├── STACK.md           # Stack tecnológico y restricciones de versión
-│   ├── CONVENTIONS.md     # Reglas de código, naming, testing
-│   ├── COMMANDS.md        # Comandos del proyecto (build, test, lint...)
-│   ├── SPEC.md            # Spec activa (o entrada a specs/)
-│   ├── DECISIONS.md       # Decisiones persistentes y tradeoffs
-│   ├── ROADMAP.md         # Dirección temporal
-│   ├── TRACEABILITY.md    # Vínculos entre artefactos
-│   └── specs/<iniciativa>/SPEC.md
-├── tasks/<iniciativa>/TASKS.md
-├── workflows/             # PLANNING.md, IMPLEMENTATION.md, REVIEW.md
-├── pipelines/             # CI.md, CD.md — contexto de CI/CD
+│   ├── STACK.md           # Stack tecnológico y restricciones
+│   ├── CONVENTIONS.md     # Reglas de código, naming y testing
+│   ├── COMMANDS.md        # Comandos reales del proyecto
+│   ├── SESSION.md         # Estado activo entre agentes
+│   ├── specs/<iniciativa>/SPEC.md
+│   ├── tasks/<iniciativa>/TASKS.md
+│   ├── backlog/           # Vistas derivadas de entrega; no editar estado aquí
+│   ├── workflows/         # PLANNING, IMPLEMENTATION, REVIEW
+│   └── pipelines/         # CI.md, CD.md
 └── .specnative/           # Infraestructura del framework
-    ├── SCHEMA.md          # Contrato del framework (archivos, estados)
-    ├── CLI.md             # Referencia del CLI y el servidor MCP
-    └── MCP.md             # Configuración del servidor MCP por agente
+    ├── SCHEMA.md          # Contrato del framework
+    ├── CLI.md             # Referencia de la CLI
+    └── MCP.md             # Configuración del servidor MCP
 ```
 
 ### Ownership documental — una verdad por documento
@@ -89,10 +87,10 @@ Template-Project-Agents-AI/
 | `ARCHITECTURE.md` | Estructura del sistema, módulos, límites |
 | `CONVENTIONS.md` | Naming, estilo, testing, convenciones de commits |
 | `COMMANDS.md` | Solo comandos del proyecto — nunca comandos del CLI del framework |
-| `tasks/**/TASKS.md` | Plan ejecutable con estado, owner, criterio de cierre |
+| `spec-native/tasks/**/TASKS.md` | Plan ejecutable con estado, owner, criterio de cierre |
 | `TRACEABILITY.md` | Vínculos entre artefactos (actualizar al cerrar iniciativa) |
-| `pipelines/CI.md` | Definición de gates automatizados |
-| `pipelines/CD.md` | Proceso de entrega y ambientes |
+| `spec-native/pipelines/CI.md` | Definición de gates automatizados |
+| `spec-native/pipelines/CD.md` | Proceso de entrega y ambientes |
 
 ---
 
@@ -101,12 +99,26 @@ Template-Project-Agents-AI/
 ### CLI — `tools/specnative.py`
 
 ```bash
-python3 specnative.py status              # Estado de specs y tareas
-python3 specnative.py validate            # Verificar archivos y TOML
-python3 specnative.py export-index        # Exportar specs/tareas como JSON
-python3 specnative.py export-traceability # Exportar matriz de trazabilidad
-python3 specnative.py install --target /ruta/al/repo --profile minimal
+python3 tools/specnative.py status --target /ruta/al/proyecto              # Estado de specs y tareas
+python3 tools/specnative.py validate --target /ruta/al/proyecto            # Verificar archivos y TOML
+python3 tools/specnative.py export-index --target /ruta/al/proyecto        # Exportar specs/tareas como JSON
+python3 tools/specnative.py export-traceability --target /ruta/al/proyecto # Exportar matriz de trazabilidad
+python3 tools/specnative.py board --target /ruta/al/proyecto               # Tablero de entrega derivado
+python3 tools/specnative.py board --target /ruta/al/proyecto --format mermaid
+python3 tools/specnative.py github-project plan --target /ruta/al/proyecto # Plan de exportación sin efectos
 ```
+
+### Gestión del trabajo
+
+`TASKS.md` sigue siendo el único registro editable de ejecución. `board`
+calcula `ready`, `in_progress`, `blocked`, `waiting` y `done` usando estado y
+dependencias; no crea un segundo backlog. Una tarea solo llega a `done` cuando
+registra evidencia de cierre además de la validación planificada.
+
+GitHub Projects es opcional y comienza con un plan de exportación determinista.
+Copia `.specnative/integrations/github-project.toml.example`, configura el ID
+ProjectV2 y los nombres de estado, y revisa el JSON de `github-project plan`.
+No realiza solicitudes de red ni hace a GitHub autoritativo.
 
 ### Servidor MCP — `tools/specnative_mcp.py` (v0.7) <!-- MCP_VERSION -->
 
@@ -118,16 +130,21 @@ manualmente el árbol de archivos.
 
 ```
 spec://agents                  → AGENTS.md
-spec://context/product         → agents/PRODUCT.md
-spec://context/architecture    → agents/ARCHITECTURE.md
-spec://context/decisions       → agents/DECISIONS.md
-spec://context/roadmap         → agents/ROADMAP.md
-spec://pipelines/ci            → pipelines/CI.md
+spec://context/product         → spec-native/PRODUCT.md
+spec://context/architecture    → spec-native/ARCHITECTURE.md
+spec://context/decisions       → spec-native/DECISIONS.md
+spec://context/roadmap         → spec-native/ROADMAP.md
+spec://pipelines/ci            → spec-native/pipelines/CI.md
 spec://schema                  → .specnative/SCHEMA.md
 # … y más (ver MCP.md)
 ```
 
-**Herramientas**: `status`, `validate`, `list_specs`, `list_tasks`, `read_spec`, `read_context`, `export_index`
+**Herramientas**: `status`, `validate`, `list_specs`, `list_tasks`, `board`, `capture_backlog_item`, `read_spec`, `read_context`, `export_index`
+
+Para una solicitud como “agrega esta tarea al backlog”, usa el comando nativo
+`spec-backlog-add`. El agente crea una tarea solo si existe una spec y tiene
+criterio de cierre y validación; en otro caso captura una idea triada en
+`spec-native/intake/IDEAS.md`.
 
 **Prompts**: `start_initiative`, `plan_tasks`, `implement_task`, `review_against_spec`, `record_decision`, `close_initiative`
 
@@ -190,9 +207,9 @@ type = "stdio"
 ## Cómo trabajan los agentes con un repositorio SpecNative
 
 1. Leer `AGENTS.md` — contrato operativo del agente.
-2. Revisar `agents/ROADMAP.md` — confirmar que la iniciativa es coherente con la dirección.
-3. Leer `agents/PRODUCT.md` y contexto técnico relevante.
-4. Leer `agents/DECISIONS.md` — respetar tradeoffs persistentes.
+2. Revisar `spec-native/ROADMAP.md` — confirmar que la iniciativa es coherente con la dirección.
+3. Leer `spec-native/PRODUCT.md` y contexto técnico relevante.
+4. Leer `spec-native/DECISIONS.md` — respetar tradeoffs persistentes.
 5. Revisar o crear un `SPEC.md`.
 6. Derivar tareas en `tasks/`.
 7. Implementar siguiendo `workflows/IMPLEMENTATION.md`.

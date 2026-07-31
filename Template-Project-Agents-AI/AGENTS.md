@@ -25,12 +25,15 @@ spec-native/
 ├── STACK.md          ← tecnologias y restricciones
 ├── CONVENTIONS.md    ← reglas de codigo y naming
 ├── COMMANDS.md       ← comandos del proyecto
-├── DECISIONS.md      ← decisiones persistentes y tradeoffs
+├── DECISIONS.md      ← índice de decisiones persistentes
+├── decisions/        ← decisiones individuales con relaciones y tags
 ├── ROADMAP.md        ← prioridades de mediano plazo
 ├── TRACEABILITY.md   ← vinculos entre artefactos
 ├── SESSION.md        ← estado activo de trabajo
 ├── specs/            ← especificaciones por iniciativa
 ├── tasks/            ← tareas ejecutables por iniciativa
+├── intake/           ← ideas triadas sin spec; no son tareas ejecutables
+├── backlog/           ← vistas derivadas de entrega; no editar estado aqui
 ├── workflows/        ← procedimientos operativos
 └── pipelines/        ← contexto de CI/CD
 ```
@@ -53,7 +56,8 @@ Lee `spec-native/ROADMAP.md` para ver que viene primero.
 2. Si es una nueva iniciativa: `context_snapshot()` para entender el
    proyecto, luego `start_initiative()` para arrancar.
 3. Implementar siguiendo `spec-native/workflows/IMPLEMENTATION.md`.
-4. Actualizar tareas: `update_task(initiative, task_id, state)`.
+4. Actualizar tareas: `update_task(initiative, task_id, state)` y registrar
+   evidencia al cerrarlas.
 5. Registrar decisiones: `log_decision(title, ctx, decision, cons)`.
 6. Al pausar o cambiar de agente: `checkpoint(initiative, task, intent,
    next_steps)`.
@@ -74,7 +78,8 @@ Cada documento tiene un dominio exclusivo:
 
 - `spec-native/specs/*/SPEC.md` — *que* debe construirse, horizonte
   de la iniciativa.
-- `spec-native/DECISIONS.md` — *por que el sistema es como es*,
+- `spec-native/decisions/` — *por que el sistema es como es*; `DECISIONS.md`
+  es solo el índice de navegación,
   tradeoffs que condicionan el futuro.
 - `spec-native/PRODUCT.md` — *para quien y por que existe* el
   producto.
@@ -111,6 +116,8 @@ El servidor MCP expone el repositorio como herramientas tipadas.
 | `read_spec(initiative)` | Lee contenido de spec |
 | `read_context(document)` | Lee documento de contexto (incluye `session`) |
 | `export_index()` | Exporta specs y tareas como JSON |
+| `board(format?)` | Vista de entrega derivada de tareas |
+| `capture_backlog_item(...)` | Registra una tarea válida o una idea triada según el contexto |
 
 **Continuidad multi-agente**
 
@@ -118,7 +125,7 @@ El servidor MCP expone el repositorio como herramientas tipadas.
 |---|---|
 | `resume()` | Lee SESSION.md y retorna resumen de continuidad |
 | `checkpoint(initiative, task_id, intent, next_steps, ...)` | Guarda estado antes de pausar |
-| `update_task(initiative, task_id, state)` | Actualiza estado de tarea en TASKS.md |
+| `update_task(initiative, task_id, state, ..., completion_evidence?)` | Actualiza estado; exige evidencia al cerrar |
 | `log_decision(title, ctx, decision, cons)` | Registra decision persistente en DECISIONS.md |
 
 **Definicion del proyecto**
@@ -166,6 +173,7 @@ Propios: `.specnative/templates/specs/*.md` y `.specnative/templates/decisions/*
 | `handoff(summary, next_steps)` | Genera traspaso estructurado para el siguiente agente |
 | `record_decision(title, ctx, dec, cons)` | Registra decision persistente |
 | `close_initiative(initiative)` | Cierra iniciativa y actualiza trazabilidad |
+| `capture_backlog(title, description, initiative?, priority?)` | Guía para clasificar y registrar solicitudes de backlog |
 
 ## Estados obligatorios
 

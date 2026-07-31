@@ -72,8 +72,8 @@ Profiles are cumulative — each one adds files on top of the previous layer.
 
 | Profile | What it installs | Best for |
 |---------|-----------------|----------|
-| `context` | `AGENTS.md` · `spec-native/{PRODUCT,ARCHITECTURE,STACK,CONVENTIONS,COMMANDS,SESSION}.md` · `.specnative/{README,MCP}.md` | Solo devs, any project that wants AI context without process overhead |
-| `spec` | **context** + `spec-native/{DECISIONS,ROADMAP,TRACEABILITY}.md` · `spec-native/specs/` · `spec-native/tasks/` · `spec-native/workflows/` | Startups and solo devs building spec-first without CI/CD |
+| `context` | Core context plus navigation indexes, `SESSION.md` and `.specnative/{README,MCP,SCHEMA}.md`; no task templates or examples | Solo devs and projects that want a coherent AI context layer |
+| `spec` | **context** + task template and complete planning/review workflows | Startups and solo devs building spec-first without CI/CD |
 | `team` *(default)* | **spec** + `spec-native/pipelines/{CI,CD}.md` · `.specnative/{CLI,SCHEMA}.md` | Teams with automated pipelines and pull request workflows |
 | `platform` | **team** + `README.md` (if absent) + authentication example initiative | Open-source projects and orgs that need reference implementations |
 
@@ -126,6 +126,7 @@ spec-native/
 │   └── <initiative>/SPEC.md
 ├── tasks/
 │   └── <initiative>/TASKS.md
+├── backlog/                 # Generated delivery-board views; never edit state here
 ├── workflows/               # PLANNING.md, IMPLEMENTATION.md, REVIEW.md
 └── pipelines/               # CI.md, CD.md — CI/CD context
 .specnative/                 # Framework infrastructure
@@ -159,11 +160,27 @@ spec-native/
 ### CLI — `tools/specnative.py`
 
 ```bash
-python3 specnative.py status              # Spec and task state overview
-python3 specnative.py validate            # Check required files and TOML
-python3 specnative.py export-index        # Export specs/tasks as JSON
-python3 specnative.py export-traceability # Export traceability matrix as JSON
+python3 tools/specnative.py status --target /path/to/project              # Spec and task state overview
+python3 tools/specnative.py validate --target /path/to/project            # Check required files and TOML
+python3 tools/specnative.py export-index --target /path/to/project        # Export specs/tasks as JSON
+python3 tools/specnative.py export-traceability --target /path/to/project # Export traceability matrix as JSON
+python3 tools/specnative.py board --target /path/to/project               # Derived delivery board
+python3 tools/specnative.py board --target /path/to/project --format mermaid
+python3 tools/specnative.py github-project plan --target /path/to/project # No-side-effect export plan
 ```
+
+### Work management
+
+`TASKS.md` remains the only editable execution record. `board` calculates
+`ready`, `in_progress`, `blocked`, `waiting`, and `done` from task state and
+dependencies; it is not a second backlog file. A task can reach `done` only
+when it records completion evidence in addition to planned validation.
+
+GitHub Projects is optional and currently begins with a deterministic export
+plan. Copy `.specnative/integrations/github-project.toml.example`, configure
+the ProjectV2 node ID and status names, then inspect the JSON produced by
+`github-project plan`. It performs no network requests and does not make
+GitHub authoritative.
 
 ### MCP server — `tools/specnative_mcp.py` (v0.7) <!-- MCP_VERSION -->
 
@@ -194,13 +211,15 @@ spec://schema                  → .specnative/SCHEMA.md
 | `validate()` | Check required files |
 | `list_specs()` | List specs with states |
 | `list_tasks(initiative)` | List tasks for an initiative |
+| `board(format?)` | Read-only delivery board derived from canonical task files |
+| `capture_backlog_item(...)` | Capture an executable task or a triaged intake idea |
 | `read_spec(initiative)` | Read a spec file |
 | `read_context(document)` | Read a context document |
 | `export_index()` | Export specs/tasks as JSON |
 | `context_snapshot(initiative?)` | Full context dump for new-agent onboarding |
 | `resume()` | Read SESSION.md and return continuity summary |
 | `checkpoint(initiative, task_id, intent, next_steps, ...)` | Save work state |
-| `update_task(initiative, task_id, state, notes?)` | Update task state inline |
+| `update_task(initiative, task_id, state, notes?, completion_evidence?)` | Update task state; evidence is required to close |
 | `log_decision(title, context, decision, consequences)` | Append decision |
 
 **Prompts**: `start_initiative`, `plan_tasks`, `implement_task`, `review_against_spec`, `handoff`, `record_decision`, `close_initiative`
