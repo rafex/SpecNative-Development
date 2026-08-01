@@ -20,6 +20,27 @@ prompt → select spec  (not: explain project from scratch)
 
 Instead of rebuilding project context in every session, the repository encodes it once and the agent navigates it deterministically.
 
+## Use SpecNative
+
+Use one short entry point for any request:
+
+```text
+/spec <request>                 # Claude Code
+spec <request>                  # OpenCode and Codex prompt
+specnative(request)             # MCP prompt
+```
+
+The workflow reads the repository contract, checks active work, and routes to
+the smallest correct action: initiative, backlog, implementation, decision,
+review, handoff, or closure. Skills installed with the template make this
+workflow available to Claude Code and OpenCode; Codex also receives matching
+project prompts.
+
+For focused work, use `/spec-backlog-add <request>` to capture work as a
+canonical task or a triaged intake item. Use MCP `list_architecture(tag)`,
+`list_conventions(tag)`, `list_decisions(tag)`, and `read_context_artifact(id)`
+to load only the related context.
+
 ---
 
 ## Quick Start
@@ -213,6 +234,10 @@ spec://schema                  → .specnative/SCHEMA.md
 | `list_tasks(initiative)` | List tasks for an initiative |
 | `board(format?)` | Read-only delivery board derived from canonical task files |
 | `capture_backlog_item(...)` | Capture an executable task or a triaged intake idea |
+| `list_decisions(tag?)` | List persistent decisions by tag |
+| `list_architecture(tag?)` | List architecture artifacts by tag |
+| `list_conventions(tag?)` | List convention artifacts by tag |
+| `read_context_artifact(id)` | Read one decision, architecture, or convention artifact |
 | `read_spec(initiative)` | Read a spec file |
 | `read_context(document)` | Read a context document |
 | `export_index()` | Export specs/tasks as JSON |
@@ -330,6 +355,7 @@ Less useful for very small, short-lived prototypes where maintaining structured 
 | v0.6.1 | `read_template()` · `update_section()` — safe incremental doc updates, Copilot compatible |
 | v0.6.2 | Fix `opencode.json` schema compliance (`command` key, `instructions` for AGENTS.md auto-load) |
 | **v0.7.0** | **Archetypes (`java-hexagonal` built-in) · Spec templates · Decision snippets · `.specnative/archetypes/` + `.specnative/templates/`** |
+| **v0.8.0** | **Short `/spec` workflow · Skills · Markdown backlog · Context indexes · GitHub Projects export plan** |
 <!-- END_VERSIONS -->
 
 ---

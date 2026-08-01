@@ -101,7 +101,7 @@
 
           <!-- MCP -->
           <section class="ref-section" id="mcp">
-            <h2>Servidor MCP — v0.7</h2>
+            <h2>Servidor MCP — v0.8</h2>
             <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
               <code>.specnative/specnative_mcp.py</code> expone el repositorio como
               <strong>recursos</strong>, <strong>herramientas</strong> y <strong>prompts</strong>
@@ -147,6 +147,10 @@ claude mcp add specnative \
                 <tr><td><code>list_tasks(initiative)</code></td><td>Tareas de una iniciativa</td></tr>
                 <tr><td><code>board(format?)</code></td><td>Tablero de entrega de solo lectura derivado de estado y dependencias</td></tr>
                 <tr><td><code>capture_backlog_item(...)</code></td><td>Crea una tarea válida o una idea triada sin editar el tablero</td></tr>
+                <tr><td><code>list_decisions(tag?)</code></td><td>Lista decisiones indexadas por tag</td></tr>
+                <tr><td><code>list_architecture(tag?)</code></td><td>Lista artefactos de arquitectura por tag</td></tr>
+                <tr><td><code>list_conventions(tag?)</code></td><td>Lista convenciones por tag</td></tr>
+                <tr><td><code>read_context_artifact(id)</code></td><td>Lee un artefacto DEC, ARCH o CONV</td></tr>
                 <tr><td><code>read_spec(initiative)</code></td><td>Leer una spec</td></tr>
                 <tr><td><code>read_context(document)</code></td><td>Leer cualquier documento de contexto (incluye <code>session</code>)</td></tr>
                 <tr><td><code>export_index()</code></td><td>Exportar toda la metadata como JSON</td></tr>

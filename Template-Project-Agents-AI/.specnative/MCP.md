@@ -1,4 +1,4 @@
-# MCP.md — SpecNative MCP Server v0.7
+# MCP.md — SpecNative MCP Server v0.8
 
 El servidor MCP de SpecNative expone el repositorio como **recursos**, **herramientas**
 y **prompts** para que cualquier agente compatible con MCP pueda trabajar en modo

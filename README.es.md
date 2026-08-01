@@ -20,6 +20,25 @@ prompt → seleccionar spec  (no: explicar el proyecto desde cero)
 
 En lugar de reconstruir el contexto en cada sesión, el repositorio lo codifica una vez y el agente lo navega de forma determinista.
 
+## Usar SpecNative
+
+Existe un punto de entrada corto para cualquier solicitud:
+
+```text
+/spec <solicitud>               # Claude Code
+spec <solicitud>                # Prompt de OpenCode y Codex
+specnative(request)             # Prompt MCP
+```
+
+El flujo lee el contrato del repositorio, revisa trabajo activo y enruta a la
+acción mínima correcta: iniciativa, backlog, implementación, decisión, revisión,
+handoff o cierre. Las skills instaladas habilitan el flujo en Claude Code y
+OpenCode; Codex recibe prompts equivalentes.
+
+Para trabajo enfocado usa `/spec-backlog-add <solicitud>`. Para cargar solo el
+contexto relacionado usa `list_architecture(tag)`, `list_conventions(tag)`,
+`list_decisions(tag)` y `read_context_artifact(id)` mediante MCP.
+
 ---
 
 ## Inicio Rápido
@@ -141,6 +160,9 @@ spec://schema                  → .specnative/SCHEMA.md
 
 **Herramientas**: `status`, `validate`, `list_specs`, `list_tasks`, `board`, `capture_backlog_item`, `read_spec`, `read_context`, `export_index`
 
+También: `list_decisions(tag?)`, `list_architecture(tag?)`,
+`list_conventions(tag?)` y `read_context_artifact(id)`.
+
 Para una solicitud como “agrega esta tarea al backlog”, usa el comando nativo
 `spec-backlog-add`. El agente crea una tarea solo si existe una spec y tiene
 criterio de cierre y validación; en otro caso captura una idea triada en
@@ -245,6 +267,7 @@ Menos útil para prototipos muy pequeños y de corta duración donde mantener el
 | **v0.6.1** | **`read_template()` · `update_section()` — actualizaciones incrementales, compatible con Copilot** |
 | v0.6.2 | Fix `opencode.json` — clave `command` correcta, `instructions` carga AGENTS.md automáticamente |
 | **v0.7.0** | **Archetypes (`java-hexagonal` built-in) · Spec templates · Decision snippets · `.specnative/archetypes/` + `.specnative/templates/`** |
+| **v0.8.0** | **Flujo corto `/spec` · Skills · Backlog Markdown · Índices de contexto · Plan de exportación a GitHub Projects** |
 <!-- END_VERSIONS -->
 
 ---

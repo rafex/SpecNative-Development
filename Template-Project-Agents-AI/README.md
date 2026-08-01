@@ -7,6 +7,12 @@ El punto de entrada es `AGENTS.md`. Todo el contexto persistente del proyecto
 vive en `spec-native/`; la infraestructura y documentación del framework vive
 en `.specnative/`.
 
+## Entrada rápida
+
+En Claude Code usa `/spec <solicitud>`. En OpenCode y Codex usa el prompt
+`spec <solicitud>`. El MCP `specnative(request)` decide el flujo adecuado sin
+que el usuario tenga que recordar herramientas individuales.
+
 ## Qué incluye
 
 - contrato de operación para agentes en `AGENTS.md`

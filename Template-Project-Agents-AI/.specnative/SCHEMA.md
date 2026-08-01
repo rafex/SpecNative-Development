@@ -1,6 +1,6 @@
 # SCHEMA.md
 
-Contrato minimo del framework SpecNative Development v0.7.
+Contrato minimo del framework SpecNative Development v0.8.
 
 ## Objetivo
 

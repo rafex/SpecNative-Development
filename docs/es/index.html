@@ -197,7 +197,7 @@
 
         <section class="section">
           <div class="section-heading">
-            <p class="eyebrow">v0.7</p>
+            <p class="eyebrow">v0.8</p>
             <h2>Qué provee el framework</h2>
             <p>
               La plantilla consolida todo el contexto del proyecto bajo <code>spec-native/</code>,
@@ -236,7 +236,7 @@
             <article class="card">
               <h3>Comandos nativos por agente</h3>
               <p>
-                <code>/spec-init</code>, <code>/spec-update</code>, <code>/spec-status</code>,
+                <code>/spec</code>, <code>/spec-init</code>, <code>/spec-update</code>, <code>/spec-status</code>,
                 <code>/spec-handoff</code> — instalados automáticamente en todos los perfiles.
                 Disponibles como slash commands en Claude Code, prompts en OpenCode y
                 <code>codex --prompt</code> en Codex.
@@ -531,6 +531,7 @@
               </ul>
               <div class="snippet">
                 <pre><code># Slash commands instalados (.claude/commands/)
+/spec          # Enruta cualquier solicitud por el MCP de SpecNative
 /spec-init     # Entrevista al dev, llena spec-native/
 /spec-update   # Detecta vacíos, refina iterativamente
 /spec-status   # Sesión + specs + tareas + alertas
