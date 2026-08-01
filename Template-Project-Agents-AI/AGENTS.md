@@ -58,7 +58,8 @@ Lee `spec-native/ROADMAP.md` para ver que viene primero.
 3. Implementar siguiendo `spec-native/workflows/IMPLEMENTATION.md`.
 4. Actualizar tareas: `update_task(initiative, task_id, state)` y registrar
    evidencia al cerrarlas.
-5. Registrar decisiones: `log_decision(title, ctx, decision, cons)`.
+5. Registrar cambios persistentes: `log_decision(...)`, `log_architecture(...)`
+   o `log_convention(...)`; no editar los índices manualmente.
 6. Al pausar o cambiar de agente: `checkpoint(initiative, task, intent,
    next_steps)`.
 7. Al cerrar una iniciativa: `close_initiative(initiative)`.
@@ -127,6 +128,8 @@ El servidor MCP expone el repositorio como herramientas tipadas.
 | `checkpoint(initiative, task_id, intent, next_steps, ...)` | Guarda estado antes de pausar |
 | `update_task(initiative, task_id, state, ..., completion_evidence?)` | Actualiza estado; exige evidencia al cerrar |
 | `log_decision(title, ctx, decision, cons)` | Registra decision persistente en DECISIONS.md |
+| `log_architecture(title, ctx, design, cons)` | Crea un artefacto ARCH y actualiza su índice |
+| `log_convention(title, rationale, rule, cons)` | Crea un artefacto CONV y actualiza su índice |
 
 **Definicion del proyecto**
 
@@ -172,6 +175,8 @@ Propios: `.specnative/templates/specs/*.md` y `.specnative/templates/decisions/*
 | `review_against_spec(initiative)` | Revisa implementacion contra criterios |
 | `handoff(summary, next_steps)` | Genera traspaso estructurado para el siguiente agente |
 | `record_decision(title, ctx, dec, cons)` | Registra decision persistente |
+| `record_architecture(title, ctx, design, cons)` | Prepara arquitectura persistente para revisión |
+| `record_convention(title, rationale, rule, cons)` | Prepara una convención persistente para revisión |
 | `close_initiative(initiative)` | Cierra iniciativa y actualiza trazabilidad |
 | `capture_backlog(title, description, initiative?, priority?)` | Guía para clasificar y registrar solicitudes de backlog |
 

@@ -31,7 +31,7 @@ Profiles (each layer is cumulative):
               navigate the project. It installs the required document indexes
               but no task/example content.
               Every profile also installs native agent commands:
-              .claude/commands/spec{,-init,-update,-status,-handoff,-backlog-add}.md and codex.toml
+              .claude/commands/spec-*.md, codex.toml and a shared command manifest.
               Files: AGENTS.md, spec-native/{README,PRODUCT,ARCHITECTURE,STACK,
                      CONVENTIONS,COMMANDS,SESSION}.md, .specnative/{README,MCP}.md
 
@@ -75,6 +75,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import shutil
 import sys
@@ -122,16 +123,9 @@ PATHS_CONTEXT = [
     ".specnative/README.md",
     ".specnative/MCP.md",
     ".specnative/SCHEMA.md",
-    # Native agent commands — installed in every profile
-    ".claude/commands/spec-init.md",
-    ".claude/commands/spec.md",
-    ".claude/commands/spec-update.md",
-    ".claude/commands/spec-status.md",
-    ".claude/commands/spec-handoff.md",
-    ".claude/commands/spec-backlog-add.md",
+    ".specnative/commands.json",
     ".claude/skills/specnative-workflow/SKILL.md",
     ".codex/skills/specnative-workflow/SKILL.md",
-    "codex.toml",
 ]
 
 # spec — adds executable task templates and complete planning/review workflows
@@ -412,6 +406,108 @@ def setup_venv(target: Path) -> tuple[Path, list[str]]:
 # MCP client configuration
 # ---------------------------------------------------------------------------
 
+def _load_agent_commands(target: Path) -> dict[str, dict[str, str]]:
+    """Load the command manifest shared by Claude, Codex and OpenCode."""
+    manifest_path = target / ".specnative" / "commands.json"
+    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    raw_commands = data.get("commands")
+    if not isinstance(raw_commands, list):
+        raise ValueError("commands.json must contain a commands array")
+    commands: dict[str, dict[str, str]] = {}
+    for entry in raw_commands:
+        if not isinstance(entry, dict):
+            raise ValueError("each command manifest entry must be an object")
+        name = entry.get("name")
+        description = entry.get("description")
+        prompt = entry.get("prompt")
+        if not all(isinstance(value, str) and value for value in (name, description, prompt)):
+            raise ValueError("each command requires name, description and prompt")
+        if name in commands or not re.fullmatch(r"spec(?:-[a-z0-9]+)*", name):
+            raise ValueError(f"invalid or duplicate command name: {name!r}")
+        commands[name] = {
+            "description": description,
+            "prompt": prompt,
+            # OpenCode receives the request as command input; keep this wording
+            # runtime-neutral instead of exposing Claude's $ARGUMENTS token.
+            "template": prompt.replace("$ARGUMENTS", "la solicitud del desarrollador"),
+        }
+    return commands
+
+
+def _codex_prompt_block(name: str, command: dict[str, str]) -> str:
+    prompt = command["template"].replace('"""', '\\\"\\\"\\\"')
+    return (
+        f"\n[prompts.{name}]\n"
+        f"description = {json.dumps(command['description'], ensure_ascii=False)}\n"
+        f'prompt = """\n{prompt}\n"""\n'
+    )
+
+
+def _write_claude_commands(
+    target: Path,
+    commands: dict[str, dict[str, str]],
+    created: list[str],
+    skipped: list[str],
+    force: bool,
+) -> None:
+    """Generate Claude slash commands from the installed command manifest."""
+    command_dir = target / ".claude" / "commands"
+    for name, command in commands.items():
+        destination = command_dir / f"{name}.md"
+        relative = str(destination.relative_to(target))
+        if destination.exists() and not force:
+            skipped.append(relative)
+            continue
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(command["prompt"].strip() + "\n", encoding="utf-8")
+        created.append(relative)
+
+
+def _default_codex_config(commands: dict[str, dict[str, str]]) -> str:
+    content = (
+        "# codex.toml — generated from the SpecNative command manifest.\n"
+        "# Framework maintainers regenerate it from .specnative/commands.json.\n\n"
+        "[mcp_servers.specnative]\n"
+        'command = "./.specnative/.venv/bin/python3"\n'
+        'args = ["./.specnative/specnative_mcp.py"]\n'
+        'type = "stdio"\n'
+    )
+    return content + "".join(_codex_prompt_block(name, command) for name, command in commands.items())
+
+
+def _merge_codex_prompts(
+    target: Path,
+    commands: dict[str, dict[str, str]],
+    created: list[str],
+    errors: list[str],
+) -> None:
+    """Add missing managed SpecNative prompts without replacing user Codex config."""
+    codex_file = target / "codex.toml"
+    if not codex_file.exists():
+        codex_file.write_text(_default_codex_config(commands), encoding="utf-8")
+        created.append("codex.toml")
+        return
+    try:
+        content = codex_file.read_text(encoding="utf-8")
+        additions = []
+        if not re.search(r"^\[mcp_servers\.specnative\]\s*$", content, re.MULTILINE):
+            additions.append(
+                "\n[mcp_servers.specnative]\n"
+                'command = "./.specnative/.venv/bin/python3"\n'
+                'args = ["./.specnative/specnative_mcp.py"]\n'
+                'type = "stdio"\n'
+            )
+        for name, command in commands.items():
+            pattern = rf"^\[prompts\.{re.escape(name)}\]\s*$"
+            if not re.search(pattern, content, re.MULTILINE):
+                additions.append(_codex_prompt_block(name, command))
+        if additions:
+            codex_file.write_text(content.rstrip() + "\n" + "".join(additions), encoding="utf-8")
+            created.append("codex.toml (merged)")
+    except OSError as exc:
+        errors.append(f"Failed to update codex.toml safely: {exc}")
+
+
 def setup_mcp_configs(
     target: Path,
     created: list[str],
@@ -430,6 +526,15 @@ def setup_mcp_configs(
     # Schema: https://opencode.ai/config.json
     # 'command' keys use 'template' (required) + 'description' (optional)
     # 'instructions' auto-loads files as context in every session
+    try:
+        agent_commands = _load_agent_commands(target)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(f"Failed to load SpecNative command manifest: {exc}")
+        return
+
+    _write_claude_commands(target, agent_commands, created, skipped=[], force=force)
+    _merge_codex_prompts(target, agent_commands, created, errors)
+
     opencode_config = {
         "$schema": "https://opencode.ai/config.json",
         "instructions": [
@@ -446,60 +551,7 @@ def setup_mcp_configs(
                 ],
             }
         },
-        "command": {
-            "spec": {
-                "description": "Route a request through the SpecNative MCP workflow",
-                "template": "Use the SpecNative MCP. Call resume() and status(), then route the request to the minimum appropriate SpecNative prompt or tool. Never edit generated indexes or boards.",
-            },
-            "spec-init": {
-                "description": "Initialize SpecNative — guided project setup",
-                "template": (
-                    "Use the specnative MCP server. "
-                    "Call health_check() to see which spec-native/ documents are empty. "
-                    "Interview the developer and fill PRODUCT.md, STACK.md, "
-                    "ARCHITECTURE.md, CONVENTIONS.md and COMMANDS.md using "
-                    "update_section() or refine_document(). "
-                    "Finish by suggesting start_initiative() for the first spec."
-                ),
-            },
-            "spec-update": {
-                "description": "Update SpecNative docs — detect gaps, refine iteratively",
-                "template": (
-                    "Use the specnative MCP server. "
-                    "Call health_check() and suggest_next() to identify gaps. "
-                    "Ask the developer what to refine today, then use "
-                    "update_section() or refine_document() to update the documents."
-                ),
-            },
-            "spec-status": {
-                "description": "Quick SpecNative project health check",
-                "template": (
-                    "Use the specnative MCP server. "
-                    "Call resume(), status() and health_check(). "
-                    "Summarize in 5 lines what is healthy and what needs attention."
-                ),
-            },
-            "spec-handoff": {
-                "description": "Generate structured handoff for next agent",
-                "template": (
-                    "Use the specnative MCP server. "
-                    "Ask the developer what they were doing and what the next step is. "
-                    "Call checkpoint() with the gathered info, then log_decision() for "
-                    "any unrecorded decisions. Confirm with read_context('session')."
-                ),
-            },
-            "spec-backlog-add": {
-                "description": "Capture a backlog request as a task or triaged intake idea",
-                "template": (
-                    "Use the specnative MCP server. First call list_specs() and board() to find "
-                    "the relevant initiative and avoid duplicates. If the request has an existing "
-                    "spec plus explicit close criteria and validation, call capture_backlog_item() "
-                    "with initiative. Otherwise call capture_backlog_item() without initiative to "
-                    "record a triaged idea in spec-native/intake/IDEAS.md. Never edit a generated "
-                    "Markdown or Mermaid board. Do not invent acceptance criteria or validation."
-                ),
-            },
-        },
+        "command": agent_commands,
     }
 
     opencode_file = target / "opencode.json"

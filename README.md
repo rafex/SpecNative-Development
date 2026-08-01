@@ -36,10 +36,24 @@ review, handoff, or closure. Skills installed with the template make this
 workflow available to Claude Code and OpenCode; Codex also receives matching
 project prompts.
 
-For focused work, use `/spec-backlog-add <request>` to capture work as a
-canonical task or a triaged intake item. Use MCP `list_architecture(tag)`,
-`list_conventions(tag)`, `list_decisions(tag)`, and `read_context_artifact(id)`
-to load only the related context.
+For focused work, use the native commands installed for Claude Code, OpenCode,
+and Codex:
+
+```text
+spec-backlog [request]             # Show the board or capture work
+spec-decision <decision>           # Review and record a durable trade-off
+spec-plan <initiative>             # Derive verifiable tasks from a spec
+spec-implement <initiative> <task> # Implement with completion evidence
+spec-review <initiative>           # Check acceptance criteria
+spec-close <initiative>            # Close with traceability
+spec-context <tag|artifact-id>     # Load only relevant DEC/ARCH/CONV context
+spec-architecture <change>         # Record an ARCH artifact
+spec-convention <rule>              # Record a CONV artifact
+```
+
+`spec-backlog-add` remains as a compatibility alias. The command definitions
+live in `.specnative/commands.json`; generated adapters keep Claude, OpenCode,
+and Codex aligned.
 
 ---
 
@@ -203,7 +217,7 @@ the ProjectV2 node ID and status names, then inspect the JSON produced by
 `github-project plan`. It performs no network requests and does not make
 GitHub authoritative.
 
-### MCP server — `tools/specnative_mcp.py` (v0.8) <!-- MCP_VERSION -->
+### MCP server — `tools/specnative_mcp.py` (v0.9) <!-- MCP_VERSION -->
 
 Exposes the repository as MCP resources, tools, and prompts so any MCP-compatible
 agent works spec-first without manually navigating the file tree.
@@ -246,8 +260,10 @@ spec://schema                  → .specnative/SCHEMA.md
 | `checkpoint(initiative, task_id, intent, next_steps, ...)` | Save work state |
 | `update_task(initiative, task_id, state, notes?, completion_evidence?)` | Update task state; evidence is required to close |
 | `log_decision(title, context, decision, consequences)` | Append decision |
+| `log_architecture(title, context, design, consequences)` | Create an architecture artifact and refresh its index |
+| `log_convention(title, rationale, rule, consequences)` | Create a convention artifact and refresh its index |
 
-**Prompts**: `start_initiative`, `plan_tasks`, `implement_task`, `review_against_spec`, `handoff`, `record_decision`, `close_initiative`
+**Prompts**: `start_initiative`, `plan_tasks`, `implement_task`, `review_against_spec`, `handoff`, `record_decision`, `record_architecture`, `record_convention`, `close_initiative`
 
 #### Configure per agent
 

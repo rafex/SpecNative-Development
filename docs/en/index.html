@@ -196,7 +196,7 @@
 
         <section class="section">
           <div class="section-heading">
-            <p class="eyebrow">v0.8</p>
+            <p class="eyebrow">v0.9</p>
             <h2>What the framework provides</h2>
             <p>
               The template consolidates all project context under <code>spec-native/</code>,
@@ -235,8 +235,9 @@
             <article class="card">
               <h3>Native agent commands</h3>
               <p>
-                <code>/spec</code>, <code>/spec-init</code>, <code>/spec-update</code>, <code>/spec-status</code>,
-                <code>/spec-handoff</code> — installed automatically in every profile.
+                <code>/spec</code>, <code>/spec-decision</code>, <code>/spec-plan</code>,
+                <code>/spec-implement</code>, <code>/spec-review</code>, and <code>/spec-backlog</code>
+                are installed from one shared manifest in every profile.
                 Available as slash commands in Claude Code, prompts in OpenCode, and
                 <code>codex --prompt</code> in Codex.
               </p>
@@ -533,7 +534,11 @@
 /spec-init     # Interview developer, fill spec-native/ docs
 /spec-update   # Detect gaps, guide iterative refinement
 /spec-status   # Session + specs + tasks + alerts
-/spec-handoff  # Generate SESSION.md handoff for next agent
+/spec-decision # Review and record a durable trade-off
+/spec-plan     # Derive verifiable tasks from an approved spec
+/spec-implement # Implement a task with closing evidence
+/spec-review   # Review acceptance criteria
+/spec-backlog  # Show the board or capture work
 
 # MCP setup (auto-installed)
 claude mcp add specnative \

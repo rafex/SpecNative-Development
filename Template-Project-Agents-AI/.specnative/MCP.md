@@ -1,55 +1,66 @@
-# MCP.md — SpecNative MCP Server v0.8
+# MCP.md — SpecNative MCP Server v0.9
 
 El servidor MCP de SpecNative expone el repositorio como **recursos**, **herramientas**
 y **prompts** para que cualquier agente compatible con MCP pueda trabajar en modo
 spec-first sin navegar manualmente el árbol de archivos.
 
-**v0.6 agrega comandos nativos para Claude Code, OpenCode y Codex**, plus
-herramientas de definición guiada (`health_check`, `suggest_next`, `refine_document`,
-`init_project_guided`) para que adoptar SpecNative tome minutos, no horas.
+**v0.9 define una superficie de comandos común para Claude Code, OpenCode y
+Codex**, con operaciones canónicas para decisiones, arquitectura y
+convenciones.
 
 ## Comandos por agente
 
 Instalados automáticamente en tu repositorio. Disponibles desde el primer día.
 
-### Claude Code — slash commands
+### Comandos comunes
 
 | Comando | Descripción |
 |---------|-------------|
-| `/spec-init` | Wizard guiado: entrevista al desarrollador y llena los documentos core |
-| `/spec-update` | Detecta vacíos, sugiere refinamientos, actualiza iterativamente |
-| `/spec-status` | Vista rápida: sesión activa, specs, tareas, alertas |
-| `/spec-handoff` | Genera traspaso estructurado para el siguiente agente |
-| `/spec-backlog-add` | Clasifica una solicitud como tarea ejecutable o idea triada |
+| `spec` | Enruta una solicitud por el flujo mínimo correcto |
+| `spec-init`, `spec-update`, `spec-status` | Inicialización, refinamiento y salud del contexto |
+| `spec-backlog [solicitud]` | Tablero derivado o captura canónica de trabajo |
+| `spec-decision` | Registra una decisión persistente después de revisión |
+| `spec-plan`, `spec-implement` | Planifica e implementa una tarea con evidencia de cierre |
+| `spec-review`, `spec-close` | Revisa criterios y cierra con trazabilidad |
+| `spec-context` | Carga el mínimo contexto por tag o ID `DEC`/`ARCH`/`CONV` |
+| `spec-architecture`, `spec-convention` | Crea artefactos canónicos e índices derivados |
+| `spec-handoff` | Guarda un traspaso para el siguiente agente |
 
-Archivos en `.claude/commands/spec-*.md`.
+`spec-backlog-add` se mantiene como alias compatible de `spec-backlog`.
+
+La fuente de verdad es `.specnative/commands.json`. En el repositorio del
+framework, `tools/sync_agent_commands.py --check` verifica que los adaptadores
+generados no hayan quedado desactualizados.
+
+### Claude Code — slash commands
+
+Usa `/spec-*`; cada entrada de `.specnative/commands.json` genera un archivo
+en `.claude/commands/`.
 
 La skill `specnative-workflow` se instala en `.claude/skills/` y es detectada
 por Claude Code y OpenCode. También se incluye en `.codex/skills/` para los
 entornos Codex que cargan skills de proyecto; `codex.toml` conserva los prompts
 como mecanismo de respaldo.
 
-### OpenCode — prompts integrados
+### OpenCode — comandos integrados
 
 Disponibles en el menú de prompts de OpenCode (configurados en `opencode.json`):
 
-| Prompt | Descripción |
-|--------|-------------|
-| `spec-init` | Initialize SpecNative — guided project setup |
-| `spec-update` | Update SpecNative docs — detect gaps, refine |
-| `spec-status` | Quick SpecNative health check |
-| `spec-handoff` | Generate handoff for next agent |
-| `spec-backlog-add` | Capture a task or triaged intake idea |
+Todos los comandos comunes se agregan bajo `command` en `opencode.json` desde
+el manifiesto durante la instalación. Las configuraciones existentes se
+preservan y solo se agregan claves ausentes.
 
 ### Codex CLI — prompts en codex.toml
 
 ```bash
-codex --prompt spec-init     # guided project setup
-codex --prompt spec-update   # detect gaps and refine
-codex --prompt spec-status   # health check
-codex --prompt spec-handoff  # generate handoff
-codex --prompt spec-backlog-add # capture backlog item
+codex --prompt spec-decision
+codex --prompt spec-plan
+codex --prompt spec-implement
+codex --prompt spec-review
 ```
+
+Todos los comandos comunes se instalan como prompts `spec-*`; si ya existe un
+`codex.toml`, el instalador agrega solo los prompts faltantes.
 
 ### CLI sin agente
 
@@ -256,6 +267,8 @@ export SPECNATIVE_REPO=/ruta/a/tu/proyecto
 | `checkpoint(initiative, task_id, intent, next_steps, context_notes?, agent_name?)` | Guarda estado antes de pausar |
 | `update_task(initiative, task_id, state, notes?, completion_evidence?)` | Actualiza estado; cerrar exige evidencia |
 | `log_decision(title, context, decision, consequences)` | Append rápido a DECISIONS.md              |
+| `log_architecture(title, context, design, consequences)` | Crea `ARCH-*` y actualiza ARCHITECTURE.md |
+| `log_convention(title, rationale, rule, consequences)` | Crea `CONV-*` y actualiza CONVENTIONS.md |
 
 ### Definición y salud del proyecto (v0.6)
 
@@ -316,6 +329,8 @@ Ver `.specnative/archetypes/README.md` para el formato.
 | `review_against_spec(initiative)`         | Revisa implementación contra criterios de aceptación     |
 | `handoff(summary, next_steps, decisions?)` | Genera traspaso estructurado para el siguiente agente   |
 | `record_decision(title, ctx, dec, cons)`  | Registra una decisión persistente en DECISIONS.md        |
+| `record_architecture(title, ctx, design, cons)` | Prepara un artefacto ARCH para revisión |
+| `record_convention(title, rationale, rule, cons)` | Prepara una convención para revisión |
 | `close_initiative(initiative)`            | Cierra la iniciativa y actualiza trazabilidad            |
 | `capture_backlog(title, description, initiative?, priority?)` | Clasifica y registra una solicitud de backlog |
 

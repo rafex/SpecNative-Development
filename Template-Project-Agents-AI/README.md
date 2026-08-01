@@ -10,8 +10,10 @@ en `.specnative/`.
 ## Entrada rápida
 
 En Claude Code usa `/spec <solicitud>`. En OpenCode y Codex usa el prompt
-`spec <solicitud>`. El MCP `specnative(request)` decide el flujo adecuado sin
-que el usuario tenga que recordar herramientas individuales.
+`spec <solicitud>`. Para flujos explícitos están `spec-decision`, `spec-plan`,
+`spec-implement`, `spec-review`, `spec-close`, `spec-backlog`, `spec-context`,
+`spec-architecture` y `spec-convention`. El MCP `specnative(request)` decide
+el flujo adecuado cuando el usuario no necesita escogerlo.
 
 ## Qué incluye
 
@@ -51,6 +53,7 @@ que el usuario tenga que recordar herramientas individuales.
 ├── .specnative/
 │   ├── README.md
 │   ├── MCP.md
+│   ├── commands.json           # Fuente de verdad de comandos de agente
 │   ├── CLI.md
 │   ├── SCHEMA.md
 │   ├── archetypes/

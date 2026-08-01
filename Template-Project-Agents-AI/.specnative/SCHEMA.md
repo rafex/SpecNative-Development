@@ -1,6 +1,6 @@
 # SCHEMA.md
 
-Contrato minimo del framework SpecNative Development v0.8.
+Contrato minimo del framework SpecNative Development v0.9.
 
 ## Objetivo
 
@@ -54,6 +54,8 @@ que estados o campos minimos deben existir para reducir ambiguedad.
 - Descomposicion ejecutable: `spec-native/tasks/**/TASKS.md`
 - Índice de decisiones persistentes: `spec-native/DECISIONS.md`
 - Decisiones canónicas: `spec-native/decisions/DEC-XXXX-<slug>.md`
+- Arquitectura canónica: `spec-native/architecture/ARCH-XXXX-<slug>.md`
+- Convenciones canónicas: `spec-native/conventions/CONV-XXXX-<slug>.md`
 - Relaciones entre artefactos: `spec-native/TRACEABILITY.md`
 - Gates de CI y proceso de CD: `spec-native/pipelines/CI.md`, `spec-native/pipelines/CD.md`
 - Estado activo de trabajo: `spec-native/SESSION.md`
@@ -118,6 +120,12 @@ Estados permitidos:
 - `accepted`
 - `deprecated`
 - `replaced`
+
+### Arquitectura y convenciones
+
+Los artefactos persistentes de arquitectura y convenciones usan front matter
+TOML con `doctype`, `id`, `title`, `status`, relaciones y `tags`. Sus índices
+(`ARCHITECTURE.md` y `CONVENTIONS.md`) son derivados y no se editan a mano.
 
 ### SESSION.md
 

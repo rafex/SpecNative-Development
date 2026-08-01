@@ -100,7 +100,7 @@
 
           <!-- MCP -->
           <section class="ref-section" id="mcp">
-            <h2>MCP server — v0.8</h2>
+            <h2>MCP server — v0.9</h2>
             <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
               <code>.specnative/specnative_mcp.py</code> exposes the repository as MCP
               <strong>resources</strong>, <strong>tools</strong>, and <strong>prompts</strong>
@@ -177,6 +177,8 @@ claude mcp add specnative \
                 <tr><td><code>checkpoint(initiative, task_id, intent, next_steps, …)</code></td><td>Save active work state before pausing or switching agents</td></tr>
                 <tr><td><code>update_task(initiative, task_id, state, notes?, completion_evidence?)</code></td><td>Update task state; closing requires validation evidence</td></tr>
                 <tr><td><code>log_decision(title, context, decision, consequences)</code></td><td>Append a new decision to DECISIONS.md</td></tr>
+                <tr><td><code>log_architecture(title, context, design, consequences)</code></td><td>Create an ARCH artifact and refresh ARCHITECTURE.md</td></tr>
+                <tr><td><code>log_convention(title, rationale, rule, consequences)</code></td><td>Create a CONV artifact and refresh CONVENTIONS.md</td></tr>
               </tbody>
             </table>
 
@@ -223,6 +225,8 @@ claude mcp add specnative \
                 <tr><td><code>review_against_spec(initiative)</code></td><td>Review against acceptance criteria</td></tr>
                 <tr><td><code>handoff(summary, next_steps, decisions?)</code></td><td>Generate structured SESSION.md handoff for next agent</td></tr>
                 <tr><td><code>record_decision(title, ctx, dec, cons)</code></td><td>Record a persistent decision</td></tr>
+                <tr><td><code>record_architecture(title, ctx, design, cons)</code></td><td>Prepare an architecture artifact for review</td></tr>
+                <tr><td><code>record_convention(title, rationale, rule, cons)</code></td><td>Prepare a convention artifact for review</td></tr>
                 <tr><td><code>close_initiative(initiative)</code></td><td>Close and update traceability</td></tr>
               </tbody>
             </table>

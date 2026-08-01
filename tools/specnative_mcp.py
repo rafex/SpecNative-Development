@@ -327,16 +327,88 @@ def _context_artifact_files(directory: str, prefix: str) -> list[Path]:
     return sorted(path for path in root.glob(f"{prefix}-*.md") if path.is_file()) if root.exists() else []
 
 
-def _refresh_decisions_index() -> None:
+def _next_artifact_id(directory: str, prefix: str) -> str:
+    numbers = []
+    for path in _context_artifact_files(directory, prefix):
+        match = re.search(rf"{re.escape(prefix)}-(\d+)", path.name)
+        if match:
+            numbers.append(int(match.group(1)))
+    return f"{prefix}-{(max(numbers) + 1) if numbers else 1:04d}"
+
+
+def _refresh_context_index(
+    directory: str,
+    prefix: str,
+    index_name: str,
+    section: str,
+    title_label: str,
+) -> None:
+    """Regenerate only an index table, preserving the human-written guidance."""
     rows = []
-    for path in _decision_files():
+    for path in _context_artifact_files(directory, prefix):
         meta = _toml_loads(path.read_text(encoding="utf-8"))
         rows.append(
-            f"| [{meta.get('id', path.stem)}](./decisions/{path.name}) | {meta.get('status', '-')} | "
+            f"| [{meta.get('id', path.stem)}](./{directory}/{path.name}) | {meta.get('status', '-')} | "
             f"{meta.get('title', '-')} | {', '.join(meta.get('tags', [])) or '-'} |"
         )
-    content = "# DECISIONS.md\n\nÍndice de decisiones persistentes. Los archivos canónicos viven en `decisions/`.\n\n## Decisiones\n\n| ID | Estado | Título | Tags |\n| --- | --- | --- | --- |\n"
-    (SN / "DECISIONS.md").write_text(content + "\n".join(rows) + "\n", encoding="utf-8")
+    table = (
+        f"| ID | Estado | {title_label} | Tags |\n"
+        "| --- | --- | --- | --- |\n"
+        + ("\n".join(rows) + "\n" if rows else "")
+    )
+    index_path = SN / index_name
+    existing = index_path.read_text(encoding="utf-8") if index_path.exists() else f"# {index_name}\n\n## {section}\n\n"
+    heading = f"## {section}"
+    if heading not in existing:
+        existing = existing.rstrip() + f"\n\n{heading}\n\n"
+    pattern = re.compile(
+        rf"(## {re.escape(section)}\s*\n\s*)\| ID \| Estado \| [^\n]+\|\n\| --- \| --- \| --- \| --- \|\n(?:\|[^\n]*\|\n)*"
+    )
+    if pattern.search(existing):
+        updated = pattern.sub(lambda match: match.group(1) + table, existing, count=1)
+    else:
+        updated = existing.rstrip() + "\n\n" + table
+    index_path.write_text(updated, encoding="utf-8")
+
+
+def _refresh_decisions_index() -> None:
+    _refresh_context_index("decisions", "DEC", "DECISIONS.md", "Decisiones", "Título")
+
+
+def _refresh_architecture_index() -> None:
+    _refresh_context_index("architecture", "ARCH", "ARCHITECTURE.md", "Componentes", "Componente")
+
+
+def _refresh_conventions_index() -> None:
+    _refresh_context_index("conventions", "CONV", "CONVENTIONS.md", "Reglas", "Regla")
+
+
+def _write_context_artifact(
+    directory: str,
+    prefix: str,
+    doctype: str,
+    title: str,
+    fields: dict[str, Any],
+    body: str,
+) -> tuple[str, Path]:
+    artifact_id = _next_artifact_id(directory, prefix)
+    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:48] or doctype
+    path = SN / directory / f"{artifact_id}-{slug}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    metadata = {
+        "doctype": doctype,
+        "id": artifact_id,
+        "title": title,
+        "status": "active",
+        "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        **fields,
+    }
+    toml_lines = [f"{key} = {json.dumps(value, ensure_ascii=False)}" for key, value in metadata.items()]
+    path.write_text(
+        "+++\n" + "\n".join(toml_lines) + f"\n+++\n\n# {artifact_id} - {title}\n\n" + body.strip() + "\n",
+        encoding="utf-8",
+    )
+    return artifact_id, path
 
 
 def _update_session(fields: dict[str, str], sections: dict[str, str]) -> None:
@@ -1007,32 +1079,78 @@ def log_decision(
         decision:     What was decided exactly
         consequences: Costs, benefits, and limits future work must respect
     """
-    existing_ids = []
-    for path in _decision_files():
-        existing_ids.extend(re.findall(r"DEC-(\d+)", path.name))
-    ids = existing_ids
-    next_num = (max(int(i) for i in ids) + 1) if ids else 1
-    dec_id = f"DEC-{next_num:04d}"
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:48] or "decision"
-    path = SN / "decisions" / f"{dec_id}-{slug}.md"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    metadata = {
-        "doctype": "decision", "id": dec_id, "title": title, "status": "accepted",
-        "created_at": today, "owners": [], "related_specs": related_specs or [],
-        "related_tasks": related_tasks or [], "related_architecture": related_architecture or [],
-        "supersedes": [], "tags": tags or [],
-    }
-    toml_lines = []
-    for key, value in metadata.items():
-        toml_lines.append(f"{key} = {json.dumps(value, ensure_ascii=False)}")
-    path.write_text(
-        "+++\n" + "\n".join(toml_lines) +
-        f"\n+++\n\n# {dec_id} - {title}\n\n## Contexto\n\n{context}\n\n## Decisión\n\n{decision}\n\n## Consecuencias\n\n{consequences}\n",
-        encoding="utf-8",
+    dec_id, path = _write_context_artifact(
+        "decisions",
+        "DEC",
+        "decision",
+        title,
+        {
+            "status": "accepted",
+            "owners": [],
+            "related_specs": related_specs or [],
+            "related_tasks": related_tasks or [],
+            "related_architecture": related_architecture or [],
+            "supersedes": [],
+            "tags": tags or [],
+        },
+        f"## Contexto\n\n{context}\n\n## Decisión\n\n{decision}\n\n## Consecuencias\n\n{consequences}",
     )
     _refresh_decisions_index()
     return f"Decision {dec_id} created at {path.relative_to(REPO)} and DECISIONS.md was refreshed."
+
+
+@mcp.tool()
+def log_architecture(
+    title: str,
+    context: str,
+    design: str,
+    consequences: str,
+    tags: list[str] | None = None,
+    related_decisions: list[str] | None = None,
+    related_specs: list[str] | None = None,
+) -> str:
+    """Create an ARCH artifact and refresh the ARCHITECTURE.md index."""
+    artifact_id, path = _write_context_artifact(
+        "architecture",
+        "ARCH",
+        "architecture",
+        title,
+        {
+            "related_decisions": related_decisions or [],
+            "related_specs": related_specs or [],
+            "tags": tags or [],
+        },
+        f"## Contexto\n\n{context}\n\n## Diseño\n\n{design}\n\n## Restricciones y consecuencias\n\n{consequences}",
+    )
+    _refresh_architecture_index()
+    return f"Architecture artifact {artifact_id} created at {path.relative_to(REPO)} and ARCHITECTURE.md was refreshed."
+
+
+@mcp.tool()
+def log_convention(
+    title: str,
+    rationale: str,
+    rule: str,
+    consequences: str,
+    tags: list[str] | None = None,
+    related_architecture: list[str] | None = None,
+    related_decisions: list[str] | None = None,
+) -> str:
+    """Create a CONV artifact and refresh the CONVENTIONS.md index."""
+    artifact_id, path = _write_context_artifact(
+        "conventions",
+        "CONV",
+        "convention",
+        title,
+        {
+            "related_architecture": related_architecture or [],
+            "related_decisions": related_decisions or [],
+            "tags": tags or [],
+        },
+        f"## Justificación\n\n{rationale}\n\n## Regla\n\n{rule}\n\n## Consecuencias\n\n{consequences}",
+    )
+    _refresh_conventions_index()
+    return f"Convention artifact {artifact_id} created at {path.relative_to(REPO)} and CONVENTIONS.md was refreshed."
 
 
 @mcp.tool()
@@ -1128,9 +1246,10 @@ def specnative(request: str) -> str:
     return f"""Use the SpecNative MCP for this request: {request}
 
 Read `spec://agents`, call `resume()` and `status()`, then choose the smallest
-correct workflow: start_initiative, capture_backlog, implement_task,
-log_decision, review_against_spec, checkpoint, or close_initiative. Do not edit
-generated indexes or boards; update canonical artifacts only.
+correct workflow: start_initiative, capture_backlog, plan_tasks, implement_task,
+record_decision, record_architecture, record_convention, review_against_spec,
+checkpoint, or close_initiative. Do not edit generated indexes or boards;
+update canonical artifacts only.
 """
 
 
@@ -1314,7 +1433,8 @@ def implement_task(initiative_name: str, task_id: str) -> str:
    - Run the validation command from the task TOML
 
 7. After validation:
-   - If passes → update_task('{initiative_name}', '{task_id}', 'done')
+   - If passes → update_task('{initiative_name}', '{task_id}', 'done',
+     completion_evidence='<command executed and observed result>')
    - If blocked → update_task('{initiative_name}', '{task_id}', 'blocked', notes='reason')
 
 8. If a persistent trade-off emerged:
@@ -1454,6 +1574,58 @@ Consequences: {consequences}
 
 4. Only record decisions that future initiatives must respect.
    Implementation details or spec-specific choices belong in the spec, not here.
+"""
+
+
+@mcp.prompt()
+def record_architecture(
+    title: str,
+    context: str,
+    design: str,
+    consequences: str,
+) -> str:
+    """Prepare an architecture artifact for review before it is persisted."""
+    return f"""You are recording a persistent architecture artifact.
+
+Title: {title}
+Context: {context}
+Design: {design}
+Consequences: {consequences}
+
+## Steps
+
+1. Call list_architecture() and list_decisions() to detect overlap or conflict.
+2. Identify related DEC, SPEC and tags; do not invent relationships.
+3. Present the artifact draft for developer confirmation.
+4. After confirmation, call log_architecture(title, context, design, consequences,
+   tags, related_decisions, related_specs).
+5. Do not edit ARCHITECTURE.md directly: it is a generated index.
+"""
+
+
+@mcp.prompt()
+def record_convention(
+    title: str,
+    rationale: str,
+    rule: str,
+    consequences: str,
+) -> str:
+    """Prepare a persistent convention artifact for review before it is persisted."""
+    return f"""You are recording a persistent convention artifact.
+
+Title: {title}
+Rationale: {rationale}
+Rule: {rule}
+Consequences: {consequences}
+
+## Steps
+
+1. Call list_conventions() and load related ARCH or DEC artifacts to avoid conflict.
+2. Identify related artifact IDs and tags; do not invent relationships.
+3. Present the rule draft for developer confirmation.
+4. After confirmation, call log_convention(title, rationale, rule, consequences,
+   tags, related_architecture, related_decisions).
+5. Do not edit CONVENTIONS.md directly: it is a generated index.
 """
 
 

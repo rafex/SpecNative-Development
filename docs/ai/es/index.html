@@ -101,7 +101,7 @@
 
           <!-- MCP -->
           <section class="ref-section" id="mcp">
-            <h2>Servidor MCP — v0.8</h2>
+            <h2>Servidor MCP — v0.9</h2>
             <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
               <code>.specnative/specnative_mcp.py</code> expone el repositorio como
               <strong>recursos</strong>, <strong>herramientas</strong> y <strong>prompts</strong>
@@ -166,6 +166,8 @@ claude mcp add specnative \
                 <tr><td><code>checkpoint(initiative, task_id, intent, next_steps, …)</code></td><td>Guarda estado activo antes de pausar o cambiar de agente</td></tr>
                 <tr><td><code>update_task(initiative, task_id, state, notes?, completion_evidence?)</code></td><td>Actualiza estado; cerrar exige evidencia de validación</td></tr>
                 <tr><td><code>log_decision(title, context, decision, consequences)</code></td><td>Append rápido a DECISIONS.md</td></tr>
+                <tr><td><code>log_architecture(title, context, design, consequences)</code></td><td>Crea un artefacto ARCH y actualiza ARCHITECTURE.md</td></tr>
+                <tr><td><code>log_convention(title, rationale, rule, consequences)</code></td><td>Crea un artefacto CONV y actualiza CONVENTIONS.md</td></tr>
               </tbody>
             </table>
 
@@ -212,6 +214,8 @@ claude mcp add specnative \
                 <tr><td><code>review_against_spec(initiative)</code></td><td>Revisar contra criterios de aceptación</td></tr>
                 <tr><td><code>handoff(summary, next_steps, decisions?)</code></td><td>Generar traspaso estructurado en SESSION.md para el siguiente agente</td></tr>
                 <tr><td><code>record_decision(title, ctx, dec, cons)</code></td><td>Registrar una decisión persistente</td></tr>
+                <tr><td><code>record_architecture(title, ctx, design, cons)</code></td><td>Preparar un artefacto de arquitectura para revisión</td></tr>
+                <tr><td><code>record_convention(title, rationale, rule, cons)</code></td><td>Preparar una convención para revisión</td></tr>
                 <tr><td><code>close_initiative(initiative)</code></td><td>Cerrar y actualizar trazabilidad</td></tr>
               </tbody>
             </table>

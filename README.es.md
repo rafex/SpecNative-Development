@@ -35,9 +35,24 @@ acción mínima correcta: iniciativa, backlog, implementación, decisión, revis
 handoff o cierre. Las skills instaladas habilitan el flujo en Claude Code y
 OpenCode; Codex recibe prompts equivalentes.
 
-Para trabajo enfocado usa `/spec-backlog-add <solicitud>`. Para cargar solo el
-contexto relacionado usa `list_architecture(tag)`, `list_conventions(tag)`,
-`list_decisions(tag)` y `read_context_artifact(id)` mediante MCP.
+Para trabajo enfocado usa los comandos nativos instalados en Claude Code,
+OpenCode y Codex:
+
+```text
+spec-backlog [solicitud]           # Muestra el tablero o captura trabajo
+spec-decision <decisión>           # Revisa y registra un trade-off duradero
+spec-plan <iniciativa>             # Deriva tareas verificables desde una spec
+spec-implement <iniciativa> <tarea># Implementa con evidencia de cierre
+spec-review <iniciativa>           # Comprueba criterios de aceptación
+spec-close <iniciativa>            # Cierra con trazabilidad
+spec-context <tag|id-artefacto>    # Carga contexto DEC/ARCH/CONV relacionado
+spec-architecture <cambio>         # Registra un artefacto ARCH
+spec-convention <regla>             # Registra un artefacto CONV
+```
+
+`spec-backlog-add` se mantiene como alias compatible. Las definiciones viven
+en `.specnative/commands.json`; los adaptadores generados mantienen alineados
+Claude, OpenCode y Codex.
 
 ---
 
@@ -139,7 +154,7 @@ Copia `.specnative/integrations/github-project.toml.example`, configura el ID
 ProjectV2 y los nombres de estado, y revisa el JSON de `github-project plan`.
 No realiza solicitudes de red ni hace a GitHub autoritativo.
 
-### Servidor MCP — `tools/specnative_mcp.py` (v0.8) <!-- MCP_VERSION -->
+### Servidor MCP — `tools/specnative_mcp.py` (v0.9) <!-- MCP_VERSION -->
 
 Expone el repositorio como recursos, herramientas y prompts MCP para que
 cualquier agente compatible trabaje en modo spec-first sin navegar
@@ -163,12 +178,16 @@ spec://schema                  → .specnative/SCHEMA.md
 También: `list_decisions(tag?)`, `list_architecture(tag?)`,
 `list_conventions(tag?)` y `read_context_artifact(id)`.
 
+Para registrar artefactos canónicos también están disponibles
+`log_decision(...)`, `log_architecture(...)` y `log_convention(...)`; los dos
+últimos regeneran el índice correspondiente.
+
 Para una solicitud como “agrega esta tarea al backlog”, usa el comando nativo
 `spec-backlog-add`. El agente crea una tarea solo si existe una spec y tiene
 criterio de cierre y validación; en otro caso captura una idea triada en
 `spec-native/intake/IDEAS.md`.
 
-**Prompts**: `start_initiative`, `plan_tasks`, `implement_task`, `review_against_spec`, `record_decision`, `close_initiative`
+**Prompts**: `start_initiative`, `plan_tasks`, `implement_task`, `review_against_spec`, `record_decision`, `record_architecture`, `record_convention`, `close_initiative`
 
 #### Configuración por agente
 

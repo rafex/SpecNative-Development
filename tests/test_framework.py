@@ -144,6 +144,35 @@ updated_at = "2026-01-01"
             self.assertIn('spec_id = "SPEC-PAY-0001"', task_file)
             self.assertIn('priority = "p2"', task_file)
 
+    def test_context_artifacts_are_created_with_indexes(self):
+        mcp = load_mcp_module()
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            sn = target / "spec-native"
+            sn.mkdir()
+            (sn / "DECISIONS.md").write_text("# DECISIONS.md\n\n## Decisiones\n\n| ID | Estado | Título | Tags |\n| --- | --- | --- | --- |\n", encoding="utf-8")
+            (sn / "ARCHITECTURE.md").write_text("# ARCHITECTURE.md\n\n## Componentes\n\n| ID | Estado | Componente | Tags |\n| --- | --- | --- | --- |\n", encoding="utf-8")
+            (sn / "CONVENTIONS.md").write_text("# CONVENTIONS.md\n\n## Reglas\n\n| ID | Estado | Regla | Tags |\n| --- | --- | --- | --- |\n", encoding="utf-8")
+            mcp.REPO = target
+            mcp.SN = sn
+
+            decision = mcp.log_decision("Usar puertos", "Necesitamos aislar proveedores.", "Usar puertos.", "Más adaptadores.", tags=["component/payments"])
+            architecture = mcp.log_architecture("Puerto de pagos", "Aislar proveedores.", "Definir un puerto.", "Adaptadores explícitos.", related_decisions=["DEC-0001"])
+            convention = mcp.log_convention("Tests del puerto", "Evitar regresiones.", "Cubrir contratos.", "Mayor tiempo de test.", related_architecture=["ARCH-0001"])
+
+            self.assertIn("DEC-0001", decision)
+            self.assertIn("ARCH-0001", architecture)
+            self.assertIn("CONV-0001", convention)
+            self.assertIn("DEC-0001", (sn / "DECISIONS.md").read_text(encoding="utf-8"))
+            self.assertIn("ARCH-0001", (sn / "ARCHITECTURE.md").read_text(encoding="utf-8"))
+            self.assertIn("CONV-0001", (sn / "CONVENTIONS.md").read_text(encoding="utf-8"))
+            self.assertIn('related_decisions = ["DEC-0001"]', next((sn / "architecture").glob("ARCH-*.md")).read_text(encoding="utf-8"))
+
+    def test_implement_prompt_requires_completion_evidence(self):
+        mcp = load_mcp_module()
+        prompt = mcp.implement_task("payments", "TASK-PAYMENTS-0001")
+        self.assertIn("completion_evidence", prompt)
+
     def test_context_profile_contains_navigation_contract(self):
         required = {
             "spec-native/README.md",
@@ -167,9 +196,26 @@ updated_at = "2026-01-01"
         self.assertIn(".claude/skills/specnative-workflow/SKILL.md", install.PATHS_CONTEXT)
         self.assertIn(".codex/skills/specnative-workflow/SKILL.md", install.PATHS_CONTEXT)
 
+    def test_command_manifest_generates_all_agent_adapters(self):
+        result = subprocess.run(
+            [sys.executable, "tools/sync_agent_commands.py", "--check"],
+            cwd=Path(__file__).parents[1],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        manifest = json.loads(
+            (Path(__file__).parents[1] / "Template-Project-Agents-AI/.specnative/commands.json").read_text(encoding="utf-8")
+        )
+        names = {command["name"] for command in manifest["commands"]}
+        self.assertTrue({"spec-decision", "spec-plan", "spec-implement", "spec-review", "spec-close", "spec-context", "spec-architecture", "spec-convention"}.issubset(names))
+
     def test_opencode_configuration_is_merged_without_losing_existing_values(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
+            command_manifest = Path(__file__).parents[1] / "Template-Project-Agents-AI/.specnative/commands.json"
+            (target / ".specnative").mkdir()
+            (target / ".specnative/commands.json").write_bytes(command_manifest.read_bytes())
             config_path = target / "opencode.json"
             config_path.write_text(
                 json.dumps(
@@ -194,7 +240,33 @@ updated_at = "2026-01-01"
             self.assertIn("specnative", merged["mcp"])
             self.assertIn("spec-init", merged["command"])
             self.assertIn("spec", merged["command"])
-            self.assertIn("spec-backlog-add", merged["command"])
+            self.assertIn("spec-backlog", merged["command"])
+            self.assertIn("spec-decision", merged["command"])
+            self.assertIn("spec-architecture", merged["command"])
+            self.assertIn("spec-convention", merged["command"])
+
+    def test_codex_configuration_receives_missing_managed_prompts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            manifest = Path(__file__).parents[1] / "Template-Project-Agents-AI/.specnative/commands.json"
+            (target / ".specnative").mkdir()
+            (target / ".specnative/commands.json").write_bytes(manifest.read_bytes())
+            codex_file = target / "codex.toml"
+            codex_file.write_text(
+                "[prompts.custom]\ndescription = \"Keep\"\nprompt = \"Keep me\"\n",
+                encoding="utf-8",
+            )
+
+            created = []
+            errors = []
+            install.setup_mcp_configs(target, created, errors)
+
+            content = codex_file.read_text(encoding="utf-8")
+            self.assertEqual(errors, [])
+            self.assertIn("[prompts.custom]", content)
+            self.assertIn("[prompts.spec-decision]", content)
+            self.assertIn("[prompts.spec-architecture]", content)
+            self.assertIn("[mcp_servers.specnative]", content)
 
     def test_install_creates_clean_branch_and_context_profile(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -236,6 +308,8 @@ updated_at = "2026-01-01"
             self.assertTrue((target / "spec-native/workflows/IMPLEMENTATION.md").exists())
             self.assertTrue((target / ".specnative/SCHEMA.md").exists())
             self.assertTrue((target / ".specnative/specnative_mcp.py").exists())
+            self.assertTrue((target / ".claude/commands/spec-decision.md").exists())
+            self.assertIn("[prompts.spec-decision]", (target / "codex.toml").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

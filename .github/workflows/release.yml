@@ -26,7 +26,8 @@ jobs:
       - name: Validate template and run tests
         run: |
           python3 tools/specnative.py validate --target Template-Project-Agents-AI
-          python3 -m py_compile install.py tools/specnative.py tools/specnative_mcp.py
+          python3 tools/sync_agent_commands.py --check
+          python3 -m py_compile install.py tools/specnative.py tools/specnative_mcp.py tools/sync_agent_commands.py
           python3 -m unittest discover -s tests -v
 
       - name: Prepare release assets
