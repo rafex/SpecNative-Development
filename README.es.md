@@ -59,7 +59,7 @@ python3 install.py --target /ruta/a/tu/repo --profile platform --include-example
 ### Conectar via MCP (Claude Code, Claude Desktop, OpenCode, Codex)
 
 ```bash
-pip install mcp
+pip install "mcp>=1.0,<2.0"
 
 # Claude Code
 claude mcp add specnative \

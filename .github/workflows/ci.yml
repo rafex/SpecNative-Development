@@ -22,7 +22,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install MCP dependency for smoke tests
-        run: python3 -m pip install mcp
+        run: python3 -m pip install "mcp>=1.0,<2.0"
 
       - name: Validate template
         run: python3 tools/specnative.py validate --target Template-Project-Agents-AI

@@ -397,7 +397,9 @@ def setup_venv(target: Path) -> tuple[Path, list[str]]:
     print("Installing mcp …", file=sys.stderr, flush=True)
     try:
         subprocess.run(
-            [str(python), "-m", "pip", "install", "mcp"],
+            # The server uses the FastMCP 1.x API. Keep installations aligned
+            # with the version exercised by the repository CI.
+            [str(python), "-m", "pip", "install", "mcp>=1.0,<2.0"],
             check=True, capture_output=True, text=True,
         )
     except subprocess.CalledProcessError as exc:

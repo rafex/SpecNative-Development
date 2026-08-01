@@ -51,7 +51,7 @@ jobs:
 
       - name: Smoke test release assets
         run: |
-          python3 -m pip install mcp
+          python3 -m pip install "mcp>=1.0,<2.0"
           python3 dist/install.py --help
           python3 -m py_compile dist/install.py dist/specnative_mcp.py
           python3 dist/specnative_mcp.py --help

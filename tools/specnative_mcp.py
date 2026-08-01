@@ -29,7 +29,7 @@ Usage:
     SPECNATIVE_REPO=/path/to/project python3 specnative_mcp.py
 
 Requirements:
-    pip install mcp
+    pip install "mcp>=1.0,<2.0"
 """
 
 from __future__ import annotations
@@ -52,7 +52,7 @@ try:
 except ImportError:
     sys.exit(
         "mcp package not found.\n"
-        "Install with:  pip install mcp\n"
+        "Install with:  pip install \"mcp>=1.0,<2.0\"\n"
         "Then retry:    python3 specnative_mcp.py --repo /path/to/project\n"
     )
 
