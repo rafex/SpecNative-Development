@@ -288,6 +288,7 @@ Menos útil para prototipos muy pequeños y de corta duración donde mantener el
 | **v0.7.0** | **Archetypes (`java-hexagonal` built-in) · Spec templates · Decision snippets · `.specnative/archetypes/` + `.specnative/templates/`** |
 | **v0.8.0** | **Flujo corto `/spec` · Skills · Backlog Markdown · Índices de contexto · Plan de exportación a GitHub Projects** |
 | **v0.8.1** | [Notas de la versión](https://github.com/rafex/SpecNative-Development/releases/tag/v0.8.1) |
+| **v0.9.0** | [Notas de la versión](https://github.com/rafex/SpecNative-Development/releases/tag/v0.9.0) |
 <!-- END_VERSIONS -->
 
 ---

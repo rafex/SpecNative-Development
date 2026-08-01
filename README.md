@@ -59,7 +59,7 @@ and Codex aligned.
 
 ## Quick Start
 
-**Current Release:** [v0.8.1](https://github.com/rafex/SpecNative-Development/releases/tag/v0.8.1) <!-- CURRENT_RELEASE -->
+**Current Release:** [v0.9.0](https://github.com/rafex/SpecNative-Development/releases/tag/v0.9.0) <!-- CURRENT_RELEASE -->
 
 ### Install into an existing repository
 
