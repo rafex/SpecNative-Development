@@ -45,7 +45,7 @@ to load only the related context.
 
 ## Quick Start
 
-**Current Release:** [v0.7.0](https://github.com/rafex/SpecNative-Development/releases/tag/v0.7.0) <!-- CURRENT_RELEASE -->
+**Current Release:** [v0.8.1](https://github.com/rafex/SpecNative-Development/releases/tag/v0.8.1) <!-- CURRENT_RELEASE -->
 
 ### Install into an existing repository
 
@@ -203,7 +203,7 @@ the ProjectV2 node ID and status names, then inspect the JSON produced by
 `github-project plan`. It performs no network requests and does not make
 GitHub authoritative.
 
-### MCP server — `tools/specnative_mcp.py` (v0.7) <!-- MCP_VERSION -->
+### MCP server — `tools/specnative_mcp.py` (v0.8) <!-- MCP_VERSION -->
 
 Exposes the repository as MCP resources, tools, and prompts so any MCP-compatible
 agent works spec-first without manually navigating the file tree.
