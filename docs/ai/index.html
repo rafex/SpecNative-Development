@@ -266,6 +266,7 @@ claude mcp add specnative \
 │       ├── CI.md          # Automated validation gates
 │       └── CD.md          # Delivery process and environments
 ├── .claude/commands/      # Slash commands: /spec-init /spec-update /spec-status /spec-handoff
+├── .codex/config.toml     # Project-scoped MCP for Codex CLI
 ├── codex.toml             # Codex CLI prompt commands
 ├── opencode.json          # OpenCode MCP + commands + instructions
 └── .specnative/
@@ -395,7 +396,7 @@ claude mcp add specnative \
                   <strong>Bootstrap the structure</strong>
                   <p>Run <code>python3 install.py --target /path/to/repo --profile team</code>.
                   This creates all required folders, placeholder files, agent commands, and configures
-                  opencode.json and codex.toml automatically.</p>
+                  opencode.json, .codex/config.toml, and codex.toml automatically.</p>
                 </div>
               </li>
               <li>
@@ -754,7 +755,7 @@ apply_decision_snippet('jwt-authentication')</code></pre>
             <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 0.75rem;">
               <code>install.py</code> bootstraps SpecNative from a GitHub release with no
               dependencies beyond the Python standard library. Installs agent commands,
-              configures opencode.json and codex.toml, and sets up the MCP venv.
+              configures opencode.json, .codex/config.toml, and codex.toml, and sets up the MCP venv.
             </p>
             <div class="code-card">
               <pre><code># Minimal — AI context layer only

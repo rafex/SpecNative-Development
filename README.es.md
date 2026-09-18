@@ -224,12 +224,17 @@ claude mcp add specnative \
 }
 ```
 
-**Codex CLI** — `~/.codex/config.toml` o `codex.toml`:
+**Codex CLI** — `~/.codex/config.toml` o el `.codex/config.toml` del proyecto:
 ```toml
 [mcp_servers.specnative]
-command = "python3"
-args = ["/ruta/a/specnative_mcp.py", "--repo", "/ruta/a/tu/proyecto"]
-type = "stdio"
+command = "/ruta/a/tu/proyecto/.specnative/.venv/bin/python3"
+args = [
+  "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
+  "--repo", "/ruta/a/tu/proyecto"
+]
+cwd = "/ruta/a/tu/proyecto"
+enabled = true
+startup_timeout_sec = 30
 ```
 
 ---

@@ -266,7 +266,13 @@ updated_at = "2026-01-01"
             self.assertIn("[prompts.custom]", content)
             self.assertIn("[prompts.spec-decision]", content)
             self.assertIn("[prompts.spec-architecture]", content)
-            self.assertIn("[mcp_servers.specnative]", content)
+            self.assertNotIn("[mcp_servers.specnative]", content)
+            mcp_config = target / ".codex/config.toml"
+            self.assertTrue(mcp_config.exists())
+            mcp_content = mcp_config.read_text(encoding="utf-8")
+            self.assertIn("[mcp_servers.specnative]", mcp_content)
+            self.assertIn('"--repo"', mcp_content)
+            self.assertIn(str(target), mcp_content)
 
     def test_install_creates_clean_branch_and_context_profile(self):
         with tempfile.TemporaryDirectory() as directory:

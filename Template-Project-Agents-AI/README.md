@@ -61,8 +61,10 @@ el flujo adecuado cuando el usuario no necesita escogerlo.
 │   └── templates/
 ├── .claude/commands/
 ├── .claude/skills/         # Carga automática del flujo SpecNative en Claude/OpenCode
-├── .codex/skills/          # Skill de proyecto para entornos Codex compatibles
-├── codex.toml
+├── .codex/
+│   ├── config.toml         # MCP de proyecto generado para Codex
+│   └── skills/              # Skill de proyecto para entornos Codex compatibles
+├── codex.toml               # Prompts de proyecto para Codex CLI
 └── opencode.json
 ```
 
