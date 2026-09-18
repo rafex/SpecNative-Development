@@ -36,13 +36,8 @@ def render_claude(command: dict[str, str]) -> str:
 
 def render_codex(commands: list[dict[str, str]]) -> str:
     lines = [
-        "# codex.toml — generated from the SpecNative command manifest.",
+        "# codex.toml — prompts generated from the SpecNative command manifest.",
         "# Framework maintainers regenerate it from .specnative/commands.json.",
-        "",
-        "[mcp_servers.specnative]",
-        'command = "./.specnative/.venv/bin/python3"',
-        'args = ["./.specnative/specnative_mcp.py"]',
-        'type = "stdio"',
     ]
     for command in commands:
         prompt = command["prompt"].replace("$ARGUMENTS", "la solicitud del desarrollador")

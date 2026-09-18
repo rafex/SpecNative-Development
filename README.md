@@ -288,12 +288,17 @@ claude mcp add specnative \
 
 **OpenCode** — generated automatically to `opencode.json` during install.
 
-**Codex CLI** — `~/.codex/config.toml` or `codex.toml`:
+**Codex CLI** — `~/.codex/config.toml` or the project-scoped `.codex/config.toml`:
 ```toml
 [mcp_servers.specnative]
-command = "python3"
-args = ["/path/to/specnative_mcp.py", "--repo", "/path/to/project"]
-type = "stdio"
+command = "/path/to/project/.specnative/.venv/bin/python3"
+args = [
+  "/path/to/project/.specnative/specnative_mcp.py",
+  "--repo", "/path/to/project"
+]
+cwd = "/path/to/project"
+enabled = true
+startup_timeout_sec = 30
 ```
 
 ---

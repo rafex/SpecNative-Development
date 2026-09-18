@@ -352,6 +352,7 @@
 │       ├── CI.md
 │       └── CD.md
 ├── .claude/commands/       # /spec-init, /spec-update, /spec-status, /spec-handoff
+├── .codex/config.toml      # MCP de proyecto para Codex
 ├── codex.toml              # Comandos prompt para Codex
 ├── opencode.json           # MCP + prompts para OpenCode
 └── .specnative/
@@ -560,8 +561,9 @@ claude mcp add specnative \
               </div>
               <p>
                 Codex lee <code>AGENTS.md</code> y funciona mejor cuando el repositorio
-                expone restricciones y setup de forma clara. SpecNative instala prompts
-                listos para usar vía <code>codex.toml</code>.
+                expone restricciones y setup de forma clara. SpecNative configura el MCP
+                del proyecto en <code>.codex/config.toml</code> e instala prompts listos
+                para usar vía <code>codex.toml</code>.
               </p>
               <h4>Patrón recomendado</h4>
               <ul>
@@ -571,11 +573,13 @@ claude mcp add specnative \
                 <li>Usa <code>codex --prompt spec-handoff</code> antes de cerrar para guardar el estado de sesión.</li>
               </ul>
               <div class="snippet">
-                <pre><code># codex.toml — generado automáticamente por install.py
+                <pre><code># .codex/config.toml — generado automáticamente por install.py
 [mcp_servers.specnative]
-command = "./.specnative/.venv/bin/python3"
-args    = ["./.specnative/specnative_mcp.py"]
-type    = "stdio"
+command = "/ruta/al/proyecto/.specnative/.venv/bin/python3"
+args    = ["/ruta/al/proyecto/.specnative/specnative_mcp.py", "--repo", "/ruta/al/proyecto"]
+cwd     = "/ruta/al/proyecto"
+enabled = true
+startup_timeout_sec = 30
 
 # Prompts listos para usar:
 # codex --prompt spec-init

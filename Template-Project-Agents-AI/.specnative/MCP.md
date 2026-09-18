@@ -39,8 +39,9 @@ en `.claude/commands/`.
 
 La skill `specnative-workflow` se instala en `.claude/skills/` y es detectada
 por Claude Code y OpenCode. También se incluye en `.codex/skills/` para los
-entornos Codex que cargan skills de proyecto; `codex.toml` conserva los prompts
-como mecanismo de respaldo.
+entornos Codex que cargan skills de proyecto. El instalador genera el MCP en
+`.codex/config.toml` y `codex.toml` conserva los prompts como mecanismo de
+respaldo.
 
 ### OpenCode — comandos integrados
 
@@ -50,7 +51,7 @@ Todos los comandos comunes se agregan bajo `command` en `opencode.json` desde
 el manifiesto durante la instalación. Las configuraciones existentes se
 preservan y solo se agregan claves ausentes.
 
-### Codex CLI — prompts en codex.toml
+### Codex CLI — MCP en .codex/config.toml y prompts en codex.toml
 
 ```bash
 codex --prompt spec-decision
@@ -60,7 +61,8 @@ codex --prompt spec-review
 ```
 
 Todos los comandos comunes se instalan como prompts `spec-*`; si ya existe un
-`codex.toml`, el instalador agrega solo los prompts faltantes.
+`codex.toml`, el instalador agrega solo los prompts faltantes. El MCP se agrega
+al `.codex/config.toml` del proyecto sin reemplazar otras configuraciones.
 
 ### CLI sin agente
 
@@ -192,7 +194,9 @@ La clave `instructions` hace que OpenCode cargue `AGENTS.md` automáticamente en
 
 ### Codex CLI
 
-Agrega a `~/.codex/config.toml` (global) o `codex.toml` (raíz del proyecto):
+El instalador crea `.codex/config.toml` en la raíz del proyecto. Para una
+configuración manual, agrega lo siguiente a `~/.codex/config.toml` (global) o
+`.codex/config.toml` (proyecto confiable):
 
 ```toml
 [mcp_servers.specnative]
@@ -201,7 +205,9 @@ args = [
   "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
   "--repo", "/ruta/a/tu/proyecto"
 ]
-type = "stdio"
+cwd = "/ruta/a/tu/proyecto"
+enabled = true
+startup_timeout_sec = 30
 ```
 
 ### Variable de entorno (alternativa universal)
