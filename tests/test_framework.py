@@ -253,9 +253,9 @@ updated_at = "2026-01-01"
             created = []
             errors = []
 
-            with patch.object(install.Path, "home", return_value=home), patch.object(
-                install.shutil, "which", return_value=None
-            ):
+            with patch.dict(install.os.environ, {"XDG_CONFIG_HOME": str(home / ".config")}), patch.object(
+                install.Path, "home", return_value=home
+            ), patch.object(install.shutil, "which", return_value=None):
                 install.setup_global_mcp_configs(target / "runtime", created, errors)
 
             self.assertEqual(errors, [])
