@@ -86,19 +86,20 @@ python3 install.py --target /path/to/your/repo --profile team
 python3 install.py --target /path/to/your/repo --profile platform --include-examples
 ```
 
-### Repair broken MCP
+### Install or repair the global MCP
 
-If your MCP installation is broken, reinstall it without touching other files:
+Install the MCP once per user and machine. It discovers the SpecNative
+repository from the workspace; repositories never contain the MCP runtime.
 
 ```bash
 curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
-  | python3 - --reinstall --target /path/to/your/repo
+  | python3 - --global
 ```
 
 Or locally:
 
 ```bash
-python3 install.py --reinstall --target /path/to/your/repo
+python3 install.py --global
 ```
 
 ### Installation profiles
@@ -114,31 +115,8 @@ Profiles are cumulative — each one adds files on top of the previous layer.
 
 Add `--include-examples` to any profile to include the example authentication initiative.
 
-### Connect via MCP (Claude Code, Claude Desktop, OpenCode)
-
-**MCP configs are created automatically** during installation to `opencode.json`.
-
-For Claude Desktop, add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "specnative": {
-      "command": "python3",
-      "args": ["/path/to/.specnative/specnative_mcp.py"]
-    }
-  }
-}
-```
-
-For Claude Code:
-
-```bash
-claude mcp add specnative \
-  python3 /path/to/.specnative/specnative_mcp.py
-```
-
-See [`.specnative/MCP.md`](./Template-Project-Agents-AI/.specnative/MCP.md) for full per-agent configuration.
+Use `--migrate-local --target /path/to/repo` after `--global` to remove
+recognised legacy local runtime files without touching unrelated configuration.
 
 ---
 
@@ -265,41 +243,13 @@ spec://schema                  → .specnative/SCHEMA.md
 
 **Prompts**: `start_initiative`, `plan_tasks`, `implement_task`, `review_against_spec`, `handoff`, `record_decision`, `record_architecture`, `record_convention`, `close_initiative`
 
-#### Configure per agent
+#### Global configuration
 
-**Claude Code**
-```bash
-claude mcp add specnative \
-  "$(pwd)/.specnative/.venv/bin/python3" "$(pwd)/.specnative/specnative_mcp.py" \
-  -- --repo "$(pwd)"
-```
-
-**Claude Desktop** — `~/Library/Application Support/Claude/claude_desktop_config.json`:
-```json
-{
-  "mcpServers": {
-    "specnative": {
-      "command": "/path/to/.specnative/.venv/bin/python3",
-      "args": ["/path/to/.specnative/specnative_mcp.py", "--repo", "/path/to/project"]
-    }
-  }
-}
-```
-
-**OpenCode** — generated automatically to `opencode.json` during install.
-
-**Codex CLI** — `~/.codex/config.toml` or the project-scoped `.codex/config.toml`:
-```toml
-[mcp_servers.specnative]
-command = "/path/to/project/.specnative/.venv/bin/python3"
-args = [
-  "/path/to/project/.specnative/specnative_mcp.py",
-  "--repo", "/path/to/project"
-]
-cwd = "/path/to/project"
-enabled = true
-startup_timeout_sec = 30
-```
+`python3 install.py --global` installs one runtime in the user data directory
+and registers it in the user configuration for Codex, OpenCode, and Claude
+Code when available. No project `opencode.json` or `.codex/config.toml` is
+created. The server discovers `AGENTS.md` and `spec-native/` from the active
+workspace; `SPECNATIVE_REPO` or `select_repository(path)` are fallbacks.
 
 ---
 

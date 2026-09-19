@@ -39,19 +39,14 @@ en `.claude/commands/`.
 
 La skill `specnative-workflow` se instala en `.claude/skills/` y es detectada
 por Claude Code y OpenCode. También se incluye en `.codex/skills/` para los
-entornos Codex que cargan skills de proyecto. El instalador genera el MCP en
-`.codex/config.toml` y `codex.toml` conserva los prompts como mecanismo de
-respaldo.
+entornos Codex que cargan skills de proyecto. El MCP se instala globalmente;
+`codex.toml` conserva los prompts versionados del proyecto.
 
 ### OpenCode — comandos integrados
 
-Disponibles en el menú de prompts de OpenCode (configurados en `opencode.json`):
+Disponibles mediante el MCP global y los prompts del proyecto.
 
-Todos los comandos comunes se agregan bajo `command` en `opencode.json` desde
-el manifiesto durante la instalación. Las configuraciones existentes se
-preservan y solo se agregan claves ausentes.
-
-### Codex CLI — MCP en .codex/config.toml y prompts en codex.toml
+### Codex CLI — prompts en codex.toml
 
 ```bash
 codex --prompt spec-decision
@@ -61,8 +56,8 @@ codex --prompt spec-review
 ```
 
 Todos los comandos comunes se instalan como prompts `spec-*`; si ya existe un
-`codex.toml`, el instalador agrega solo los prompts faltantes. El MCP se agrega
-al `.codex/config.toml` del proyecto sin reemplazar otras configuraciones.
+`codex.toml`, el instalador agrega solo los prompts faltantes. La conexión MCP
+vive en la configuración global del usuario, no en `.codex/config.toml`.
 
 ### CLI sin agente
 
@@ -72,7 +67,26 @@ python3 specnative.py update            # health check + refinamiento guiado
 python3 specnative.py update --doc stack  # actualizar solo un documento
 ```
 
-## Instalación
+## Instalación global
+
+Ejecuta una vez por usuario y máquina:
+
+```bash
+python3 install.py --global
+```
+
+El runtime se instala fuera de los repositorios y registra la conexión global
+para Codex, OpenCode y Claude. El servidor descubre el repositorio activo desde
+el workspace buscando `AGENTS.md` y `spec-native/`; usa `SPECNATIVE_REPO` o
+`select_repository(path)` solo como alternativa.
+
+Para retirar artefactos locales de instalaciones previas:
+
+```bash
+python3 install.py --global --migrate-local --target /ruta/a/tu/repo
+```
+
+## Instalación heredada (no usar)
 
 El instalador de SpecNative descarga el servidor MCP y crea un entorno virtual
 aislado con todas sus dependencias automáticamente:
@@ -90,7 +104,7 @@ python3 install.py --reinstall --target /ruta/a/tu/repo
 
 ---
 
-## Configuración por agente
+## Configuración heredada por agente (no usar)
 
 El servidor usa el Python del venv aislado en `.specnative/.venv/`.
 Reemplaza `/ruta/a/tu/proyecto` con la ruta absoluta real de tu repositorio.

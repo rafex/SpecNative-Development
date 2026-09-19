@@ -24,7 +24,7 @@ el flujo adecuado cuando el usuario no necesita escogerlo.
 - workflows de planificación, implementación y revisión
 - pipelines documentados para CI/CD
 - `SESSION.md` para continuidad entre agentes
-- servidor MCP con herramientas de lectura, escritura y prompts de workflow
+- contrato para el MCP global con herramientas de lectura, escritura y prompts de workflow
 - comandos nativos para Claude Code, OpenCode y Codex
 - archetypes y templates reutilizables desde MCP
 
@@ -62,10 +62,8 @@ el flujo adecuado cuando el usuario no necesita escogerlo.
 ├── .claude/commands/
 ├── .claude/skills/         # Carga automática del flujo SpecNative en Claude/OpenCode
 ├── .codex/
-│   ├── config.toml         # MCP de proyecto generado para Codex
 │   └── skills/              # Skill de proyecto para entornos Codex compatibles
 ├── codex.toml               # Prompts de proyecto para Codex CLI
-└── opencode.json
 ```
 
 ## Gestion del trabajo

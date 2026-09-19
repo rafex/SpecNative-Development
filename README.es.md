@@ -71,18 +71,15 @@ O descarga una vez y ejecuta localmente:
 python3 install.py --target /ruta/a/tu/repo --profile platform --include-examples
 ```
 
-### Conectar via MCP (Claude Code, Claude Desktop, OpenCode, Codex)
+### Instalar o reparar el MCP global
+
+Instálalo una sola vez por usuario y máquina; descubre el repositorio
+SpecNative desde el workspace activo y nunca escribe el runtime dentro del repo.
 
 ```bash
-pip install "mcp>=1.0,<2.0"
-
-# Claude Code
-claude mcp add specnative \
-  python3 .specnative/specnative_mcp.py \
-  -- --repo /ruta/a/tu/proyecto
+python3 install.py --global
+python3 install.py --global --migrate-local --target /ruta/a/tu/repo
 ```
-
-Consulta [`.specnative/MCP.md`](./Template-Project-Agents-AI/.specnative/MCP.md) para la configuración completa por agente.
 
 ---
 
@@ -189,53 +186,14 @@ criterio de cierre y validación; en otro caso captura una idea triada en
 
 **Prompts**: `start_initiative`, `plan_tasks`, `implement_task`, `review_against_spec`, `record_decision`, `record_architecture`, `record_convention`, `close_initiative`
 
-#### Configuración por agente
+#### Configuración global
 
-**Claude Code**
-```bash
-claude mcp add specnative \
-  python3 .specnative/specnative_mcp.py \
-  -- --repo /ruta/a/tu/proyecto
-```
-
-**Claude Desktop** — `~/Library/Application Support/Claude/claude_desktop_config.json`:
-```json
-{
-  "mcpServers": {
-    "specnative": {
-      "command": "python3",
-      "args": ["/ruta/a/specnative_mcp.py", "--repo", "/ruta/a/tu/proyecto"]
-    }
-  }
-}
-```
-
-**OpenCode** — `.opencode/config.json`:
-```json
-{
-  "mcp": {
-    "servers": {
-      "specnative": {
-        "command": "python3",
-        "args": ["/ruta/a/specnative_mcp.py", "--repo", "/ruta/a/tu/proyecto"]
-      }
-    }
-  }
-}
-```
-
-**Codex CLI** — `~/.codex/config.toml` o el `.codex/config.toml` del proyecto:
-```toml
-[mcp_servers.specnative]
-command = "/ruta/a/tu/proyecto/.specnative/.venv/bin/python3"
-args = [
-  "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
-  "--repo", "/ruta/a/tu/proyecto"
-]
-cwd = "/ruta/a/tu/proyecto"
-enabled = true
-startup_timeout_sec = 30
-```
+`python3 install.py --global` instala un único runtime en el directorio de
+datos del usuario y lo registra en la configuración de usuario de Codex,
+OpenCode y Claude Code cuando está disponible. No crea `opencode.json` ni
+`.codex/config.toml` en los proyectos. El servidor descubre `AGENTS.md` y
+`spec-native/` desde el workspace; `SPECNATIVE_REPO` y
+`select_repository(path)` son alternativas.
 
 ---
 

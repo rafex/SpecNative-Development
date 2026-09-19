@@ -144,6 +144,30 @@ updated_at = "2026-01-01"
             self.assertIn('spec_id = "SPEC-PAY-0001"', task_file)
             self.assertIn('priority = "p2"', task_file)
 
+    def test_mcp_discovers_and_can_select_a_repository(self):
+        mcp = load_mcp_module()
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "project"
+            (target / "spec-native").mkdir(parents=True)
+            (target / "AGENTS.md").write_text("# Agent contract\n", encoding="utf-8")
+            self.assertEqual(mcp._discover_repo(target / "spec-native"), target)
+            self.assertIn(str(target), mcp.select_repository(str(target)))
+
+    def test_migrate_local_mcp_removes_only_generated_artifacts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            server = target / ".specnative/specnative_mcp.py"
+            server.parent.mkdir(parents=True)
+            server.write_text("# SpecNative MCP Server\n", encoding="utf-8")
+            (target / ".specnative/.venv").mkdir()
+            codex = target / ".codex/config.toml"
+            codex.parent.mkdir()
+            codex.write_text('[mcp_servers.specnative]\ncommand = "old"\n\n[profiles.keep]\nname = "keep"\n', encoding="utf-8")
+            install.migrate_local_mcp(target)
+            self.assertFalse(server.exists())
+            self.assertFalse((target / ".specnative/.venv").exists())
+            self.assertIn("[profiles.keep]", codex.read_text(encoding="utf-8"))
+
     def test_context_artifacts_are_created_with_indexes(self):
         mcp = load_mcp_module()
         with tempfile.TemporaryDirectory() as directory:
@@ -210,13 +234,12 @@ updated_at = "2026-01-01"
         names = {command["name"] for command in manifest["commands"]}
         self.assertTrue({"spec-decision", "spec-plan", "spec-implement", "spec-review", "spec-close", "spec-context", "spec-architecture", "spec-convention"}.issubset(names))
 
-    def test_opencode_configuration_is_merged_without_losing_existing_values(self):
+    def test_global_opencode_configuration_is_merged_without_losing_existing_values(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
-            command_manifest = Path(__file__).parents[1] / "Template-Project-Agents-AI/.specnative/commands.json"
-            (target / ".specnative").mkdir()
-            (target / ".specnative/commands.json").write_bytes(command_manifest.read_bytes())
-            config_path = target / "opencode.json"
+            home = target / "home"
+            config_path = home / ".config/opencode/opencode.json"
+            config_path.parent.mkdir(parents=True)
             config_path.write_text(
                 json.dumps(
                     {
@@ -230,20 +253,18 @@ updated_at = "2026-01-01"
             created = []
             errors = []
 
-            install.setup_mcp_configs(target, created, errors)
+            with patch.object(install.Path, "home", return_value=home), patch.object(
+                install.shutil, "which", return_value=None
+            ):
+                install.setup_global_mcp_configs(target / "runtime", created, errors)
 
             self.assertEqual(errors, [])
             merged = json.loads(config_path.read_text(encoding="utf-8"))
             self.assertEqual(merged["$schema"], "custom-schema")
             self.assertEqual(merged["provider"], {"name": "existing"})
             self.assertEqual(merged["command"]["custom-command"]["template"], "keep me")
-            self.assertIn("specnative", merged["mcp"])
-            self.assertIn("spec-init", merged["command"])
-            self.assertIn("spec", merged["command"])
-            self.assertIn("spec-backlog", merged["command"])
-            self.assertIn("spec-decision", merged["command"])
-            self.assertIn("spec-architecture", merged["command"])
-            self.assertIn("spec-convention", merged["command"])
+            self.assertIn("specnative", merged["mcp"]["servers"])
+            self.assertEqual(merged["mcp"]["servers"]["specnative"]["type"], "local")
 
     def test_codex_configuration_receives_missing_managed_prompts(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -259,20 +280,14 @@ updated_at = "2026-01-01"
 
             created = []
             errors = []
-            install.setup_mcp_configs(target, created, errors)
+            install.setup_agent_commands(target, created, errors)
 
             content = codex_file.read_text(encoding="utf-8")
             self.assertEqual(errors, [])
             self.assertIn("[prompts.custom]", content)
             self.assertIn("[prompts.spec-decision]", content)
             self.assertIn("[prompts.spec-architecture]", content)
-            self.assertNotIn("[mcp_servers.specnative]", content)
-            mcp_config = target / ".codex/config.toml"
-            self.assertTrue(mcp_config.exists())
-            mcp_content = mcp_config.read_text(encoding="utf-8")
-            self.assertIn("[mcp_servers.specnative]", mcp_content)
-            self.assertIn('"--repo"', mcp_content)
-            self.assertIn(str(target), mcp_content)
+            self.assertFalse((target / ".codex/config.toml").exists())
 
     def test_install_creates_clean_branch_and_context_profile(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -294,9 +309,7 @@ updated_at = "2026-01-01"
                 relative = url.split("/Template-Project-Agents-AI/", 1)[1]
                 return (template_root / relative).read_bytes()
 
-            with patch.object(install, "download_file", side_effect=fake_download), patch.object(
-                install, "setup_venv", return_value=(target / ".specnative/.venv", [])
-            ):
+            with patch.object(install, "download_file", side_effect=fake_download):
                 install.install(
                     target=target,
                     version="vtest",
@@ -313,7 +326,7 @@ updated_at = "2026-01-01"
             self.assertTrue((target / "spec-native/README.md").exists())
             self.assertTrue((target / "spec-native/workflows/IMPLEMENTATION.md").exists())
             self.assertTrue((target / ".specnative/SCHEMA.md").exists())
-            self.assertTrue((target / ".specnative/specnative_mcp.py").exists())
+            self.assertFalse((target / ".specnative/specnative_mcp.py").exists())
             self.assertTrue((target / ".claude/commands/spec-decision.md").exists())
             self.assertIn("[prompts.spec-decision]", (target / "codex.toml").read_text(encoding="utf-8"))
 

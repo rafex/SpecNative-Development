@@ -84,7 +84,24 @@ _parser.add_argument(
     help="Port for SSE transport (default: 8765)",
 )
 _ARGS, _ = _parser.parse_known_args()
-REPO = Path(_ARGS.repo).resolve()
+
+
+def _discover_repo(start: Path) -> Path | None:
+    """Find the nearest SpecNative repository without relying on OS paths."""
+    start = start.resolve()
+    for candidate in (start, *start.parents):
+        if (candidate / "AGENTS.md").is_file() and (candidate / "spec-native").is_dir():
+            return candidate
+    return None
+
+
+def _resolve_initial_repo() -> Path:
+    requested = _ARGS.repo
+    candidate = Path(requested).expanduser().resolve()
+    return _discover_repo(candidate) or candidate
+
+
+REPO = _resolve_initial_repo()
 
 # ---------------------------------------------------------------------------
 # FastMCP server
@@ -93,7 +110,8 @@ REPO = Path(_ARGS.repo).resolve()
 mcp = FastMCP(
     "specnative",
     instructions=(
-        f"SpecNative repository at {REPO}. "
+        "SpecNative operates on the current workspace. "
+        "Use select_repository(path) only when the client did not start in a SpecNative workspace. "
         "Read AGENTS.md first. All project context is in spec-native/. "
         "If there is active work, call resume() before starting. "
         "Load only the minimum context needed for the current task."
@@ -105,6 +123,20 @@ mcp = FastMCP(
 # ---------------------------------------------------------------------------
 
 SN = REPO / "spec-native"
+
+
+def _set_repository(path: str | Path) -> Path:
+    """Select a valid repository for this stdio MCP session."""
+    global REPO, SN
+    resolved = _discover_repo(Path(path).expanduser())
+    if resolved is None:
+        raise ValueError(
+            "No SpecNative repository found. Start the client from a repository containing "
+            "AGENTS.md and spec-native/, set SPECNATIVE_REPO, or call select_repository(path)."
+        )
+    REPO = resolved
+    SN = REPO / "spec-native"
+    return REPO
 
 
 def _read(path: Path) -> str:
@@ -530,6 +562,24 @@ def resource_schema() -> str:
 # ---------------------------------------------------------------------------
 # Tools — read-only queries
 # ---------------------------------------------------------------------------
+
+@mcp.tool()
+def select_repository(path: str) -> str:
+    """Select the SpecNative repository used by this MCP session."""
+    try:
+        repo = _set_repository(path)
+    except ValueError as exc:
+        return str(exc)
+    return f"SpecNative repository selected: {repo}"
+
+
+@mcp.tool()
+def current_repository() -> str:
+    """Return the repository currently selected for this MCP session."""
+    if _discover_repo(REPO) is None:
+        return "No SpecNative repository is selected; call select_repository(path)."
+    return str(REPO)
+
 
 @mcp.tool()
 def status() -> str:

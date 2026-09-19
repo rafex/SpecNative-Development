@@ -18,12 +18,12 @@ The installer:
   2. Creates a dedicated branch.
   3. Downloads template files from the SpecNative GitHub release.
   4. Writes them to the target repository.
-  5. Creates .specnative/.venv and installs the mcp package.
+  5. Installs only the repository contract and agent prompts.
 
---reinstall mode:
-  Reinstalls only the MCP server and venv without touching other files.
-  Does not require a clean worktree. Use this to repair a broken MCP.
-  Usage: python3 install.py --reinstall [--target /path/to/repo]
+--global mode:
+  Installs one MCP server and venv for the current user, then configures
+  supported agent clients globally. Use --migrate-local to remove recognised
+  legacy runtime files from one repository after the global install.
 
 Profiles (each layer is cumulative):
 
@@ -76,11 +76,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import shutil
 import sys
-import venv as _venv
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen, Request
@@ -274,42 +274,6 @@ def create_branch(target: Path, branch: str) -> None:
 # ---------------------------------------------------------------------------
 
 MCP_MIN_PYTHON = (3, 10)
-VENV_GITIGNORE_ENTRY = ".specnative/.venv/"
-VENV_GITIGNORE_COMMENT = "# SpecNative — venv is generated; do not commit\n"
-
-
-def purge_stale_venv(target: Path) -> None:
-    """Remove a leftover .specnative/.venv/ before git operations.
-
-    A failed previous install may leave venv files (with Windows CRLF
-    line endings, binary data, etc.) that cause 'fatal: CRLF would be
-    replaced by LF' errors when git inspects the working tree.
-    The venv is always recreated by setup_venv(), so it is safe to delete.
-    """
-    venv_dir = target / ".specnative" / ".venv"
-    if venv_dir.exists():
-        print("Removing stale .specnative/.venv/ before git operations …",
-              file=sys.stderr, flush=True)
-        shutil.rmtree(venv_dir)
-
-
-def ensure_venv_gitignore(target: Path, created: list[str]) -> None:
-    """Add .specnative/.venv/ to .gitignore so git never tracks venv files."""
-    gitignore = target / ".gitignore"
-    if gitignore.exists():
-        content = gitignore.read_text(encoding="utf-8")
-        if VENV_GITIGNORE_ENTRY in content:
-            return  # already ignored
-        updated = (content.rstrip("\n")
-                   + f"\n\n{VENV_GITIGNORE_COMMENT}{VENV_GITIGNORE_ENTRY}\n")
-        gitignore.write_text(updated, encoding="utf-8")
-        created.append(".gitignore")
-    else:
-        gitignore.write_text(
-            f"{VENV_GITIGNORE_COMMENT}{VENV_GITIGNORE_ENTRY}\n",
-            encoding="utf-8",
-        )
-        created.append(".gitignore")
 
 
 def find_python310() -> str | None:
@@ -347,9 +311,9 @@ def find_python310() -> str | None:
     return None
 
 
-def setup_venv(target: Path) -> tuple[Path, list[str]]:
-    """Create .specnative/.venv with a Python >= 3.10, upgrade pip, install mcp."""
-    venv_dir = target / ".specnative" / ".venv"
+def setup_global_venv(runtime_root: Path) -> tuple[Path, list[str]]:
+    """Create the single user-scoped venv used by every SpecNative repository."""
+    venv_dir = runtime_root / ".venv"
     errors: list[str] = []
 
     python_bin = find_python310()
@@ -361,7 +325,7 @@ def setup_venv(target: Path) -> tuple[Path, list[str]]:
         )
         return venv_dir, errors
 
-    print(f"Setting up .specnative/.venv (Python: {python_bin}) …",
+    print(f"Setting up global SpecNative venv (Python: {python_bin}) …",
           file=sys.stderr, flush=True)
     try:
         subprocess.run(
@@ -642,67 +606,122 @@ def setup_mcp_configs(
         errors.append(f"Failed to update opencode.json safely: {exc}")
 
 
+def setup_agent_commands(target: Path, created: list[str], errors: list[str], force: bool = False) -> None:
+    """Install repository-owned prompts and commands, never an MCP runtime/config."""
+    try:
+        commands = _load_agent_commands(target)
+        _write_claude_commands(target, commands, created, skipped=[], force=force)
+        _merge_codex_prompts(target, commands, created, errors)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(f"Failed to load SpecNative command manifest: {exc}")
+
+
+def global_runtime_root() -> Path:
+    """Return the platform-native per-user location for the shared MCP runtime."""
+    if sys.platform == "win32":
+        return Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "SpecNative"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "SpecNative"
+    return Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share")) / "specnative"
+
+
+def _global_python(runtime_root: Path) -> Path:
+    return runtime_root / ".venv" / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python3")
+
+
+def _global_server(runtime_root: Path) -> Path:
+    return runtime_root / "specnative_mcp.py"
+
+
+def _merge_toml_server(config: Path, rendered: str, created: list[str], errors: list[str]) -> None:
+    """Add or replace the managed server table while preserving other TOML tables."""
+    try:
+        content = config.read_text(encoding="utf-8") if config.exists() else ""
+        pattern = r"(?ms)^\[mcp_servers\.specnative\]\s*.*?(?=^\[|\Z)"
+        updated = re.sub(pattern, rendered, content) if re.search(pattern, content) else content.rstrip() + ("\n\n" if content.strip() else "") + rendered
+        config.parent.mkdir(parents=True, exist_ok=True)
+        config.write_text(updated.rstrip() + "\n", encoding="utf-8")
+        created.append(str(config))
+    except (OSError, re.error) as exc:
+        errors.append(f"Failed to update {config}: {exc}")
+
+
+def setup_global_mcp_configs(runtime_root: Path, created: list[str], errors: list[str]) -> None:
+    """Register the shared executable in user-scoped MCP configurations."""
+    python, server = _global_python(runtime_root), _global_server(runtime_root)
+    quoted = lambda value: json.dumps(str(value), ensure_ascii=False)
+    _merge_toml_server(
+        Path.home() / ".codex" / "config.toml",
+        "[mcp_servers.specnative]\n"
+        f"command = {quoted(python)}\nargs = [{quoted(server)}]\n"
+        "enabled = true\nstartup_timeout_sec = 30\n",
+        created, errors,
+    )
+
+    opencode = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "opencode" / "opencode.json"
+    try:
+        data = json.loads(opencode.read_text(encoding="utf-8")) if opencode.exists() else {"$schema": "https://opencode.ai/config.json"}
+        mcp_config = data.setdefault("mcp", {})
+        servers = mcp_config.setdefault("servers", {})
+        servers["specnative"] = {"type": "local", "command": [str(python), str(server)]}
+        opencode.parent.mkdir(parents=True, exist_ok=True)
+        opencode.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        created.append(str(opencode))
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(f"Failed to update {opencode}: {exc}")
+
+    if sys.platform == "darwin":
+        desktop = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+    elif sys.platform == "win32":
+        desktop = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming")) / "Claude" / "claude_desktop_config.json"
+    else:
+        desktop = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "Claude" / "claude_desktop_config.json"
+    try:
+        desktop_data = json.loads(desktop.read_text(encoding="utf-8")) if desktop.exists() else {}
+        desktop_data.setdefault("mcpServers", {})["specnative"] = {"command": str(python), "args": [str(server)]}
+        desktop.parent.mkdir(parents=True, exist_ok=True)
+        desktop.write_text(json.dumps(desktop_data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        created.append(str(desktop))
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        errors.append(f"Failed to update {desktop}: {exc}")
+
+    claude = shutil.which("claude")
+    if claude:
+        try:
+            subprocess.run([claude, "mcp", "add", "--scope", "user", "specnative", "--", str(python), str(server)], check=True, capture_output=True, text=True)
+            created.append("Claude Code user MCP configuration")
+        except subprocess.CalledProcessError as exc:
+            errors.append(f"Failed to configure Claude Code: {exc.stderr.strip()}")
+
+
+def install_global(version: str) -> None:
+    """Install or update one MCP runtime and user-scoped client configurations."""
+    runtime_root = global_runtime_root()
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    errors: list[str] = []
+    created: list[str] = []
+    try:
+        _global_server(runtime_root).write_bytes(download_file(release_asset_url(version, "specnative_mcp.py")))
+        _global_server(runtime_root).chmod(0o755)
+        created.append(str(_global_server(runtime_root)))
+    except RuntimeError as exc:
+        errors.append(str(exc))
+    _, venv_errors = setup_global_venv(runtime_root)
+    errors.extend(venv_errors)
+    setup_global_mcp_configs(runtime_root, created, errors)
+    print(json.dumps({"version": version, "mode": "global", "runtime": str(runtime_root), "created": created, "errors": errors}, indent=2, ensure_ascii=False))
+    if errors:
+        sys.exit(1)
+
+
 # ---------------------------------------------------------------------------
 # Reinstall MCP only
 # ---------------------------------------------------------------------------
 
 def reinstall_mcp(target: Path, version: str, force: bool = False) -> None:
-    """Repair MCP server and venv without touching other files.
-
-    Does not require a clean worktree or create a git branch.
-    Only reinstalls .specnative/specnative_mcp.py and .specnative/.venv.
-    """
-    ensure_git_repo(target)
-
-    errors: list[str] = []
-
-    print("Reinstalling MCP server …", file=sys.stderr, flush=True)
-
-    # Download and write MCP server
-    mcp_dest = target / ".specnative" / "specnative_mcp.py"
-    mcp_url = release_asset_url(version, "specnative_mcp.py")
-    try:
-        mcp_content = download_file(mcp_url)
-        mcp_dest.parent.mkdir(parents=True, exist_ok=True)
-        mcp_dest.write_bytes(mcp_content)
-        mcp_dest.chmod(0o755)
-        print(f"✓ Downloaded .specnative/specnative_mcp.py", file=sys.stderr)
-    except RuntimeError as exc:
-        errors.append(str(exc))
-
-    # Purge and recreate venv
-    purge_stale_venv(target)
-    venv_dir, venv_errors = setup_venv(target)
-    errors.extend(venv_errors)
-
-    if sys.platform == "win32":
-        venv_python = str(venv_dir / "Scripts" / "python.exe")
-    else:
-        venv_python = str(venv_dir / "bin" / "python3")
-
-    created: list[str] = []
-    setup_mcp_configs(target, created, errors, force=force)
-
-    print(json.dumps({
-        "version": version,
-        "target": str(target),
-        "mode": "reinstall_mcp_only",
-        "venv": str(venv_dir),
-        "venv_python": venv_python,
-        "created": created,
-        "errors": errors,
-    }, indent=2, ensure_ascii=False))
-
-    if errors:
-        print(f"\n{len(errors)} error(s) during MCP reinstall.", file=sys.stderr)
-        sys.exit(1)
-
-    print(
-        f"\n✓ MCP reinstalled successfully.\n"
-        f"MCP server : .specnative/specnative_mcp.py\n"
-        f"Venv Python: {venv_python}\n"
-        f"Configure your agent following: .specnative/MCP.md"
-    )
+    """Backward-compatible alias for the global MCP installer."""
+    print("--reinstall is deprecated; installing the user-scoped MCP instead.", file=sys.stderr)
+    install_global(version)
 
 
 # ---------------------------------------------------------------------------
@@ -718,7 +737,6 @@ def install(
     force: bool,
 ) -> None:
     ensure_git_repo(target)
-    purge_stale_venv(target)      # remove leftover venv before git sees it
     ensure_clean_worktree(target)
     create_branch(target, branch)
 
@@ -733,8 +751,6 @@ def install(
     created: list[str] = []
     skipped: list[str] = []
     errors: list[str] = []
-
-    ensure_venv_gitignore(target, created)  # add .venv to .gitignore early
 
     for relative in paths:
         dest = target / relative
@@ -751,31 +767,8 @@ def install(
         dest.write_bytes(content)
         created.append(relative)
 
-    # Download MCP server into .specnative/
-    mcp_dest = target / ".specnative" / "specnative_mcp.py"
-    if mcp_dest.exists() and not force:
-        skipped.append(".specnative/specnative_mcp.py")
-    else:
-        mcp_url = release_asset_url(version, "specnative_mcp.py")
-        try:
-            mcp_content = download_file(mcp_url)
-            mcp_dest.parent.mkdir(parents=True, exist_ok=True)
-            mcp_dest.write_bytes(mcp_content)
-            mcp_dest.chmod(0o755)
-            created.append(".specnative/specnative_mcp.py")
-        except RuntimeError as exc:
-            errors.append(str(exc))
-
-    # Create .specnative/.venv and install mcp
-    venv_dir, venv_errors = setup_venv(target)
-    if sys.platform == "win32":
-        venv_python = str(venv_dir / "Scripts" / "python.exe")
-    else:
-        venv_python = str(venv_dir / "bin" / "python3")
-    errors.extend(venv_errors)
-
-    # Create MCP configuration files for OpenCode and other clients
-    setup_mcp_configs(target, created, errors, force=force)
+    # Commands and prompts are project content; MCP runtime/configuration is global.
+    setup_agent_commands(target, created, errors, force=force)
 
     print(json.dumps({
         "version": version,
@@ -785,8 +778,6 @@ def install(
         "include_examples": include_examples,
         "created": created,
         "skipped_existing": skipped,
-        "venv": str(venv_dir),
-        "venv_python": venv_python,
         "errors": errors,
     }, indent=2, ensure_ascii=False))
 
@@ -796,11 +787,48 @@ def install(
 
     print(
         f"\nSpecNative {version} installed on branch '{branch}'.\n"
-        f"MCP server : .specnative/specnative_mcp.py\n"
-        f"Venv Python: {venv_python}\n"
-        f"Configure your agent following: .specnative/MCP.md\n"
+        f"Install the global MCP once with: python3 install.py --global\n"
         f"Review the files, then merge the branch into your main branch."
     )
+
+
+def migrate_local_mcp(target: Path) -> None:
+    """Remove only recognisable legacy SpecNative MCP artifacts from one repo."""
+    removed: list[str] = []
+    server = target / ".specnative" / "specnative_mcp.py"
+    if server.exists() and "SpecNative MCP Server" in server.read_text(encoding="utf-8", errors="ignore"):
+        server.unlink()
+        removed.append(str(server.relative_to(target)))
+    venv_dir = target / ".specnative" / ".venv"
+    if venv_dir.exists():
+        shutil.rmtree(venv_dir)
+        removed.append(str(venv_dir.relative_to(target)))
+
+    codex = target / ".codex" / "config.toml"
+    if codex.exists():
+        content = codex.read_text(encoding="utf-8")
+        updated = re.sub(r"(?ms)^\[mcp_servers\.specnative\]\s*.*?(?=^\[|\Z)", "", content).strip()
+        if updated != content.strip():
+            if updated:
+                codex.write_text(updated + "\n", encoding="utf-8")
+            else:
+                codex.unlink()
+            removed.append(str(codex.relative_to(target)))
+
+    opencode = target / "opencode.json"
+    if opencode.exists():
+        try:
+            data = json.loads(opencode.read_text(encoding="utf-8"))
+            mcp_config = data.get("mcp", {})
+            if isinstance(mcp_config, dict) and "specnative" in mcp_config:
+                del mcp_config["specnative"]
+                if not mcp_config:
+                    data.pop("mcp", None)
+                opencode.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+                removed.append(str(opencode.relative_to(target)))
+        except json.JSONDecodeError:
+            pass
+    print(json.dumps({"mode": "migrate_local_mcp", "target": str(target), "removed": removed}, indent=2, ensure_ascii=False))
 
 
 # ---------------------------------------------------------------------------
@@ -854,6 +882,17 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Repair MCP only (no branch, no worktree check)",
     )
+    parser.add_argument(
+        "--global",
+        dest="global_install",
+        action="store_true",
+        help="Install or update the user-scoped SpecNative MCP and client configs",
+    )
+    parser.add_argument(
+        "--migrate-local",
+        action="store_true",
+        help="Remove recognised legacy project-scoped MCP artifacts from --target",
+    )
     return parser
 
 
@@ -864,7 +903,13 @@ def main() -> int:
     version = resolve_version(args.version)
     target = Path(args.target).resolve()
 
-    if args.reinstall:
+    if args.global_install:
+        install_global(version)
+        if args.migrate_local:
+            migrate_local_mcp(target)
+    elif args.migrate_local:
+        migrate_local_mcp(target)
+    elif args.reinstall:
         reinstall_mcp(target=target, version=version, force=args.force)
     else:
         branch = args.branch or f"{INSTALL_BRANCH_PREFIX}-{version}"
