@@ -151,7 +151,7 @@ Copia `.specnative/integrations/github-project.toml.example`, configura el ID
 ProjectV2 y los nombres de estado, y revisa el JSON de `github-project plan`.
 No realiza solicitudes de red ni hace a GitHub autoritativo.
 
-### Servidor MCP — `tools/specnative_mcp.py` (v0.9) <!-- MCP_VERSION -->
+### Servidor MCP — `tools/specnative_mcp.py` (v0.10) <!-- MCP_VERSION -->
 
 Expone el repositorio como recursos, herramientas y prompts MCP para que
 cualquier agente compatible trabaje en modo spec-first sin navegar
@@ -252,6 +252,7 @@ Menos útil para prototipos muy pequeños y de corta duración donde mantener el
 | **v0.8.0** | **Flujo corto `/spec` · Skills · Backlog Markdown · Índices de contexto · Plan de exportación a GitHub Projects** |
 | **v0.8.1** | [Notas de la versión](https://github.com/rafex/SpecNative-Development/releases/tag/v0.8.1) |
 | **v0.9.0** | [Notas de la versión](https://github.com/rafex/SpecNative-Development/releases/tag/v0.9.0) |
+| **v0.10.1** | [Notas de la versión](https://github.com/rafex/SpecNative-Development/releases/tag/v0.10.1) |
 <!-- END_VERSIONS -->
 
 ---
