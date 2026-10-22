@@ -79,6 +79,7 @@ SpecNative desde el workspace activo y nunca escribe el runtime dentro del repo.
 ```bash
 python3 install.py --global
 python3 install.py --global --migrate-local --target /ruta/a/tu/repo
+python3 install.py --doctor   # diagnostica runtime y registros de clientes
 ```
 
 ---

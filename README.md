@@ -118,6 +118,9 @@ Add `--include-examples` to any profile to include the example authentication in
 Use `--migrate-local --target /path/to/repo` after `--global` to remove
 recognised legacy local runtime files without touching unrelated configuration.
 
+Run `python3 install.py --doctor` to verify the user-scoped runtime and its
+Codex, OpenCode, Claude Desktop and Claude Code registrations (exit code 1 on failure).
+
 ---
 
 ## Repository layout

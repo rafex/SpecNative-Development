@@ -1,4 +1,5 @@
 import importlib.util
+import io
 import json
 import subprocess
 import sys
@@ -150,7 +151,7 @@ updated_at = "2026-01-01"
             target = Path(directory) / "project"
             (target / "spec-native").mkdir(parents=True)
             (target / "AGENTS.md").write_text("# Agent contract\n", encoding="utf-8")
-            self.assertEqual(mcp._discover_repo(target / "spec-native"), target)
+            self.assertEqual(mcp._discover_repo(target / "spec-native"), target.resolve())
             self.assertIn(str(target), mcp.select_repository(str(target)))
 
     def test_migrate_local_mcp_removes_only_generated_artifacts(self):
@@ -263,8 +264,47 @@ updated_at = "2026-01-01"
             self.assertEqual(merged["$schema"], "custom-schema")
             self.assertEqual(merged["provider"], {"name": "existing"})
             self.assertEqual(merged["command"]["custom-command"]["template"], "keep me")
-            self.assertIn("specnative", merged["mcp"]["servers"])
-            self.assertEqual(merged["mcp"]["servers"]["specnative"]["type"], "local")
+            self.assertEqual(merged["mcp"]["specnative"]["type"], "local")
+            self.assertNotIn("servers", merged["mcp"])
+
+    def test_global_opencode_migrates_legacy_servers_schema(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory) / "home"
+            config_path = home / ".config/opencode/opencode.json"
+            config_path.parent.mkdir(parents=True)
+            config_path.write_text(json.dumps({"mcp": {"servers": {"specnative": {"type": "local"}}}}), encoding="utf-8")
+            created, errors = [], []
+            with patch.dict(install.os.environ, {"XDG_CONFIG_HOME": str(home / ".config")}), patch.object(
+                install.Path, "home", return_value=home
+            ), patch.object(install.shutil, "which", return_value=None):
+                install.setup_global_mcp_configs(Path(directory) / "runtime", created, errors)
+            merged = json.loads(config_path.read_text(encoding="utf-8"))
+            self.assertNotIn("servers", merged["mcp"])
+            self.assertIn("specnative", merged["mcp"])
+
+    def test_claude_desktop_is_skipped_when_not_installed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory) / "home"
+            home.mkdir()
+            created, errors = [], []
+            with patch.dict(install.os.environ, {"XDG_CONFIG_HOME": str(home / ".config"), "APPDATA": str(home / "AppData")}), patch.object(
+                install.Path, "home", return_value=home
+            ), patch.object(install.shutil, "which", return_value=None):
+                install.setup_global_mcp_configs(Path(directory) / "runtime", created, errors)
+                desktop = install._claude_desktop_config()
+            self.assertEqual(errors, [])
+            self.assertFalse(desktop.exists())
+
+    def test_doctor_reports_missing_runtime(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory) / "home"
+            home.mkdir()
+            with patch.dict(install.os.environ, {"XDG_CONFIG_HOME": str(home / ".config"), "XDG_DATA_HOME": str(home / "data"), "LOCALAPPDATA": str(home / "data")}), patch.object(
+                install.Path, "home", return_value=home
+            ), patch.object(install.shutil, "which", return_value=None), patch.object(
+                install, "global_runtime_root", return_value=home / "runtime"
+            ), patch("sys.stdout", new_callable=io.StringIO):
+                self.assertEqual(install.doctor(), 1)
 
     def test_codex_configuration_receives_missing_managed_prompts(self):
         with tempfile.TemporaryDirectory() as directory:
