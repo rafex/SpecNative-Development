@@ -260,6 +260,7 @@ Menos útil para prototipos muy pequeños y de corta duración donde mantener el
 | **v0.8.1** | [Notas de la versión](https://github.com/rafex/SpecNative-Development/releases/tag/v0.8.1) |
 | **v0.9.0** | [Notas de la versión](https://github.com/rafex/SpecNative-Development/releases/tag/v0.9.0) |
 | **v0.10.1** | [Notas de la versión](https://github.com/rafex/SpecNative-Development/releases/tag/v0.10.1) |
+| **v0.10.2** | [Notas de la versión](https://github.com/rafex/SpecNative-Development/releases/tag/v0.10.2) |
 <!-- END_VERSIONS -->
 
 ---
