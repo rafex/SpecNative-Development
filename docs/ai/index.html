@@ -102,30 +102,23 @@
           <section class="ref-section" id="mcp">
             <h2>MCP server — v0.9</h2>
             <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
-              <code>.specnative/specnative_mcp.py</code> exposes the repository as MCP
+              The user-level <code>specnative_mcp.py</code> runtime exposes the repository as MCP
               <strong>resources</strong>, <strong>tools</strong>, and <strong>prompts</strong>
               so any agent works spec-first without navigating files manually.
-              Installed automatically with its own venv. Supports stdio and SSE transport.
+              Installed once per user with <code>python3 install.py --global</code> (no <code>sudo</code>) and shared by every repository; it finds the repo from the client's working directory. Verify with <code>python3 install.py --doctor</code>. Supports stdio and SSE transport.
             </p>
 
-            <h3>Quick setup — Claude Code</h3>
+            <h3>Quick setup — all clients</h3>
             <div class="code-card">
-              <pre><code># Add via CLI (from project root)
-claude mcp add specnative \
-  "$(pwd)/.specnative/.venv/bin/python3" \
-  "$(pwd)/.specnative/specnative_mcp.py" \
-  -- --repo "$(pwd)"
+              <pre><code># Once per user and machine: installs the runtime and registers
+# Claude Code (user scope), Codex, OpenCode and Claude Desktop (if installed)
+python3 install.py --global
 
-# Or add to .claude/mcp_settings.json
-{
-  "mcpServers": {
-    "specnative": {
-      "command": "/your/project/.specnative/.venv/bin/python3",
-      "args": ["/your/project/.specnative/specnative_mcp.py",
-               "--repo", "/your/project"]
-    }
-  }
-}</code></pre>
+# Diagnose runtime and client registrations (exit code 1 on failure)
+python3 install.py --doctor
+
+# Remove legacy per-project MCP artifacts
+python3 install.py --global --migrate-local --target /path/to/repo</code></pre>
             </div>
 
             <h3>Resources</h3>
@@ -266,13 +259,10 @@ claude mcp add specnative \
 │       ├── CI.md          # Automated validation gates
 │       └── CD.md          # Delivery process and environments
 ├── .claude/commands/      # Slash commands: /spec-init /spec-update /spec-status /spec-handoff
-├── .codex/config.toml     # Project-scoped MCP for Codex CLI
 ├── codex.toml             # Codex CLI prompt commands
-├── opencode.json          # OpenCode MCP + commands + instructions
 └── .specnative/
     ├── SCHEMA.md           # Framework contract (not project content)
-    ├── MCP.md              # MCP server configuration per agent
-    ├── specnative_mcp.py   # MCP server (installed automatically)
+    ├── MCP.md              # MCP guide (server runs from the user-level runtime)
     ├── archetypes/         # Custom archetypes (user-defined)
     │   └── README.md
     └── templates/          # Reusable spec templates + decision snippets
@@ -766,8 +756,8 @@ curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/downlo
 curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
   | python3 - --target /path/to/repo --profile team
 
-# Repair broken MCP (no branch, no worktree check)
-python3 install.py --reinstall --target /path/to/repo</code></pre>
+# Install or update the user-level MCP (no branch, no sudo)
+python3 install.py --global</code></pre>
             </div>
           </section>
 

@@ -204,19 +204,14 @@ curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/downlo
 
 ## MCP server (tools/specnative_mcp.py — lives in SpecNative Development repo)
 
-Requires: pip install mcp
+Install once per user (no sudo; runtime in the user data directory, shared by all repos):
+  python3 install.py --global          # registers Claude Code (user scope), Codex, OpenCode, Claude Desktop
+  python3 install.py --doctor          # diagnose runtime and client registrations
+  python3 install.py --global --migrate-local --target /path/to/repo   # remove legacy per-project MCP files
 
-Configure in your agent (stdio transport):
-```json
-{
-  "mcpServers": {
-    "specnative": {
-      "command": "python3",
-      "args": [".specnative/specnative_mcp.py", "--repo", "/path/to/project"]
-    }
-  }
-}
-```
+The server finds the repository from the client's working directory (nearest
+ancestor with AGENTS.md and spec-native/). Fallbacks: SPECNATIVE_REPO env var or
+the select_repository(path) tool.
 
 Resources (read by URI):
   spec://agents                  → AGENTS.md

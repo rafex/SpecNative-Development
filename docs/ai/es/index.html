@@ -103,18 +103,22 @@
           <section class="ref-section" id="mcp">
             <h2>Servidor MCP — v0.9</h2>
             <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1.25rem;">
-              <code>.specnative/specnative_mcp.py</code> expone el repositorio como
+              El runtime de usuario <code>specnative_mcp.py</code> expone el repositorio como
               <strong>recursos</strong>, <strong>herramientas</strong> y <strong>prompts</strong>
-              MCP. Se instala automáticamente con su propio venv. Soporta transporte stdio y SSE.
+              MCP. Se instala una vez por usuario con <code>python3 install.py --global</code> (sin <code>sudo</code>) y lo comparten todos los repositorios; encuentra el repo desde el directorio de trabajo del cliente. Verifica con <code>python3 install.py --doctor</code>. Soporta transporte stdio y SSE.
             </p>
 
-            <h3>Configuración rápida — Claude Code</h3>
+            <h3>Configuración rápida — todos los clientes</h3>
             <div class="code-card">
-              <pre><code># Agregar desde la CLI (desde la raíz del proyecto)
-claude mcp add specnative \
-  "$(pwd)/.specnative/.venv/bin/python3" \
-  "$(pwd)/.specnative/specnative_mcp.py" \
-  -- --repo "$(pwd)"</code></pre>
+              <pre><code># Una vez por usuario y máquina: instala el runtime y registra
+# Claude Code (ámbito de usuario), Codex, OpenCode y Claude Desktop (si está instalado)
+python3 install.py --global
+
+# Diagnostica runtime y registros de clientes (código 1 si algo falla)
+python3 install.py --doctor
+
+# Retira artefactos MCP heredados por proyecto
+python3 install.py --global --migrate-local --target /ruta/al/repo</code></pre>
             </div>
 
             <h3>Recursos</h3>
@@ -255,13 +259,10 @@ claude mcp add specnative \
 │       ├── CI.md          # Gates de validación automatizados
 │       └── CD.md          # Proceso de entrega y ambientes
 ├── .claude/commands/      # Slash commands: /spec-init /spec-update /spec-status /spec-handoff
-├── .codex/config.toml     # MCP de proyecto para Codex CLI
 ├── codex.toml             # Comandos prompt para Codex CLI
-├── opencode.json          # MCP + prompts para OpenCode
 └── .specnative/
     ├── SCHEMA.md           # Contrato del framework (no contenido del proyecto)
-    ├── MCP.md              # Configuración del servidor MCP por agente
-    ├── specnative_mcp.py   # Servidor MCP (instalado automáticamente)
+    ├── MCP.md              # Guía MCP (el servidor corre desde el runtime del usuario)
     ├── archetypes/         # Archetypes propios del equipo
     │   └── README.md
     └── templates/          # Spec templates + decision snippets
