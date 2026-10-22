@@ -86,6 +86,12 @@ Para retirar artefactos locales de instalaciones previas:
 python3 install.py --global --migrate-local --target /ruta/a/tu/repo
 ```
 
+Para diagnosticar el runtime y los registros de los clientes:
+
+```bash
+python3 install.py --doctor
+```
+
 ## Instalación heredada (no usar)
 
 El instalador de SpecNative descarga el servidor MCP y crea un entorno virtual

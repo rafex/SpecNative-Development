@@ -646,6 +646,14 @@ def _merge_toml_server(config: Path, rendered: str, created: list[str], errors: 
         errors.append(f"Failed to update {config}: {exc}")
 
 
+def _claude_desktop_config() -> Path:
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+    if sys.platform == "win32":
+        return Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming")) / "Claude" / "claude_desktop_config.json"
+    return Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "Claude" / "claude_desktop_config.json"
+
+
 def setup_global_mcp_configs(runtime_root: Path, created: list[str], errors: list[str]) -> None:
     """Register the shared executable in user-scoped MCP configurations."""
     python, server = _global_python(runtime_root), _global_server(runtime_root)
@@ -662,32 +670,33 @@ def setup_global_mcp_configs(runtime_root: Path, created: list[str], errors: lis
     try:
         data = json.loads(opencode.read_text(encoding="utf-8")) if opencode.exists() else {"$schema": "https://opencode.ai/config.json"}
         mcp_config = data.setdefault("mcp", {})
-        servers = mcp_config.setdefault("servers", {})
-        servers["specnative"] = {"type": "local", "command": [str(python), str(server)]}
+        legacy = mcp_config.get("servers")
+        if isinstance(legacy, dict):
+            legacy.pop("specnative", None)  # earlier releases wrote the wrong schema
+            if not legacy:
+                del mcp_config["servers"]
+        mcp_config["specnative"] = {"type": "local", "enabled": True, "command": [str(python), str(server)]}
         opencode.parent.mkdir(parents=True, exist_ok=True)
         opencode.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         created.append(str(opencode))
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         errors.append(f"Failed to update {opencode}: {exc}")
 
-    if sys.platform == "darwin":
-        desktop = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
-    elif sys.platform == "win32":
-        desktop = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming")) / "Claude" / "claude_desktop_config.json"
-    else:
-        desktop = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "Claude" / "claude_desktop_config.json"
-    try:
-        desktop_data = json.loads(desktop.read_text(encoding="utf-8")) if desktop.exists() else {}
-        desktop_data.setdefault("mcpServers", {})["specnative"] = {"command": str(python), "args": [str(server)]}
-        desktop.parent.mkdir(parents=True, exist_ok=True)
-        desktop.write_text(json.dumps(desktop_data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        created.append(str(desktop))
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
-        errors.append(f"Failed to update {desktop}: {exc}")
+    desktop = _claude_desktop_config()
+    if desktop.parent.is_dir():  # Claude Desktop is not installed otherwise
+        try:
+            desktop_data = json.loads(desktop.read_text(encoding="utf-8")) if desktop.exists() else {}
+            desktop_data.setdefault("mcpServers", {})["specnative"] = {"command": str(python), "args": [str(server)]}
+            desktop.write_text(json.dumps(desktop_data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            created.append(str(desktop))
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            errors.append(f"Failed to update {desktop}: {exc}")
 
     claude = shutil.which("claude")
     if claude:
         try:
+            # `claude mcp add` fails when the server exists; remove first (a missing entry is fine).
+            subprocess.run([claude, "mcp", "remove", "--scope", "user", "specnative"], check=False, capture_output=True, text=True)
             subprocess.run([claude, "mcp", "add", "--scope", "user", "specnative", "--", str(python), str(server)], check=True, capture_output=True, text=True)
             created.append("Claude Code user MCP configuration")
         except subprocess.CalledProcessError as exc:
@@ -712,6 +721,72 @@ def install_global(version: str) -> None:
     print(json.dumps({"version": version, "mode": "global", "runtime": str(runtime_root), "created": created, "errors": errors}, indent=2, ensure_ascii=False))
     if errors:
         sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
+# Doctor
+# ---------------------------------------------------------------------------
+
+def doctor() -> int:
+    """Check the user-scoped runtime and client registrations. Returns 0 when healthy."""
+    runtime_root = global_runtime_root()
+    python, server = _global_python(runtime_root), _global_server(runtime_root)
+    checks: list[dict[str, str]] = []
+
+    def record(name: str, status: str, detail: str = "") -> None:
+        checks.append({"check": name, "status": status, "detail": detail})
+
+    record("runtime server", "ok" if server.is_file() else "fail", str(server))
+    record("runtime python", "ok" if python.is_file() else "fail", str(python))
+    if python.is_file():
+        probe = subprocess.run([str(python), "-c", "import mcp"], capture_output=True, text=True)
+        record("mcp dependency", "ok" if probe.returncode == 0 else "fail", probe.stderr.strip().splitlines()[-1] if probe.returncode else "")
+        if server.is_file():
+            help_run = subprocess.run([str(python), str(server), "--help"], capture_output=True, text=True)
+            record("server starts", "ok" if help_run.returncode == 0 else "fail", help_run.stderr.strip()[-200:])
+
+    def points_to_runtime(command: object) -> bool:
+        flat = command if isinstance(command, list) else [command]
+        return str(python) in map(str, flat) or str(server) in map(str, flat)
+
+    codex = Path.home() / ".codex" / "config.toml"
+    if codex.is_file():
+        text = codex.read_text(encoding="utf-8")
+        ok = "[mcp_servers.specnative]" in text and str(server) in text
+        record("codex", "ok" if ok else "fail", str(codex))
+    else:
+        record("codex", "skip", "no ~/.codex/config.toml")
+
+    opencode = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "opencode" / "opencode.json"
+    if opencode.is_file():
+        try:
+            entry = json.loads(opencode.read_text(encoding="utf-8")).get("mcp", {}).get("specnative")
+            record("opencode", "ok" if entry and points_to_runtime(entry.get("command")) else "fail", str(opencode))
+        except (OSError, json.JSONDecodeError, AttributeError) as exc:
+            record("opencode", "fail", f"{opencode}: {exc}")
+    else:
+        record("opencode", "skip", "no opencode.json")
+
+    desktop = _claude_desktop_config()
+    if desktop.is_file():
+        try:
+            entry = json.loads(desktop.read_text(encoding="utf-8")).get("mcpServers", {}).get("specnative")
+            record("claude desktop", "ok" if entry and points_to_runtime(entry.get("args")) else "fail", str(desktop))
+        except (OSError, json.JSONDecodeError, AttributeError) as exc:
+            record("claude desktop", "fail", f"{desktop}: {exc}")
+    else:
+        record("claude desktop", "skip", "not installed or not configured")
+
+    claude = shutil.which("claude")
+    if claude:
+        got = subprocess.run([claude, "mcp", "get", "specnative"], capture_output=True, text=True)
+        record("claude code", "ok" if got.returncode == 0 and str(server) in got.stdout else "fail", "user scope")
+    else:
+        record("claude code", "skip", "claude CLI not found")
+
+    healthy = all(c["status"] != "fail" for c in checks)
+    print(json.dumps({"mode": "doctor", "healthy": healthy, "checks": checks}, indent=2, ensure_ascii=False))
+    return 0 if healthy else 1
 
 
 # ---------------------------------------------------------------------------
@@ -889,6 +964,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Install or update the user-scoped SpecNative MCP and client configs",
     )
     parser.add_argument(
+        "--doctor",
+        action="store_true",
+        help="Diagnose the user-scoped runtime and client registrations",
+    )
+    parser.add_argument(
         "--migrate-local",
         action="store_true",
         help="Remove recognised legacy project-scoped MCP artifacts from --target",
@@ -899,6 +979,9 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
+
+    if args.doctor:
+        return doctor()
 
     version = resolve_version(args.version)
     target = Path(args.target).resolve()
