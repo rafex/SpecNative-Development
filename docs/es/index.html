@@ -31,6 +31,7 @@
           </span>
         </a>
         <nav class="topnav" aria-label="Principal">
+          <a href="#install">Instalar</a>
           <a href="#concepto">Concepto</a>
           <a href="#estructura">Estructura</a>
           <a href="#runtimes">Runtimes</a>
@@ -96,6 +97,42 @@
                 <code>prompt =&gt; seleccionar la spec, no explicar el proyecto</code>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section class="section" id="install">
+          <div class="section-heading narrow">
+            <p class="eyebrow">Instalación</p>
+            <h2>Instala desde un release — sin clonar el repositorio</h2>
+            <p>Cada <a href="https://github.com/rafex/SpecNative-Development/releases/latest">release de GitHub</a> incluye <code>install.py</code> y <code>specnative_mcp.py</code> como assets. Solo necesitas Python 3.10+ y <code>curl</code>; no se instala nada a nivel de sistema ni se requiere <code>sudo</code>.</p>
+          </div>
+          <div class="adoption-grid">
+            <article class="card">
+              <h3>1. Instala el MCP una vez por usuario</h3>
+              <div class="snippet">
+                <pre><code># Runtime + registro en Claude Code, Codex, OpenCode y Claude Desktop
+curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
+  | python3 - --global
+
+# Verifica el runtime y cada registro de cliente
+curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
+  | python3 - --doctor</code></pre>
+              </div>
+              <p>El runtime vive en tu directorio de datos de usuario (<code>~/Library/Application Support/SpecNative</code> en macOS, <code>~/.local/share/specnative</code> en Linux, <code>%LOCALAPPDATA%\SpecNative</code> en Windows) y sirve a todos los repositorios que abras.</p>
+            </article>
+            <article class="card">
+              <h3>2. Agrega SpecNative a un repositorio</h3>
+              <div class="snippet">
+                <pre><code>cd /ruta/a/tu/repo
+curl -sSL https://github.com/rafex/SpecNative-Development/releases/latest/download/install.py \
+  | python3 - --profile team
+
+# Fijar una versión específica
+curl -sSL https://github.com/rafex/SpecNative-Development/releases/download/v0.10.2/install.py \
+  | python3 - --version v0.10.2 --profile team</code></pre>
+              </div>
+              <p>Crea una rama dedicada y nunca toca trabajo sin commit. Perfiles: <code>context</code>, <code>spec</code>, <code>team</code>, <code>platform</code>. Consulta todas las versiones en la <a href="https://github.com/rafex/SpecNative-Development/releases">página de releases</a>.</p>
+            </article>
           </div>
         </section>
 
