@@ -196,6 +196,12 @@ OpenCode y Claude Code cuando está disponible. No crea `opencode.json` ni
 `spec-native/` desde el workspace; `SPECNATIVE_REPO` y
 `select_repository(path)` son alternativas.
 
+El runtime vive en `~/Library/Application Support/SpecNative` (macOS),
+`$XDG_DATA_HOME/specnative` (Linux) o `%LOCALAPPDATA%\SpecNative` (Windows), por
+lo que no requiere `sudo`. Volver a ejecutar `--global` lo actualiza de forma
+idempotente y `python3 install.py --doctor` verifica el runtime y cada registro de
+cliente. Claude Desktop se configura solo si está instalado.
+
 ---
 
 ## Principios del framework

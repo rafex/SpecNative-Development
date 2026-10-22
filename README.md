@@ -254,6 +254,12 @@ Code when available. No project `opencode.json` or `.codex/config.toml` is
 created. The server discovers `AGENTS.md` and `spec-native/` from the active
 workspace; `SPECNATIVE_REPO` or `select_repository(path)` are fallbacks.
 
+The runtime lives in `~/Library/Application Support/SpecNative` (macOS),
+`$XDG_DATA_HOME/specnative` (Linux) or `%LOCALAPPDATA%\SpecNative` (Windows), so
+no `sudo` is needed. Re-running `--global` updates it idempotently, and
+`python3 install.py --doctor` checks the runtime and every client registration.
+Claude Desktop is configured only when it is installed.
+
 ---
 
 ## Core principles

@@ -92,155 +92,109 @@ Para diagnosticar el runtime y los registros de los clientes:
 python3 install.py --doctor
 ```
 
-## Instalación heredada (no usar)
+### Qué instala
 
-El instalador de SpecNative descarga el servidor MCP y crea un entorno virtual
-aislado con todas sus dependencias automáticamente:
+Un único runtime por usuario, sin `sudo` y fuera de los repositorios:
+
+| Plataforma | Ubicación |
+|------------|-----------|
+| macOS | `~/Library/Application Support/SpecNative/` |
+| Linux | `$XDG_DATA_HOME/specnative/` (por defecto `~/.local/share/specnative/`) |
+| Windows | `%LOCALAPPDATA%\SpecNative\` |
 
 ```
-.specnative/specnative_mcp.py   ← servidor MCP
-.specnative/.venv/              ← entorno virtual con mcp instalado
+specnative_mcp.py   ← servidor MCP
+.venv/              ← entorno virtual con la dependencia mcp
 ```
 
-Si necesitas reinstalar o actualizar el servidor:
+Y lo registra en la configuración de usuario de cada cliente:
 
-```bash
-python3 install.py --reinstall --target /ruta/a/tu/repo
-```
+| Cliente | Configuración |
+|---------|---------------|
+| Claude Code | `claude mcp add --scope user specnative` (reinstalar es idempotente) |
+| Claude Desktop | `claude_desktop_config.json` (solo si Claude Desktop está instalado) |
+| OpenCode | `~/.config/opencode/opencode.json`, clave `mcp.specnative` |
+| Codex CLI | `~/.codex/config.toml`, tabla `[mcp_servers.specnative]` |
+
+Para actualizar el runtime, vuelve a ejecutar `python3 install.py --global`.
+`--reinstall` está obsoleto y equivale a `--global`.
+
+### Diagnóstico
+
+`python3 install.py --doctor` verifica el servidor, el Python del venv, la
+dependencia `mcp`, que el servidor arranque y que cada cliente apunte al
+runtime. Imprime un JSON con `ok`, `fail` o `skip` por verificación y termina
+con código 1 si algo falla.
+
+### Selección del repositorio
+
+Como el servidor es compartido, descubre el repositorio activo desde el
+directorio de trabajo del cliente (el primer ancestro con `AGENTS.md` y
+`spec-native/`). Si el cliente no arranca dentro del repositorio (por ejemplo,
+Claude Desktop), usa `select_repository(path)` o `SPECNATIVE_REPO`.
 
 ---
 
-## Configuración heredada por agente (no usar)
+## Configuración manual (opcional)
 
-El servidor usa el Python del venv aislado en `.specnative/.venv/`.
-Reemplaza `/ruta/a/tu/proyecto` con la ruta absoluta real de tu repositorio.
-
-### Claude Code
+Solo si no usas el instalador. Sustituye `<RUNTIME>` por la ubicación de la
+tabla anterior.
 
 ```bash
-# Desde la raíz de tu proyecto:
-claude mcp add specnative \
-  "$(pwd)/.specnative/.venv/bin/python3" "$(pwd)/.specnative/specnative_mcp.py" \
-  -- --repo "$(pwd)"
+claude mcp add --scope user specnative -- "<RUNTIME>/.venv/bin/python3" "<RUNTIME>/specnative_mcp.py"
 ```
 
-O agrega a `.claude/mcp_settings.json` (proyecto) o `~/.claude/mcp_settings.json` (global):
-
-```json
-{
-  "mcpServers": {
-    "specnative": {
-      "command": "/ruta/a/tu/proyecto/.specnative/.venv/bin/python3",
-      "args": [
-        "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
-        "--repo", "/ruta/a/tu/proyecto"
-      ]
-    }
-  }
-}
-```
-
-### Claude Desktop
-
-Agrega a `claude_desktop_config.json`
-(`~/Library/Application Support/Claude/` en macOS,
-`%APPDATA%\Claude\` en Windows):
-
-```json
-{
-  "mcpServers": {
-    "specnative": {
-      "command": "/ruta/a/tu/proyecto/.specnative/.venv/bin/python3",
-      "args": [
-        "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
-        "--repo", "/ruta/a/tu/proyecto"
-      ]
-    }
-  }
-}
-```
-
-### OpenCode
-
-Generado automáticamente en `opencode.json` durante la instalación.
-Usa la clave `command` del schema de OpenCode (no `prompts` — esa clave no existe).
-La clave `instructions` hace que OpenCode cargue `AGENTS.md` automáticamente en cada sesión.
-
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "instructions": [
-    "AGENTS.md",
-    "spec-native/README.md"
-  ],
-  "mcp": {
-    "specnative": {
-      "type": "local",
-      "enabled": true,
-      "command": [
-        "./.specnative/.venv/bin/python3",
-        "./.specnative/specnative_mcp.py"
-      ]
-    }
-  },
-  "command": {
-    "spec-init": {
-      "description": "Initialize SpecNative — guided project setup",
-      "template": "Use the specnative MCP server. Call health_check() to see which spec-native/ documents are empty. Interview the developer and fill PRODUCT.md, STACK.md, ARCHITECTURE.md, CONVENTIONS.md and COMMANDS.md using update_section() or refine_document(). Finish by suggesting start_initiative() for the first spec."
-    },
-    "spec-update": {
-      "description": "Update SpecNative docs — detect gaps, refine iteratively",
-      "template": "Use the specnative MCP server. Call health_check() and suggest_next() to identify gaps. Ask the developer what to refine today, then use update_section() or refine_document() to update the documents."
-    },
-    "spec-status": {
-      "description": "Quick SpecNative project health check",
-      "template": "Use the specnative MCP server. Call resume(), status() and health_check(). Summarize in 5 lines what is healthy and what needs attention."
-    },
-    "spec-handoff": {
-      "description": "Generate structured handoff for next agent",
-      "template": "Use the specnative MCP server. Ask the developer what they were doing and what the next step is. Call checkpoint() with the gathered info, then log_decision() for any unrecorded decisions. Confirm with read_context('session')."
-    },
-    "spec-backlog-add": {
-      "description": "Capture a backlog request as a task or triaged intake idea",
-      "template": "Use list_specs() and board() first. Call capture_backlog_item() with initiative only when an existing spec, close criteria and validation are known; otherwise call it without initiative to record triaged intake. Never edit a generated board."
-    }
-  }
-}
-```
-
-> **Nota:** La clave `instructions` es exclusiva de OpenCode — le indica qué archivos
-> incluir como contexto en cada sesión. `AGENTS.md` se carga automáticamente sin
-> necesidad de pedírselo al agente.
-
-### Codex CLI
-
-El instalador crea `.codex/config.toml` en la raíz del proyecto. Para una
-configuración manual, agrega lo siguiente a `~/.codex/config.toml` (global) o
-`.codex/config.toml` (proyecto confiable):
+Codex (`~/.codex/config.toml`):
 
 ```toml
 [mcp_servers.specnative]
-command = "/ruta/a/tu/proyecto/.specnative/.venv/bin/python3"
-args = [
-  "/ruta/a/tu/proyecto/.specnative/specnative_mcp.py",
-  "--repo", "/ruta/a/tu/proyecto"
-]
-cwd = "/ruta/a/tu/proyecto"
+command = "<RUNTIME>/.venv/bin/python3"
+args = ["<RUNTIME>/specnative_mcp.py"]
 enabled = true
 startup_timeout_sec = 30
 ```
 
-### Variable de entorno (alternativa universal)
+OpenCode (`~/.config/opencode/opencode.json`):
+
+```json
+{
+  "mcp": {
+    "specnative": {
+      "type": "local",
+      "enabled": true,
+      "command": ["<RUNTIME>/.venv/bin/python3", "<RUNTIME>/specnative_mcp.py"]
+    }
+  }
+}
+```
+
+Claude Desktop (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "specnative": {
+      "command": "<RUNTIME>/.venv/bin/python3",
+      "args": ["<RUNTIME>/specnative_mcp.py"]
+    }
+  }
+}
+```
+
+En OpenCode, la clave `instructions` de un `opencode.json` de proyecto hace que
+`AGENTS.md` se cargue en cada sesión; los comandos `spec-*` se generan desde
+`.specnative/commands.json`.
+
+### Variable de entorno
 
 ```bash
 export SPECNATIVE_REPO=/ruta/a/tu/proyecto
-.specnative/.venv/bin/python3 .specnative/specnative_mcp.py
 ```
 
 ### Transporte SSE (agentes remotos)
 
 ```bash
-.specnative/.venv/bin/python3 .specnative/specnative_mcp.py \
+<RUNTIME>/.venv/bin/python3 <RUNTIME>/specnative_mcp.py \
   --repo /ruta/al/proyecto \
   --transport sse \
   --port 8765
@@ -394,6 +348,7 @@ El servidor MCP es **infraestructura del framework**, no contenido del proyecto:
 - Los documentos del proyecto viven en `spec-native/`.
 - El servidor MCP lee y escribe esos documentos mediante herramientas tipadas.
 - Las reglas de ownership siguen siendo las de `AGENTS.md` y `SCHEMA.md`.
-- `.specnative/specnative_mcp.py` y `.specnative/.venv/` pueden agregarse a
-  `.gitignore` si prefieres no versionarlos; o commitearlos si quieres que el
-  equipo use exactamente la misma versión.
+- El runtime vive en el directorio de datos del usuario, no en el repositorio:
+  no hay nada que versionar ni agregar a `.gitignore`. Si quedan restos de
+  instalaciones antiguas, `python3 install.py --global --migrate-local --target <repo>`
+  los retira.

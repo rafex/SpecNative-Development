@@ -229,7 +229,8 @@
                 <code>.specnative/specnative_mcp.py</code> exposes the repository as typed
                 resources (<code>spec://</code> URIs), tools, and prompts for
                 Claude Code, Claude Desktop, OpenCode, and Codex.
-                Installed automatically with its own venv.
+                Installed once per user with <code>install.py --global</code> (no <code>sudo</code>),
+                shared by every repository, and verified with <code>install.py --doctor</code>.
               </p>
             </article>
             <article class="card">
@@ -352,13 +353,11 @@
 │       ├── CI.md
 │       └── CD.md
 ├── .claude/commands/       # /spec-init, /spec-update, /spec-status, /spec-handoff
-├── .codex/config.toml      # Project-scoped MCP for Codex
 ├── codex.toml              # Codex prompt commands
-├── opencode.json           # OpenCode MCP + prompts
 └── .specnative/
     ├── SCHEMA.md
     ├── MCP.md
-    └── specnative_mcp.py   # MCP server (auto-installed)</code></pre>
+    └── MCP.md              # MCP guide (server runs from the user-level runtime)</code></pre>
             </div>
             <div class="stack-list">
               <article class="stack-item">
@@ -487,23 +486,17 @@
   }
 }</code></pre>
               </div>
-              <h4>MCP + prompts (auto-configured)</h4>
+              <h4>MCP (user-level, auto-configured)</h4>
               <div class="snippet">
-                <pre><code>// opencode.json — generated automatically by install.py
+                <pre><code>// ~/.config/opencode/opencode.json — written by install.py --global
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
     "specnative": {
       "type": "local", "enabled": true,
-      "command": ["./.specnative/.venv/bin/python3",
-                  "./.specnative/specnative_mcp.py"]
+      "command": ["$RUNTIME/.venv/bin/python3",
+                  "$RUNTIME/specnative_mcp.py"]
     }
-  },
-  "prompts": {
-    "spec-init":    { "description": "Guided project setup" },
-    "spec-update":  { "description": "Detect gaps, refine docs" },
-    "spec-status":  { "description": "Quick health check" },
-    "spec-handoff": { "description": "Handoff for next agent" }
   }
 }</code></pre>
               </div>
@@ -541,11 +534,12 @@
 /spec-review   # Review acceptance criteria
 /spec-backlog  # Show the board or capture work
 
-# MCP setup (auto-installed)
-claude mcp add specnative \
-  "$(pwd)/.specnative/.venv/bin/python3" \
-  "$(pwd)/.specnative/specnative_mcp.py" \
-  -- --repo "$(pwd)"</code></pre>
+# MCP setup (user scope, written by install.py --global)
+claude mcp add --scope user specnative -- \
+  "$RUNTIME/.venv/bin/python3" "$RUNTIME/specnative_mcp.py"
+
+# Verify runtime and client registrations
+python3 install.py --doctor</code></pre>
               </div>
               <p class="source">
                 Source: <a href="https://code.claude.com/docs/en/overview">Claude Code overview</a>
@@ -560,7 +554,7 @@ claude mcp add specnative \
               <p>
                 Codex reads <code>AGENTS.md</code> and works best when the repository
                 already exposes constraints clearly. SpecNative gives Codex a stable
-                context surface, configures its project MCP in <code>.codex/config.toml</code>,
+                context surface, registers the MCP once in the user-level <code>~/.codex/config.toml</code>,
                 and installs ready-to-use prompts via <code>codex.toml</code>.
               </p>
               <h4>Recommended pattern</h4>
@@ -571,11 +565,10 @@ claude mcp add specnative \
                 <li>Use <code>codex --prompt spec-handoff</code> before closing to save session state.</li>
               </ul>
               <div class="snippet">
-                <pre><code># .codex/config.toml — generated automatically by install.py
+                <pre><code># ~/.codex/config.toml — written by install.py --global
 [mcp_servers.specnative]
-command = "/path/to/project/.specnative/.venv/bin/python3"
-args    = ["/path/to/project/.specnative/specnative_mcp.py", "--repo", "/path/to/project"]
-cwd     = "/path/to/project"
+command = "$RUNTIME/.venv/bin/python3"
+args    = ["$RUNTIME/specnative_mcp.py"]
 enabled = true
 startup_timeout_sec = 30
 
